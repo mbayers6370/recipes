@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ab ovo
 
-## Getting Started
+`ab ovo` is a recipe app for saving recipes, planning meals, building grocery lists, and cooking from a clean step-by-step view.
 
-First, run the development server:
+It is built with Next.js, Prisma, PostgreSQL, and a small PWA layer so it can be installed on a phone.
+
+## Features
+
+- Save recipes and organize them by type
+- Import recipes from URLs, pasted text, and screenshots
+- Plan meals by day and meal type
+- Add recipe ingredients to a grocery list
+- Use cook mode with inline step timers
+- Install the app on iPhone or Android
+
+## Tech Stack
+
+- Next.js 16
+- React 19
+- Prisma
+- PostgreSQL / Neon
+- Zod
+- Lucide React
+
+## Quick Start
+
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Copy the environment file
+
+```bash
+cp .env.example .env
+```
+
+3. Fill in your database URL and JWT secrets in `.env`
+
+4. Run migrations
+
+```bash
+npm run db:migrate
+```
+
+5. Start the app
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run typecheck
+npm run db:migrate
+npm run db:generate
+npm run db:studio
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```text
+app/
+  (app)/        Authenticated pages
+  (auth)/       Login and signup
+  api/          API route handlers
+  offline/      Offline fallback page
+components/     Shared components
+context/        React context providers
+lib/            Helpers, parsers, auth, validators
+prisma/         Schema and migrations
+public/         Static and PWA assets
+types/          Shared TypeScript types
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Vercel is the easiest deployment target for this project.
 
-## Deploy on Vercel
+1. Push the repo to GitHub
+2. Import the repo into Vercel
+3. Add the environment variables from `.env`
+4. Deploy
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Notes
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- PWA install support is configured in `public/manifest.json` and `public/sw.js`
+- Auth uses cookie-based access and refresh tokens
+- Imported recipes are normalized into local app data so the app does not depend on third-party websites at read time
+
+## Setup Guide
+
+For the full setup flow, environment variable details, and deployment notes, see [SETUP.md](./SETUP.md).
