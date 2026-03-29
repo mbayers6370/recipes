@@ -1,26 +1,325 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-rust: 181 88 47;
+    --color-rust-soft: 219 189 170;
+    --color-rust-tint: 243 232 224;
+    --color-cream: 247 241 232;
+    --color-cream-strong: 234 224 211;
+    --color-charcoal: 53 49 46;
+    --color-charcoal-soft: 112 103 95;
+    --color-charcoal-faint: 160 150 141;
+
+    --font-body: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-display: "Urbanist", "Avenir Next Condensed", "Avenir Next", "Futura", "Trebuchet MS", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "Courier Prime", "American Typewriter", "Courier New", "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+    --font-recipe: var(--font-mono);
+    --font-sans: var(--font-body);
+    --font-serif: var(--font-display);
+
+    --terra-50: var(--color-rust-tint);
+    --terra-100: var(--color-rust-tint);
+    --terra-200: var(--color-rust-soft);
+    --terra-300: var(--color-rust-soft);
+    --terra-400: var(--color-rust);
+    --terra-500: var(--color-rust);
+    --terra-600: var(--color-rust);
+    --terra-700: var(--color-rust);
+    --terra-800: var(--color-charcoal);
+    --terra-900: var(--color-charcoal);
+
+    --warm-50: var(--color-cream);
+    --warm-100: var(--color-cream);
+    --warm-200: var(--color-cream-strong);
+    --warm-300: var(--color-charcoal-faint);
+    --warm-400: var(--color-charcoal-faint);
+    --warm-500: var(--color-charcoal-soft);
+    --warm-600: var(--color-charcoal-soft);
+    --warm-700: var(--color-charcoal);
+    --warm-800: var(--color-charcoal);
+    --warm-900: var(--color-charcoal);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: rgb(var(--warm-50));
+    color: rgb(var(--warm-900));
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  *:focus-visible {
+    outline: 2px solid rgb(var(--terra-500));
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .profile-page {
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .recipe-copy,
+  .recipe-copy input,
+  .recipe-copy textarea {
+    font-family: var(--font-recipe);
+  }
+
+  .recipe-copy h1,
+  .recipe-copy h2,
+  .recipe-copy h3,
+  .recipe-copy h4,
+  .recipe-copy h5,
+  .recipe-copy h6 {
+    font-family: var(--font-display);
+  }
+
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .profile-stats {
+    justify-content: center;
+  }
+
+  .recipe-form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .home-action-tray {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(env(safe-area-inset-bottom) + 74px);
+    z-index: 45;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .auth-wordmark {
+    font-size: 24px;
+    font-weight: 700;
+    color: rgb(var(--warm-900));
+    letter-spacing: -0.04em;
+    font-family: var(--font-serif);
+  }
+
+  .recipes-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .home-recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .home-recipe-card:nth-child(n + 3) {
+    display: none;
+  }
+
+  .home-hero-copy {
+    text-align: center;
+  }
+
+  .home-plan-title {
+    width: 100%;
+    text-align: center;
+  }
+
+  .page-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .page-header-title {
+    width: 100%;
+    text-align: center;
+  }
+
+  .page-header-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .desktop-top-nav {
+    display: none !important;
+  }
+
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+
+  .app-main-shell {
+    padding-bottom: 72px;
+  }
+
+  .recipes-folder-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .recipes-folder-chip {
+    width: 100%;
+  }
+
+  .recipe-detail-shell {
+    width: 100%;
+  }
+
+  .recipe-detail-hero {
+    width: 100%;
+  }
+
+  .recipe-detail-content {
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .profile-header {
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+    }
+
+    .profile-meta {
+      align-items: flex-start;
+    }
+
+    .profile-stats {
+      justify-content: flex-start;
+    }
+
+    .recipe-form-row {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .home-action-tray {
+      left: max(16px, calc(50% - 480px));
+      right: max(16px, calc(50% - 480px));
+    }
+
+    .recipes-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .home-recipe-grid {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .home-recipe-card:nth-child(n + 3) {
+      display: block;
+    }
+
+    .home-hero-copy {
+      text-align: left;
+    }
+
+    .home-plan-title {
+      text-align: left;
+    }
+
+    .page-header {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-header-title {
+      width: auto;
+      text-align: left;
+      flex: 1;
+    }
+
+    .recipes-folder-grid {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+
+    .recipes-folder-chip {
+      width: auto;
+    }
+
+    .page-header-actions {
+      width: auto;
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+    }
+
+    .recipe-detail-hero {
+      max-width: 700px;
+      margin: 24px auto 0;
+      border-radius: 18px;
+    }
+
+    .recipe-detail-content {
+      max-width: 760px;
+      margin: 0 auto;
+      padding-top: 24px;
+      padding-bottom: 40px;
+    }
+
+    .desktop-top-nav {
+      display: block !important;
+    }
+
+    .mobile-bottom-nav {
+      display: none !important;
+    }
+
+    .app-main-shell {
+      padding-bottom: 0;
+    }
+  }
 }
