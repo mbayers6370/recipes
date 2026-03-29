@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/get-user";
 import { recipeSchema } from "@/lib/validators";
@@ -69,7 +70,7 @@ export async function GET(req: NextRequest) {
             where,
             orderBy: [{ title: "asc" }],
             select,
-          }).then((rows) =>
+          }).then((rows: Array<Prisma.RecipeGetPayload<{ select: typeof select }>>) =>
             rows
               .sort((a, b) => {
                 const aType = getRecipeType(a.tags) || "zzzz";
