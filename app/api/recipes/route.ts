@@ -1,5 +1,4 @@
 import { NextRequest } from "next/server";
-import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/get-user";
 import { recipeSchema } from "@/lib/validators";
@@ -56,6 +55,22 @@ export async function GET(req: NextRequest) {
       createdAt: true,
       updatedAt: true,
     } as const;
+    type RecipeListRow = {
+      id: string;
+      title: string;
+      description: string | null;
+      imageUrl: string | null;
+      prepTime: number | null;
+      cookTime: number | null;
+      totalTime: number | null;
+      servings: number | null;
+      difficulty: string | null;
+      cuisine: string | null;
+      tags: string[];
+      isFavorite: boolean;
+      createdAt: Date;
+      updatedAt: Date;
+    };
 
     const dbSortMap: Record<string, { [key: string]: "asc" | "desc" }> = {
       updated_desc: { updatedAt: "desc" },
@@ -70,7 +85,7 @@ export async function GET(req: NextRequest) {
             where,
             orderBy: [{ title: "asc" }],
             select,
-          }).then((rows: Array<Prisma.RecipeGetPayload<{ select: typeof select }>>) =>
+          }).then((rows: RecipeListRow[]) =>
             rows
               .sort((a, b) => {
                 const aType = getRecipeType(a.tags) || "zzzz";
