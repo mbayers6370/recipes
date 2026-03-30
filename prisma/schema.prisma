@@ -24,8 +24,41 @@ model User {
   groceryLists    GroceryList[]
   cookingSessions CookingSession[]
   refreshTokens   RefreshToken[]
+  householdMember HouseholdMember?
+  ownedHouseholds Household[]       @relation("HouseholdOwner")
 
   @@map("users")
+}
+
+model Household {
+  id        String @id @default(cuid())
+  name      String
+  ownerId   String @map("owner_id")
+  owner     User   @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  members HouseholdMember[]
+  recipes Recipe[]
+
+  @@index([ownerId])
+  @@map("households")
+}
+
+model HouseholdMember {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  userId      String    @unique @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role        String    @default("member")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([householdId, userId])
+  @@index([householdId])
+  @@map("household_members")
 }
 
 model RefreshToken {
@@ -45,6 +78,8 @@ model Recipe {
   id          String   @id @default(cuid())
   userId      String   @map("user_id")
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  householdId String?  @map("household_id")
+  household   Household? @relation(fields: [householdId], references: [id], onDelete: SetNull)
   title       String
   description String?
   imageUrl    String?  @map("image_url")
@@ -71,6 +106,7 @@ model Recipe {
 
   @@index([userId])
   @@index([userId, isFavorite])
+  @@index([householdId])
   @@map("recipes")
 }
 

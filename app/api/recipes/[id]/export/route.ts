@@ -1,17 +1,16 @@
 import { NextRequest } from "next/server";
-import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/get-user";
-import { forbidden, notFound, serverError, unauthorized } from "@/lib/api-response";
+import { notFound, serverError, unauthorized } from "@/lib/api-response";
 import { exportRecipeAsMarkdown, recipeExportFilename } from "@/lib/recipe-export";
+import { getAccessibleRecipe } from "@/lib/households";
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const user = await requireUser(req);
     const { id } = await params;
-    const recipe = await prisma.recipe.findUnique({ where: { id } });
+    const recipe = await getAccessibleRecipe(id, user.sub);
 
     if (!recipe) return notFound("Recipe not found");
-    if (recipe.userId !== user.sub) return forbidden();
 
     return new Response(exportRecipeAsMarkdown(recipe), {
       status: 200,

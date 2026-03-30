@@ -9,6 +9,8 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
+export type * from './models/Household'
+export type * from './models/HouseholdMember'
 export type * from './models/RefreshToken'
 export type * from './models/Recipe'
 export type * from './models/MealPlan'

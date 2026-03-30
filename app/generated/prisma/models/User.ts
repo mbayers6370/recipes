@@ -219,6 +219,8 @@ export type UserWhereInput = {
   groceryLists?: Prisma.GroceryListListRelationFilter
   cookingSessions?: Prisma.CookingSessionListRelationFilter
   refreshTokens?: Prisma.RefreshTokenListRelationFilter
+  householdMember?: Prisma.XOR<Prisma.HouseholdMemberNullableScalarRelationFilter, Prisma.HouseholdMemberWhereInput> | null
+  ownedHouseholds?: Prisma.HouseholdListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -236,6 +238,8 @@ export type UserOrderByWithRelationInput = {
   groceryLists?: Prisma.GroceryListOrderByRelationAggregateInput
   cookingSessions?: Prisma.CookingSessionOrderByRelationAggregateInput
   refreshTokens?: Prisma.RefreshTokenOrderByRelationAggregateInput
+  householdMember?: Prisma.HouseholdMemberOrderByWithRelationInput
+  ownedHouseholds?: Prisma.HouseholdOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -256,6 +260,8 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   groceryLists?: Prisma.GroceryListListRelationFilter
   cookingSessions?: Prisma.CookingSessionListRelationFilter
   refreshTokens?: Prisma.RefreshTokenListRelationFilter
+  householdMember?: Prisma.XOR<Prisma.HouseholdMemberNullableScalarRelationFilter, Prisma.HouseholdMemberWhereInput> | null
+  ownedHouseholds?: Prisma.HouseholdListRelationFilter
 }, "id" | "email" | "username">
 
 export type UserOrderByWithAggregationInput = {
@@ -303,6 +309,8 @@ export type UserCreateInput = {
   groceryLists?: Prisma.GroceryListCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -320,6 +328,8 @@ export type UserUncheckedCreateInput = {
   groceryLists?: Prisma.GroceryListUncheckedCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionUncheckedCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberUncheckedCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUpdateInput = {
@@ -337,6 +347,8 @@ export type UserUpdateInput = {
   groceryLists?: Prisma.GroceryListUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -354,6 +366,8 @@ export type UserUncheckedUpdateInput = {
   groceryLists?: Prisma.GroceryListUncheckedUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUncheckedUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUncheckedUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -445,6 +459,34 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
+export type UserCreateNestedOneWithoutOwnedHouseholdsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOwnedHouseholdsInput, Prisma.UserUncheckedCreateWithoutOwnedHouseholdsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOwnedHouseholdsInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutOwnedHouseholdsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutOwnedHouseholdsInput, Prisma.UserUncheckedCreateWithoutOwnedHouseholdsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutOwnedHouseholdsInput
+  upsert?: Prisma.UserUpsertWithoutOwnedHouseholdsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutOwnedHouseholdsInput, Prisma.UserUpdateWithoutOwnedHouseholdsInput>, Prisma.UserUncheckedUpdateWithoutOwnedHouseholdsInput>
+}
+
+export type UserCreateNestedOneWithoutHouseholdMemberInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutHouseholdMemberInput, Prisma.UserUncheckedCreateWithoutHouseholdMemberInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutHouseholdMemberInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutHouseholdMemberNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutHouseholdMemberInput, Prisma.UserUncheckedCreateWithoutHouseholdMemberInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutHouseholdMemberInput
+  upsert?: Prisma.UserUpsertWithoutHouseholdMemberInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutHouseholdMemberInput, Prisma.UserUpdateWithoutHouseholdMemberInput>, Prisma.UserUncheckedUpdateWithoutHouseholdMemberInput>
+}
+
 export type UserCreateNestedOneWithoutRefreshTokensInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutRefreshTokensInput, Prisma.UserUncheckedCreateWithoutRefreshTokensInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutRefreshTokensInput
@@ -515,6 +557,182 @@ export type UserUpdateOneRequiredWithoutCookingSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCookingSessionsInput, Prisma.UserUpdateWithoutCookingSessionsInput>, Prisma.UserUncheckedUpdateWithoutCookingSessionsInput>
 }
 
+export type UserCreateWithoutOwnedHouseholdsInput = {
+  id?: string
+  email: string
+  username: string
+  passwordHash: string
+  displayName?: string | null
+  avatarUrl?: string | null
+  bio?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  mealPlans?: Prisma.MealPlanCreateNestedManyWithoutUserInput
+  groceryLists?: Prisma.GroceryListCreateNestedManyWithoutUserInput
+  cookingSessions?: Prisma.CookingSessionCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberCreateNestedOneWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutOwnedHouseholdsInput = {
+  id?: string
+  email: string
+  username: string
+  passwordHash: string
+  displayName?: string | null
+  avatarUrl?: string | null
+  bio?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  mealPlans?: Prisma.MealPlanUncheckedCreateNestedManyWithoutUserInput
+  groceryLists?: Prisma.GroceryListUncheckedCreateNestedManyWithoutUserInput
+  cookingSessions?: Prisma.CookingSessionUncheckedCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberUncheckedCreateNestedOneWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutOwnedHouseholdsInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutOwnedHouseholdsInput, Prisma.UserUncheckedCreateWithoutOwnedHouseholdsInput>
+}
+
+export type UserUpsertWithoutOwnedHouseholdsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutOwnedHouseholdsInput, Prisma.UserUncheckedUpdateWithoutOwnedHouseholdsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutOwnedHouseholdsInput, Prisma.UserUncheckedCreateWithoutOwnedHouseholdsInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutOwnedHouseholdsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutOwnedHouseholdsInput, Prisma.UserUncheckedUpdateWithoutOwnedHouseholdsInput>
+}
+
+export type UserUpdateWithoutOwnedHouseholdsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  mealPlans?: Prisma.MealPlanUpdateManyWithoutUserNestedInput
+  groceryLists?: Prisma.GroceryListUpdateManyWithoutUserNestedInput
+  cookingSessions?: Prisma.CookingSessionUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUpdateOneWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutOwnedHouseholdsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  mealPlans?: Prisma.MealPlanUncheckedUpdateManyWithoutUserNestedInput
+  groceryLists?: Prisma.GroceryListUncheckedUpdateManyWithoutUserNestedInput
+  cookingSessions?: Prisma.CookingSessionUncheckedUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUncheckedUpdateOneWithoutUserNestedInput
+}
+
+export type UserCreateWithoutHouseholdMemberInput = {
+  id?: string
+  email: string
+  username: string
+  passwordHash: string
+  displayName?: string | null
+  avatarUrl?: string | null
+  bio?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  recipes?: Prisma.RecipeCreateNestedManyWithoutUserInput
+  mealPlans?: Prisma.MealPlanCreateNestedManyWithoutUserInput
+  groceryLists?: Prisma.GroceryListCreateNestedManyWithoutUserInput
+  cookingSessions?: Prisma.CookingSessionCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdCreateNestedManyWithoutOwnerInput
+}
+
+export type UserUncheckedCreateWithoutHouseholdMemberInput = {
+  id?: string
+  email: string
+  username: string
+  passwordHash: string
+  displayName?: string | null
+  avatarUrl?: string | null
+  bio?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutUserInput
+  mealPlans?: Prisma.MealPlanUncheckedCreateNestedManyWithoutUserInput
+  groceryLists?: Prisma.GroceryListUncheckedCreateNestedManyWithoutUserInput
+  cookingSessions?: Prisma.CookingSessionUncheckedCreateNestedManyWithoutUserInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedCreateNestedManyWithoutOwnerInput
+}
+
+export type UserCreateOrConnectWithoutHouseholdMemberInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutHouseholdMemberInput, Prisma.UserUncheckedCreateWithoutHouseholdMemberInput>
+}
+
+export type UserUpsertWithoutHouseholdMemberInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutHouseholdMemberInput, Prisma.UserUncheckedUpdateWithoutHouseholdMemberInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutHouseholdMemberInput, Prisma.UserUncheckedCreateWithoutHouseholdMemberInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutHouseholdMemberInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutHouseholdMemberInput, Prisma.UserUncheckedUpdateWithoutHouseholdMemberInput>
+}
+
+export type UserUpdateWithoutHouseholdMemberInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  recipes?: Prisma.RecipeUpdateManyWithoutUserNestedInput
+  mealPlans?: Prisma.MealPlanUpdateManyWithoutUserNestedInput
+  groceryLists?: Prisma.GroceryListUpdateManyWithoutUserNestedInput
+  cookingSessions?: Prisma.CookingSessionUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUpdateManyWithoutOwnerNestedInput
+}
+
+export type UserUncheckedUpdateWithoutHouseholdMemberInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  bio?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutUserNestedInput
+  mealPlans?: Prisma.MealPlanUncheckedUpdateManyWithoutUserNestedInput
+  groceryLists?: Prisma.GroceryListUncheckedUpdateManyWithoutUserNestedInput
+  cookingSessions?: Prisma.CookingSessionUncheckedUpdateManyWithoutUserNestedInput
+  refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedUpdateManyWithoutOwnerNestedInput
+}
+
 export type UserCreateWithoutRefreshTokensInput = {
   id?: string
   email: string
@@ -529,6 +747,8 @@ export type UserCreateWithoutRefreshTokensInput = {
   mealPlans?: Prisma.MealPlanCreateNestedManyWithoutUserInput
   groceryLists?: Prisma.GroceryListCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutRefreshTokensInput = {
@@ -545,6 +765,8 @@ export type UserUncheckedCreateWithoutRefreshTokensInput = {
   mealPlans?: Prisma.MealPlanUncheckedCreateNestedManyWithoutUserInput
   groceryLists?: Prisma.GroceryListUncheckedCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionUncheckedCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberUncheckedCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutRefreshTokensInput = {
@@ -577,6 +799,8 @@ export type UserUpdateWithoutRefreshTokensInput = {
   mealPlans?: Prisma.MealPlanUpdateManyWithoutUserNestedInput
   groceryLists?: Prisma.GroceryListUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRefreshTokensInput = {
@@ -593,6 +817,8 @@ export type UserUncheckedUpdateWithoutRefreshTokensInput = {
   mealPlans?: Prisma.MealPlanUncheckedUpdateManyWithoutUserNestedInput
   groceryLists?: Prisma.GroceryListUncheckedUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUncheckedUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUncheckedUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutRecipesInput = {
@@ -609,6 +835,8 @@ export type UserCreateWithoutRecipesInput = {
   groceryLists?: Prisma.GroceryListCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutRecipesInput = {
@@ -625,6 +853,8 @@ export type UserUncheckedCreateWithoutRecipesInput = {
   groceryLists?: Prisma.GroceryListUncheckedCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionUncheckedCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberUncheckedCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutRecipesInput = {
@@ -657,6 +887,8 @@ export type UserUpdateWithoutRecipesInput = {
   groceryLists?: Prisma.GroceryListUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRecipesInput = {
@@ -673,6 +905,8 @@ export type UserUncheckedUpdateWithoutRecipesInput = {
   groceryLists?: Prisma.GroceryListUncheckedUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUncheckedUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUncheckedUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutMealPlansInput = {
@@ -689,6 +923,8 @@ export type UserCreateWithoutMealPlansInput = {
   groceryLists?: Prisma.GroceryListCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutMealPlansInput = {
@@ -705,6 +941,8 @@ export type UserUncheckedCreateWithoutMealPlansInput = {
   groceryLists?: Prisma.GroceryListUncheckedCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionUncheckedCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberUncheckedCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutMealPlansInput = {
@@ -737,6 +975,8 @@ export type UserUpdateWithoutMealPlansInput = {
   groceryLists?: Prisma.GroceryListUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutMealPlansInput = {
@@ -753,6 +993,8 @@ export type UserUncheckedUpdateWithoutMealPlansInput = {
   groceryLists?: Prisma.GroceryListUncheckedUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUncheckedUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUncheckedUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutGroceryListsInput = {
@@ -769,6 +1011,8 @@ export type UserCreateWithoutGroceryListsInput = {
   mealPlans?: Prisma.MealPlanCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutGroceryListsInput = {
@@ -785,6 +1029,8 @@ export type UserUncheckedCreateWithoutGroceryListsInput = {
   mealPlans?: Prisma.MealPlanUncheckedCreateNestedManyWithoutUserInput
   cookingSessions?: Prisma.CookingSessionUncheckedCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberUncheckedCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutGroceryListsInput = {
@@ -817,6 +1063,8 @@ export type UserUpdateWithoutGroceryListsInput = {
   mealPlans?: Prisma.MealPlanUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutGroceryListsInput = {
@@ -833,6 +1081,8 @@ export type UserUncheckedUpdateWithoutGroceryListsInput = {
   mealPlans?: Prisma.MealPlanUncheckedUpdateManyWithoutUserNestedInput
   cookingSessions?: Prisma.CookingSessionUncheckedUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUncheckedUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserCreateWithoutCookingSessionsInput = {
@@ -849,6 +1099,8 @@ export type UserCreateWithoutCookingSessionsInput = {
   mealPlans?: Prisma.MealPlanCreateNestedManyWithoutUserInput
   groceryLists?: Prisma.GroceryListCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdCreateNestedManyWithoutOwnerInput
 }
 
 export type UserUncheckedCreateWithoutCookingSessionsInput = {
@@ -865,6 +1117,8 @@ export type UserUncheckedCreateWithoutCookingSessionsInput = {
   mealPlans?: Prisma.MealPlanUncheckedCreateNestedManyWithoutUserInput
   groceryLists?: Prisma.GroceryListUncheckedCreateNestedManyWithoutUserInput
   refreshTokens?: Prisma.RefreshTokenUncheckedCreateNestedManyWithoutUserInput
+  householdMember?: Prisma.HouseholdMemberUncheckedCreateNestedOneWithoutUserInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedCreateNestedManyWithoutOwnerInput
 }
 
 export type UserCreateOrConnectWithoutCookingSessionsInput = {
@@ -897,6 +1151,8 @@ export type UserUpdateWithoutCookingSessionsInput = {
   mealPlans?: Prisma.MealPlanUpdateManyWithoutUserNestedInput
   groceryLists?: Prisma.GroceryListUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUpdateManyWithoutOwnerNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCookingSessionsInput = {
@@ -913,6 +1169,8 @@ export type UserUncheckedUpdateWithoutCookingSessionsInput = {
   mealPlans?: Prisma.MealPlanUncheckedUpdateManyWithoutUserNestedInput
   groceryLists?: Prisma.GroceryListUncheckedUpdateManyWithoutUserNestedInput
   refreshTokens?: Prisma.RefreshTokenUncheckedUpdateManyWithoutUserNestedInput
+  householdMember?: Prisma.HouseholdMemberUncheckedUpdateOneWithoutUserNestedInput
+  ownedHouseholds?: Prisma.HouseholdUncheckedUpdateManyWithoutOwnerNestedInput
 }
 
 
@@ -926,6 +1184,7 @@ export type UserCountOutputType = {
   groceryLists: number
   cookingSessions: number
   refreshTokens: number
+  ownedHouseholds: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -934,6 +1193,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   groceryLists?: boolean | UserCountOutputTypeCountGroceryListsArgs
   cookingSessions?: boolean | UserCountOutputTypeCountCookingSessionsArgs
   refreshTokens?: boolean | UserCountOutputTypeCountRefreshTokensArgs
+  ownedHouseholds?: boolean | UserCountOutputTypeCountOwnedHouseholdsArgs
 }
 
 /**
@@ -981,6 +1241,13 @@ export type UserCountOutputTypeCountRefreshTokensArgs<ExtArgs extends runtime.Ty
   where?: Prisma.RefreshTokenWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountOwnedHouseholdsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.HouseholdWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -997,6 +1264,8 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   groceryLists?: boolean | Prisma.User$groceryListsArgs<ExtArgs>
   cookingSessions?: boolean | Prisma.User$cookingSessionsArgs<ExtArgs>
   refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
+  householdMember?: boolean | Prisma.User$householdMemberArgs<ExtArgs>
+  ownedHouseholds?: boolean | Prisma.User$ownedHouseholdsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1043,6 +1312,8 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   groceryLists?: boolean | Prisma.User$groceryListsArgs<ExtArgs>
   cookingSessions?: boolean | Prisma.User$cookingSessionsArgs<ExtArgs>
   refreshTokens?: boolean | Prisma.User$refreshTokensArgs<ExtArgs>
+  householdMember?: boolean | Prisma.User$householdMemberArgs<ExtArgs>
+  ownedHouseholds?: boolean | Prisma.User$ownedHouseholdsArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1056,6 +1327,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     groceryLists: Prisma.$GroceryListPayload<ExtArgs>[]
     cookingSessions: Prisma.$CookingSessionPayload<ExtArgs>[]
     refreshTokens: Prisma.$RefreshTokenPayload<ExtArgs>[]
+    householdMember: Prisma.$HouseholdMemberPayload<ExtArgs> | null
+    ownedHouseholds: Prisma.$HouseholdPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1466,6 +1739,8 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   groceryLists<T extends Prisma.User$groceryListsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$groceryListsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$GroceryListPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   cookingSessions<T extends Prisma.User$cookingSessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$cookingSessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CookingSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   refreshTokens<T extends Prisma.User$refreshTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$refreshTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RefreshTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  householdMember<T extends Prisma.User$householdMemberArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$householdMemberArgs<ExtArgs>>): Prisma.Prisma__HouseholdMemberClient<runtime.Types.Result.GetResult<Prisma.$HouseholdMemberPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+  ownedHouseholds<T extends Prisma.User$ownedHouseholdsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$ownedHouseholdsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HouseholdPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2014,6 +2289,49 @@ export type User$refreshTokensArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.RefreshTokenScalarFieldEnum | Prisma.RefreshTokenScalarFieldEnum[]
+}
+
+/**
+ * User.householdMember
+ */
+export type User$householdMemberArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the HouseholdMember
+   */
+  select?: Prisma.HouseholdMemberSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the HouseholdMember
+   */
+  omit?: Prisma.HouseholdMemberOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HouseholdMemberInclude<ExtArgs> | null
+  where?: Prisma.HouseholdMemberWhereInput
+}
+
+/**
+ * User.ownedHouseholds
+ */
+export type User$ownedHouseholdsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Household
+   */
+  select?: Prisma.HouseholdSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Household
+   */
+  omit?: Prisma.HouseholdOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HouseholdInclude<ExtArgs> | null
+  where?: Prisma.HouseholdWhereInput
+  orderBy?: Prisma.HouseholdOrderByWithRelationInput | Prisma.HouseholdOrderByWithRelationInput[]
+  cursor?: Prisma.HouseholdWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.HouseholdScalarFieldEnum | Prisma.HouseholdScalarFieldEnum[]
 }
 
 /**

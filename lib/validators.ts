@@ -68,6 +68,7 @@ export const recipeSchema = z.object({
   notes: z.string().max(2000).optional(),
   isFavorite: z.boolean().optional(),
   isPublic: z.boolean().optional(),
+  householdId: z.string().nullable().optional(),
 });
 
 export const importUrlSchema = z.object({

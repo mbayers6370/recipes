@@ -47,6 +47,16 @@ export { Prisma }
  */
 export type User = Prisma.UserModel
 /**
+ * Model Household
+ * 
+ */
+export type Household = Prisma.HouseholdModel
+/**
+ * Model HouseholdMember
+ * 
+ */
+export type HouseholdMember = Prisma.HouseholdMemberModel
+/**
  * Model RefreshToken
  * 
  */

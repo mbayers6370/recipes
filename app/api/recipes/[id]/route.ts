@@ -5,6 +5,7 @@ import { recipeSchema } from "@/lib/validators";
 import { ok, err, unauthorized, forbidden, notFound, serverError } from "@/lib/api-response";
 import { ZodError } from "zod";
 import { nanoid } from "nanoid";
+import { getAccessibleRecipe, getUserHouseholdId } from "@/lib/households";
 
 async function getOwnedRecipe(id: string, userId: string) {
   const recipe = await prisma.recipe.findUnique({ where: { id } });
@@ -17,8 +18,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const user = await requireUser(req);
     const { id } = await params;
-    const { recipe, error } = await getOwnedRecipe(id, user.sub);
-    if (error) return error;
+    const recipe = await getAccessibleRecipe(id, user.sub);
+    if (!recipe) return notFound("Recipe not found");
     return ok(recipe);
   } catch (error) {
     if ((error as Error).message === "UNAUTHORIZED") return unauthorized();
@@ -52,6 +53,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const hasNotesUpdate = Object.prototype.hasOwnProperty.call(body, "notes");
     const hasFavoriteUpdate = Object.prototype.hasOwnProperty.call(body, "isFavorite");
     const hasPublicUpdate = Object.prototype.hasOwnProperty.call(body, "isPublic");
+    const hasHouseholdUpdate = Object.prototype.hasOwnProperty.call(body, "householdId");
 
     const steps = hasStepsUpdate && data.steps
       ? data.steps.map((step, index) => ({
@@ -86,6 +88,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (hasPublicUpdate) updateData.isPublic = data.isPublic;
     if (hasStepsUpdate) updateData.steps = steps;
     if (hasIngredientsUpdate) updateData.ingredients = ingredients;
+    if (hasHouseholdUpdate) {
+      if (data.householdId) {
+        const householdId = await getUserHouseholdId(user.sub);
+        if (!householdId || householdId !== data.householdId) {
+          return err("You can only share to your own kitchen.", 403);
+        }
+        updateData.householdId = householdId;
+      } else {
+        updateData.householdId = null;
+      }
+    }
 
     if (hasTotalTimeUpdate) {
       updateData.totalTime = data.totalTime;

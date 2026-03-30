@@ -5,6 +5,7 @@ import { groceryItemSchema } from "@/lib/validators";
 import { ok, created, err, unauthorized, serverError } from "@/lib/api-response";
 import { scaleAmountText } from "@/lib/measurements";
 import { ZodError } from "zod";
+import { getAccessibleRecipe } from "@/lib/households";
 
 const CHECKED_ITEM_TTL_HOURS = 4;
 
@@ -63,9 +64,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (body.action === "add_from_recipe" && body.recipeId) {
-      const recipe = await prisma.recipe.findFirst({
-        where: { id: body.recipeId, userId: user.sub },
-      });
+      const recipe = await getAccessibleRecipe(body.recipeId, user.sub);
       if (!recipe) return err("Recipe not found", 404);
 
       let list = await prisma.groceryList.findFirst({

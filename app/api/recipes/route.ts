@@ -6,6 +6,8 @@ import { ok, created, err, unauthorized, serverError } from "@/lib/api-response"
 import { ZodError } from "zod";
 import { nanoid } from "nanoid";
 import { getRecipeType } from "@/lib/recipe-taxonomy";
+import { buildRecipeAccessWhere, getUserHouseholdId } from "@/lib/households";
+import { Prisma } from "@/app/generated/prisma/client";
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,20 +19,20 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get("type");
     const sort = searchParams.get("sort") || "updated_desc";
     const favorites = searchParams.get("favorites") === "true";
+    const ownedOnly = searchParams.get("ownedOnly") === "true";
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(50, parseInt(searchParams.get("limit") || "20"));
     const skip = (page - 1) * limit;
     const typeTag = type ? `type:${type}` : null;
+    const householdId = await getUserHouseholdId(user.sub);
 
-    const where = {
-      userId: user.sub,
-      ...(favorites ? { isFavorite: true } : {}),
+    const filters: Prisma.RecipeWhereInput = {
       ...(search
         ? {
             OR: [
-              { title: { contains: search, mode: "insensitive" as const } },
-              { description: { contains: search, mode: "insensitive" as const } },
-              { cuisine: { contains: search, mode: "insensitive" as const } },
+              { title: { contains: search, mode: "insensitive" } },
+              { description: { contains: search, mode: "insensitive" } },
+              { cuisine: { contains: search, mode: "insensitive" } },
               { tags: { has: search } },
             ],
           }
@@ -39,8 +41,31 @@ export async function GET(req: NextRequest) {
       ...(typeTag ? { tags: { has: typeTag } } : {}),
     };
 
+    const where: Prisma.RecipeWhereInput = favorites
+      ? {
+          AND: [
+            filters,
+            { userId: user.sub, isFavorite: true },
+          ],
+        }
+      : ownedOnly
+        ? {
+            AND: [
+              filters,
+              { userId: user.sub },
+            ],
+          }
+      : {
+          AND: [
+            filters,
+            buildRecipeAccessWhere(user.sub, householdId),
+          ],
+        };
+
     const select = {
       id: true,
+      userId: true,
+      householdId: true,
       title: true,
       description: true,
       imageUrl: true,
@@ -54,9 +79,18 @@ export async function GET(req: NextRequest) {
       isFavorite: true,
       createdAt: true,
       updatedAt: true,
+      user: {
+        select: {
+          id: true,
+          username: true,
+          displayName: true,
+        },
+      },
     } as const;
     type RecipeListRow = {
       id: string;
+      userId: string;
+      householdId: string | null;
       title: string;
       description: string | null;
       imageUrl: string | null;
@@ -70,6 +104,11 @@ export async function GET(req: NextRequest) {
       isFavorite: boolean;
       createdAt: Date;
       updatedAt: Date;
+      user: {
+        id: string;
+        username: string;
+        displayName: string | null;
+      };
     };
 
     const dbSortMap: Record<string, { [key: string]: "asc" | "desc" }> = {
@@ -133,11 +172,15 @@ export async function POST(req: NextRequest) {
     const totalTime =
       data.totalTime ??
       ((data.prepTime ?? 0) + (data.cookTime ?? 0) || undefined);
+    const householdId = data.householdId
+      ? await getUserHouseholdId(user.sub)
+      : null;
 
     const recipe = await prisma.recipe.create({
       data: {
         userId: user.sub,
         ...data,
+        householdId,
         steps,
         ingredients,
         totalTime,

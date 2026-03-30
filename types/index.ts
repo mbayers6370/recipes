@@ -6,7 +6,37 @@ export interface User {
   avatarUrl?: string | null;
   bio?: string | null;
   createdAt: string;
+  household?: {
+    id: string;
+    name: string;
+    role: "owner" | "member";
+    memberCount: number;
+    memberLimit: number;
+  } | null;
   _count?: { recipes: number };
+}
+
+export interface HouseholdMember {
+  id: string;
+  email: string;
+  username: string;
+  displayName?: string | null;
+  avatarUrl?: string | null;
+  createdAt: string;
+  joinedAt: string;
+  role: "owner" | "member";
+}
+
+export interface Household {
+  id: string;
+  name: string;
+  role: "owner" | "member";
+  memberCount: number;
+  memberLimit: number;
+  remainingSlots: number;
+  createdAt: string;
+  updatedAt: string;
+  members: HouseholdMember[];
 }
 
 export interface Ingredient {
@@ -36,6 +66,8 @@ export interface Nutrition {
 export interface Recipe {
   id: string;
   userId: string;
+  householdId?: string | null;
+  user?: Pick<User, "id" | "username" | "displayName">;
   title: string;
   description?: string | null;
   imageUrl?: string | null;
@@ -59,6 +91,9 @@ export interface Recipe {
 
 export interface RecipeSummary {
   id: string;
+  userId?: string;
+  householdId?: string | null;
+  user?: Pick<User, "id" | "username" | "displayName">;
   title: string;
   description?: string | null;
   imageUrl?: string | null;

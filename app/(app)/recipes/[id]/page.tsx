@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Check, ChefHat, Download, Heart, Share2, ShoppingCart, Timer as TimerIcon } from "lucide-react";
-import type { Recipe } from "@/types";
+import { ArrowLeft, Check, ChefHat, Download, Heart, Share2, ShoppingCart, Timer as TimerIcon, Users } from "lucide-react";
+import type { Household, Recipe } from "@/types";
 import { scaleAmountText } from "@/lib/measurements";
 import { RECIPE_TYPE_OPTIONS, formatRecipeType, getRecipeType, isImportedRecipe, setRecipeTypeTag, stripRecipeTypeTags, type RecipeType } from "@/lib/recipe-taxonomy";
 import { RecipeImage } from "@/components/recipe-image";
+import { useAuth } from "@/context/auth-context";
 
 export default function RecipeDetailPage() {
+  const { user } = useAuth();
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
@@ -22,12 +24,27 @@ export default function RecipeDetailPage() {
   const [movingFolder, setMovingFolder] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [sharingWithKitchen, setSharingWithKitchen] = useState(false);
+  const [household, setHousehold] = useState<Household | null>(null);
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
       .then((r) => r.json())
       .then((json) => { setRecipe(json.data); setLoading(false); });
   }, [id]);
+
+  useEffect(() => {
+    fetch("/api/household", { credentials: "same-origin" })
+      .then((response) => response.ok ? response.json() : null)
+      .then((json) => {
+        if (json?.data) {
+          setHousehold(json.data);
+        }
+      })
+      .catch(() => {
+        setHousehold(null);
+      });
+  }, []);
 
   const toggleFavorite = async () => {
     if (!recipe) return;
@@ -130,6 +147,29 @@ export default function RecipeDetailPage() {
   const mins = recipe.totalTime || (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
   const recipeType = getRecipeType(recipe.tags);
   const imported = isImportedRecipe(recipe.tags);
+  const isOwner = recipe.userId === user?.id;
+  const canShareWithKitchen = Boolean(isOwner && household);
+  const ownerLabel = recipe.user?.displayName || recipe.user?.username || "Shared kitchen";
+
+  const toggleKitchenShare = async () => {
+    if (!recipe || !household || !isOwner) return;
+    setSharingWithKitchen(true);
+    try {
+      const res = await fetch(`/api/recipes/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          householdId: recipe.householdId ? null : household.id,
+        }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        setRecipe(json.data);
+      }
+    } finally {
+      setSharingWithKitchen(false);
+    }
+  };
 
   return (
     <div style={S.page} className="recipe-detail-shell">
@@ -147,9 +187,11 @@ export default function RecipeDetailPage() {
           <button onClick={() => router.back()} style={S.backBtn}>
             <ArrowLeft size={18} strokeWidth={2.2} />
           </button>
-          <button onClick={toggleFavorite} style={S.favBtn}>
-            <Heart size={18} strokeWidth={2.2} fill={recipe.isFavorite ? "currentColor" : "none"} />
-          </button>
+          {isOwner && (
+            <button onClick={toggleFavorite} style={S.favBtn}>
+              <Heart size={18} strokeWidth={2.2} fill={recipe.isFavorite ? "currentColor" : "none"} />
+            </button>
+          )}
       </div>
 
       <div style={S.content} className="recipe-detail-content">
@@ -157,6 +199,9 @@ export default function RecipeDetailPage() {
         <div style={S.titleWrap}>
           <h1 style={S.title}>{recipe.title}</h1>
           {imported && <span style={S.importedBadge}>Imported</span>}
+          {!isOwner && (
+            <p style={S.sharedBy}>Shared by {ownerLabel}</p>
+          )}
           {recipe.description && <p style={S.desc}>{recipe.description}</p>}
         </div>
 
@@ -196,7 +241,7 @@ export default function RecipeDetailPage() {
               style={S.folderSelect}
               value={recipeType || ""}
               onChange={(e) => { void moveToFolder(e.target.value); }}
-              disabled={movingFolder}
+              disabled={movingFolder || !isOwner}
             >
               <option value="">Unsorted</option>
               {RECIPE_TYPE_OPTIONS.map((type) => (
@@ -207,6 +252,19 @@ export default function RecipeDetailPage() {
             </select>
           </div>
         </div>
+
+        {canShareWithKitchen && (
+          <button onClick={() => void toggleKitchenShare()} style={S.householdShareBtn} disabled={sharingWithKitchen}>
+            <Users size={16} strokeWidth={2.2} />
+            <span>
+              {sharingWithKitchen
+                ? "Updating kitchen share…"
+                : recipe.householdId
+                  ? `Shared with ${household?.name || "your kitchen"}`
+                  : `Share with ${household?.name || "your kitchen"}`}
+            </span>
+          </button>
+        )}
 
         <div style={S.recipeSectionCard}>
           {/* Tabs */}
@@ -322,8 +380,8 @@ export default function RecipeDetailPage() {
             <Download size={15} strokeWidth={2.1} />
             <span>{exporting ? "Exporting…" : "Export"}</span>
           </button>
-          <Link href={`/recipes/${id}/edit`} style={S.editBtn}>Edit</Link>
-          <button onClick={deleteRecipe} style={S.deleteBtn}>Delete</button>
+          {isOwner && <Link href={`/recipes/${id}/edit`} style={S.editBtn}>Edit</Link>}
+          {isOwner && <button onClick={deleteRecipe} style={S.deleteBtn}>Delete</button>}
         </div>
       </div>
     </div>
@@ -374,6 +432,7 @@ const S: Record<string, React.CSSProperties> = {
     letterSpacing: "0.04em",
   },
   desc: { fontSize: 14, color: "rgb(var(--warm-600))", lineHeight: 1.6 },
+  sharedBy: { fontSize: 13, color: "rgb(var(--terra-700))", marginBottom: 8, fontWeight: 600 },
   stats: { display: "flex", gap: 16, background: "white", borderRadius: 14, padding: "14px 16px", marginBottom: 14, border: "1px solid rgb(var(--warm-100))", justifyContent: "space-around" },
   controlsRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16, alignItems: "stretch" },
   scaleRow: { display: "flex", flexDirection: "column", gap: 8, minWidth: 0, alignItems: "center", justifyContent: "space-between", height: "100%" },
@@ -387,6 +446,22 @@ const S: Record<string, React.CSSProperties> = {
     borderWidth: "1.5px", borderStyle: "solid", borderColor: "rgb(var(--warm-200))",
     borderRadius: 10, padding: "8px 10px", fontSize: 12, color: "rgb(var(--warm-800))",
     background: "white", outline: "none", width: "100%",
+  },
+  householdShareBtn: {
+    width: "100%",
+    marginBottom: 16,
+    background: "rgb(var(--terra-600))",
+    color: "white",
+    border: "none",
+    borderRadius: 12,
+    padding: "12px 14px",
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   recipeSectionCard: {
     background: "white",
