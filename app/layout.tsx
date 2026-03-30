@@ -12,9 +12,33 @@ const urbanist = Urbanist({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
   title: "abovo — Recipe App",
-  description: "From capture to dinner. Save, plan, and cook recipes without friction.",
+  description: "From recipe capture to dinner, all in one place.",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "abovo — Recipe App",
+    description: "From recipe capture to dinner, all in one place.",
+    images: [
+      {
+        url: "/sharing_image.png",
+        width: 1200,
+        height: 630,
+        alt: "abovo recipe app preview",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "abovo — Recipe App",
+    description: "From recipe capture to dinner, all in one place.",
+    images: ["/sharing_image.png"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

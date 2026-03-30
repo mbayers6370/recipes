@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, CalendarDays, Home, LogOut, ShoppingBasket, UserRound } from "lucide-react";
@@ -92,16 +93,25 @@ export function DesktopNav() {
         <Link
           href="/"
           style={{
-            color: "rgb(var(--warm-900))",
             textDecoration: "none",
-            fontFamily: "var(--font-serif)",
-            fontSize: 24,
-            fontWeight: 700,
-            letterSpacing: "-0.04em",
+            display: "inline-flex",
+            alignItems: "center",
             flexShrink: 0,
           }}
+          aria-label="abovo"
         >
-          abovo
+          <Image
+            src="/abovo_light_charcoal.png"
+            alt="abovo"
+            width={118}
+            height={28}
+            priority
+            style={{
+              width: "118px",
+              height: "auto",
+              display: "block",
+            }}
+          />
         </Link>
 
         <nav style={{ display: "flex", alignItems: "center", gap: 8, justifySelf: "center" }}>

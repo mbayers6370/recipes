@@ -1,0 +1,16 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="64" height="64" rx="16" fill="#F7F1E8"/>
+  <text
+    x="32"
+    y="33"
+    fill="#B5582F"
+    font-family="Urbanist, Avenir Next, Helvetica Neue, Arial, sans-serif"
+    font-size="34"
+    font-weight="800"
+    letter-spacing="-0.08em"
+    text-anchor="middle"
+    dominant-baseline="middle"
+  >
+    a
+  </text>
+</svg>

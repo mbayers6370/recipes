@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
@@ -80,9 +81,18 @@ function LoginShell({ form }: { form?: React.ReactNode }) {
     <div style={styles.page}>
       <AuthPattern />
       <div style={styles.card}>
-        <div className="auth-wordmark" style={styles.logoText}>abovo</div>
+        <div style={styles.logoWrap}>
+          <Image
+            src="/abovo_cream.png"
+            alt="abovo"
+            width={144}
+            height={34}
+            priority
+            style={styles.logoImage}
+          />
+        </div>
 
-        <h1 style={styles.heading}>Welcome back</h1>
+        <h1 style={styles.heading}>Welcome Back</h1>
         <p style={styles.sub}>Sign in to your kitchen</p>
 
         {form}
@@ -121,18 +131,26 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid rgba(247, 241, 232, 0.24)",
     backdropFilter: "blur(10px)",
   },
-  logoText: { marginBottom: 28, textAlign: "center" },
+  logoWrap: {
+    marginBottom: 28,
+    display: "flex",
+    justifyContent: "center",
+  },
+  logoImage: {
+    width: "144px",
+    height: "auto",
+  },
   heading: {
     fontSize: 26,
     fontWeight: 700,
-    color: "rgb(var(--warm-50))",
+    color: "rgb(236 225 211)",
     marginBottom: 6,
     fontFamily: "var(--font-serif)",
     textAlign: "center",
   },
   sub: {
     fontSize: 14,
-    color: "rgba(247, 241, 232, 0.78)",
+    color: "rgba(232, 219, 204, 0.9)",
     marginBottom: 28,
     textAlign: "center",
   },

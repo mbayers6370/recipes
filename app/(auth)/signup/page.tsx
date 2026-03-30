@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
@@ -51,7 +52,16 @@ export default function SignupPage() {
     <div style={styles.page}>
       <AuthPattern />
       <div style={styles.card}>
-        <div className="auth-wordmark" style={styles.logoText}>abovo</div>
+        <div style={styles.logoWrap}>
+          <Image
+            src="/abovo_cream.png"
+            alt="abovo"
+            width={144}
+            height={34}
+            priority
+            style={styles.logoImage}
+          />
+        </div>
 
         <h1 style={styles.heading}>Create your account</h1>
         <p style={styles.sub}>Save, plan, and cook with less friction.</p>
@@ -119,9 +129,10 @@ const styles: Record<string, React.CSSProperties> = {
     border: "1px solid rgba(247, 241, 232, 0.24)",
     backdropFilter: "blur(10px)",
   },
-  logoText: { marginBottom: 28, textAlign: "center" },
-  heading: { fontSize: 26, fontWeight: 700, color: "rgb(var(--warm-50))", marginBottom: 6, fontFamily: "var(--font-serif)", textAlign: "center" },
-  sub: { fontSize: 14, color: "rgba(247, 241, 232, 0.78)", marginBottom: 28, textAlign: "center" },
+  logoWrap: { marginBottom: 28, display: "flex", justifyContent: "center" },
+  logoImage: { width: "144px", height: "auto" },
+  heading: { fontSize: 26, fontWeight: 700, color: "rgb(236 225 211)", marginBottom: 6, fontFamily: "var(--font-serif)", textAlign: "center" },
+  sub: { fontSize: 14, color: "rgba(232, 219, 204, 0.9)", marginBottom: 28, textAlign: "center" },
   form: { display: "flex", flexDirection: "column", gap: 14 },
   input: { border: "1.5px solid rgba(247, 241, 232, 0.7)", borderRadius: 10, padding: "11px 14px", fontSize: 15, color: "rgb(var(--warm-900))", background: "white", outline: "none", width: "100%" },
   error: { fontSize: 13, color: "rgb(var(--warm-50))", background: "rgba(96, 42, 18, 0.34)", border: "1px solid rgba(247, 241, 232, 0.2)", borderRadius: 8, padding: "8px 12px" },
