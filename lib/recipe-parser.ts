@@ -25,6 +25,16 @@ export interface ParsedRecipe {
   };
 }
 
+class RecipeImportError extends Error {
+  status: number;
+
+  constructor(message: string, status = 422) {
+    super(message);
+    this.name = "RecipeImportError";
+    this.status = status;
+  }
+}
+
 function parseISODuration(duration?: string): number | undefined {
   if (!duration) return undefined;
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -393,17 +403,60 @@ function extractTitle(html: string): string | undefined {
 }
 
 export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
-  const response = await fetch(url, {
-    headers: {
+  const headersList: HeadersInit[] = [
+    {
       "User-Agent":
-        "Mozilla/5.0 (compatible; AbOvoBot/1.0; recipe-importer)",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+      Accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+      "Cache-Control": "no-cache",
+      Pragma: "no-cache",
+    },
+    {
       Accept: "text/html,application/xhtml+xml",
     },
-    signal: AbortSignal.timeout(5000),
-  });
+  ];
+
+  let lastError: unknown;
+  let response: Response | null = null;
+
+  for (const headers of headersList) {
+    try {
+      response = await fetch(url, {
+        headers,
+        redirect: "follow",
+        cache: "no-store",
+        signal: AbortSignal.timeout(12000),
+      });
+      break;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  if (!response) {
+    const message =
+      lastError instanceof Error && /(abort|timeout)/i.test(lastError.name + lastError.message)
+        ? "That site took too long to respond. Please try again or paste the recipe text instead."
+        : "Could not reach that URL. Please check it and try again.";
+    throw new RecipeImportError(message);
+  }
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch URL: ${response.status}`);
+    if (response.status === 401 || response.status === 403) {
+      throw new RecipeImportError(
+        "That site blocked the import request. Try copy-paste or image OCR instead."
+      );
+    }
+
+    if (response.status >= 500) {
+      throw new RecipeImportError(
+        "That site is having trouble right now. Please try again in a moment."
+      );
+    }
+
+    throw new RecipeImportError("Could not read that recipe URL. Please double-check the link.");
   }
 
   const html = await response.text();
@@ -430,6 +483,8 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
     steps: [],
   };
 }
+
+export { RecipeImportError };
 
 export function parseRecipeFromText(text: string, titleOverride?: string): ParsedRecipe {
   const lines = cleanScreenshotLines(text);
