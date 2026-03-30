@@ -51,7 +51,7 @@ export default function SignupPage() {
     <div style={styles.page}>
       <AuthPattern />
       <div style={styles.card}>
-        <div className="auth-wordmark" style={styles.logoText}>ab ovo</div>
+        <div className="auth-wordmark" style={styles.logoText}>abovo</div>
 
         <h1 style={styles.heading}>Create your account</h1>
         <p style={styles.sub}>Save, plan, and cook with less friction.</p>

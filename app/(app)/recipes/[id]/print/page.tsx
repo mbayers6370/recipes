@@ -34,7 +34,7 @@ export default function PrintRecipePage() {
     <main style={S.page}>
       <article style={S.sheet}>
         <header style={S.header}>
-          <p style={S.wordmark}>ab ovo</p>
+          <p style={S.wordmark}>abovo</p>
           <h1 style={S.title}>{recipe.title}</h1>
           {recipe.description && <p style={S.description}>{recipe.description}</p>}
           <div style={S.meta}>

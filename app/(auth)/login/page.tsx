@@ -80,7 +80,7 @@ function LoginShell({ form }: { form?: React.ReactNode }) {
     <div style={styles.page}>
       <AuthPattern />
       <div style={styles.card}>
-        <div className="auth-wordmark" style={styles.logoText}>ab ovo</div>
+        <div className="auth-wordmark" style={styles.logoText}>abovo</div>
 
         <h1 style={styles.heading}>Welcome back</h1>
         <p style={styles.sub}>Sign in to your kitchen</p>

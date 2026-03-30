@@ -18,6 +18,7 @@ export default function ImportRecipePage() {
   const [fallbackTitle, setFallbackTitle] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState("");
+  const [imageOcrText, setImageOcrText] = useState("");
   const [ocrProgress, setOcrProgress] = useState<number | null>(null);
   const [parsed, setParsed] = useState<ParsedRecipe | null>(null);
   const [error, setError] = useState("");
@@ -38,6 +39,12 @@ export default function ImportRecipePage() {
     setError("");
   }, [mode]);
 
+  useEffect(() => {
+    if (mode !== "image") return;
+    setImageOcrText("");
+    setOcrProgress(null);
+  }, [imageFile, mode]);
+
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -47,29 +54,34 @@ export default function ImportRecipePage() {
 
       if (mode === "image") {
         if (!imageFile) throw new Error("Please choose an image first.");
+        if (!imageOcrText.trim()) {
+          const { createWorker } = await import("tesseract.js");
+          const worker = await createWorker("eng", 1, {
+            logger: (message) => {
+              if (message.status === "recognizing text" && typeof message.progress === "number") {
+                setOcrProgress(message.progress);
+              }
+            },
+          });
 
-        const { createWorker } = await import("tesseract.js");
-        const worker = await createWorker("eng", 1, {
-          logger: (message) => {
-            if (message.status === "recognizing text" && typeof message.progress === "number") {
-              setOcrProgress(message.progress);
-            }
-          },
-        });
+          const result = await worker.recognize(imageFile);
+          await worker.terminate();
 
-        const result = await worker.recognize(imageFile);
-        await worker.terminate();
+          const extractedText = result.data.text.trim();
+          setOcrProgress(null);
 
-        const extractedText = result.data.text.trim();
-        setOcrProgress(null);
+          if (!extractedText) {
+            throw new Error("No readable text was found in that image.");
+          }
 
-        if (!extractedText) {
-          throw new Error("No readable text was found in that image.");
+          setImageOcrText(extractedText);
+          setLoading(false);
+          return;
         }
 
         payload = {
           mode: "text",
-          text: extractedText,
+          text: imageOcrText,
           title: fallbackTitle.trim() || undefined,
         };
       } else {
@@ -238,6 +250,21 @@ export default function ImportRecipePage() {
                 {ocrProgress !== null && (
                   <p style={S.helperText}>Reading image… {Math.round(ocrProgress * 100)}%</p>
                 )}
+                {imageOcrText && (
+                  <>
+                    <p style={S.helperText}>
+                      Review and fix the OCR text before parsing the recipe.
+                    </p>
+                    <textarea
+                      style={{ ...S.input, ...S.textarea, minHeight: 220 }}
+                      placeholder="OCR text will appear here..."
+                      value={imageOcrText}
+                      onChange={(e) => setImageOcrText(e.target.value)}
+                      required
+                      rows={12}
+                    />
+                  </>
+                )}
               </>
             )}
             {error && <p style={S.error}>{error}</p>}
@@ -250,6 +277,8 @@ export default function ImportRecipePage() {
                 ? "Import Recipe"
                 : mode === "text"
                 ? "Parse Recipe"
+                : imageOcrText
+                ? "Parse OCR Text"
                 : "Scan Image"}
             </button>
           </form>

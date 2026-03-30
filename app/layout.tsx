@@ -12,13 +12,13 @@ const urbanist = Urbanist({
 });
 
 export const metadata: Metadata = {
-  title: "ab ovo — Recipe App",
+  title: "abovo — Recipe App",
   description: "From capture to dinner. Save, plan, and cook recipes without friction.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "ab ovo",
+    title: "abovo",
   },
   formatDetection: {
     telephone: false,

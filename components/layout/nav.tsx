@@ -31,7 +31,7 @@ export function BottomNav() {
         zIndex: 50,
         background: "white",
         borderTop: "1px solid rgb(var(--warm-200))",
-        paddingBottom: "env(safe-area-inset-bottom)",
+        paddingBottom: "max(10px, env(safe-area-inset-bottom))",
       }}
     >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -45,12 +45,12 @@ export function BottomNav() {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "3px",
-              padding: "10px 4px",
+              gap: "5px",
+              padding: "12px 4px 14px",
               color: active ? "rgb(var(--terra-600))" : "rgb(var(--warm-500))",
               textDecoration: "none",
               transition: "color 0.15s",
-              fontSize: "10px",
+              fontSize: "11px",
               fontWeight: active ? 600 : 400,
             }}
           >
@@ -101,7 +101,7 @@ export function DesktopNav() {
             flexShrink: 0,
           }}
         >
-          ab ovo
+          abovo
         </Link>
 
         <nav style={{ display: "flex", alignItems: "center", gap: 8, justifySelf: "center" }}>

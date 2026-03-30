@@ -31,7 +31,7 @@ export default function OfflinePage() {
             color: "rgb(var(--terra-500))",
           }}
         >
-          ab ovo
+          abovo
         </p>
         <h1
           style={{

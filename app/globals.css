@@ -196,10 +196,11 @@
 
   .mobile-bottom-nav {
     display: flex !important;
+    min-height: calc(72px + env(safe-area-inset-bottom));
   }
 
   .app-main-shell {
-    padding-bottom: 72px;
+    padding-bottom: 92px;
   }
 
   .recipes-folder-grid {
