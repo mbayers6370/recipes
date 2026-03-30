@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   try {
     const user = await requireUser(req);
     const weekParam = req.nextUrl.searchParams.get("week");
-    const weekStart = weekParam ? new Date(weekParam) : startOfWeek(new Date());
+    const weekStart = startOfWeek(weekParam ? new Date(weekParam) : new Date());
 
     const plan = await prisma.mealPlan.findUnique({
       where: { userId_weekStart: { userId: user.sub, weekStart } },
@@ -44,9 +44,14 @@ export async function POST(req: NextRequest) {
     const user = await requireUser(req);
     const body = await req.json();
     const weekParam = body.week;
-    const weekStart = weekParam ? new Date(weekParam) : startOfWeek(new Date());
+    const weekStart = startOfWeek(weekParam ? new Date(weekParam) : new Date());
 
     const itemData = mealPlanItemSchema.parse(body);
+    const trimmedNote = itemData.note?.trim();
+
+    if (!itemData.recipeId && !trimmedNote) {
+      return err("Please choose a recipe or note for this meal.", 422);
+    }
 
     const plan = await prisma.mealPlan.upsert({
       where: { userId_weekStart: { userId: user.sub, weekStart } },
@@ -55,7 +60,11 @@ export async function POST(req: NextRequest) {
     });
 
     const item = await prisma.mealPlanItem.create({
-      data: { mealPlanId: plan.id, ...itemData },
+      data: {
+        mealPlanId: plan.id,
+        ...itemData,
+        note: trimmedNote || null,
+      },
       include: {
         recipe: {
           select: { id: true, title: true, imageUrl: true, totalTime: true },

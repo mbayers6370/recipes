@@ -8,6 +8,7 @@ import { ArrowRight, Download, Plus } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import type { RecipeSummary, CookingSession, MealPlan } from "@/types";
 import { DAY_NAMES } from "@/lib/date-utils";
+import { startOfWeek } from "@/lib/date-utils";
 import { RecipeImage } from "@/components/recipe-image";
 
 const FoodIconPattern = dynamic(
@@ -60,13 +61,17 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    const clientWeek = startOfWeek(new Date()).toISOString();
+
     Promise.all([
       fetch("/api/recipes?limit=6").then((r) => r.json()),
-      fetch("/api/meal-plan").then((r) => r.json()),
-    ]).then(([recipesRes, planRes]) => {
-      setRecentRecipes(recipesRes.data?.recipes || []);
-      setMealPlan(planRes.data || null);
-    }).finally(() => setLoading(false));
+      fetch(`/api/meal-plan?week=${clientWeek}`).then((r) => r.json()),
+    ])
+      .then(([recipesRes, planRes]) => {
+        setRecentRecipes(recipesRes.data?.recipes || []);
+        setMealPlan(planRes.data || null);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {

@@ -122,7 +122,9 @@ export default function PlanPage() {
             const dayDate = addDays(weekStart, i);
             const isPastDay = dayDate < startOfToday;
             const isToday = i === todayIndex && weekStart <= today && today <= addDays(weekStart, 6);
-            const dayItems = (plan?.items || []).filter((it) => it.dayOfWeek === i);
+            const dayItems = (plan?.items || []).filter(
+              (it) => it.dayOfWeek === i && Boolean(it.recipe?.id || it.note?.trim())
+            );
             const extraTypes = EXTRA_MEAL_TYPES.filter((type) =>
               dayItems.some((item) => item.mealType === type)
             );
@@ -284,14 +286,16 @@ function MealSlot({ label, items, isLocked, onAdd, onDelete, compact = false }: 
                 ) : (
                   <span style={SS.slotNote}>{item.note || "–"}</span>
                 )}
-                <button
-                  type="button"
-                  aria-label={`Delete ${label.toLowerCase()} meal`}
-                  style={SS.deleteBtn}
-                  onClick={() => onDelete(item.id)}
-                >
-                  <Trash2 size={14} strokeWidth={2.1} />
-                </button>
+                {!isLocked && (
+                  <button
+                    type="button"
+                    aria-label={`Delete ${label.toLowerCase()} meal`}
+                    style={SS.deleteBtn}
+                    onClick={() => onDelete(item.id)}
+                  >
+                    <Trash2 size={14} strokeWidth={2.1} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
