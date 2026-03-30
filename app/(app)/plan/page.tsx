@@ -120,7 +120,9 @@ export default function PlanPage() {
         <div style={S.planGrid}>
           {WEEK_DAYS.map((day, i) => {
             const dayDate = addDays(weekStart, i);
-            const isPastDay = dayDate < startOfToday;
+            const dayStart = new Date(dayDate);
+            dayStart.setHours(0, 0, 0, 0);
+            const isPastDay = dayStart.getTime() < startOfToday.getTime();
             const isToday = i === todayIndex && weekStart <= today && today <= addDays(weekStart, 6);
             const dayItems = (plan?.items || []).filter(
               (it) => it.dayOfWeek === i && Boolean(it.recipe?.id || it.note?.trim())
@@ -386,7 +388,12 @@ const S: Record<string, React.CSSProperties> = {
     background: "linear-gradient(180deg, rgba(243, 232, 224, 0.9) 0%, rgba(255,255,255,0.98) 100%)",
     border: "1px solid rgb(var(--terra-200))",
   },
-  dayRowPast: { opacity: 0.92 },
+  dayRowPast: {
+    opacity: 0.7,
+    background: "rgb(var(--warm-100))",
+    border: "1px solid rgb(var(--warm-200))",
+    filter: "saturate(0.78)",
+  },
   dayHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 },
   dayLabel: { display: "flex", alignItems: "center", gap: 10 },
   dayName: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase" as const, letterSpacing: "0.06em" },

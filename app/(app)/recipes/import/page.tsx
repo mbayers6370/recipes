@@ -9,6 +9,33 @@ import type { ParsedRecipe } from "@/lib/recipe-parser";
 type ImportStep = "input" | "preview" | "saving";
 type ImportMode = "url" | "text" | "image";
 
+const IMPORT_MODE_COPY: Record<
+  ImportMode,
+  { tabLabel: string; title: string; description: string; buttonLabel: string }
+> = {
+  url: {
+    tabLabel: "Website URL",
+    title: "Paste a recipe link",
+    description:
+      "Use a recipe website link from places like NYT Cooking, AllRecipes, or Serious Eats.",
+    buttonLabel: "Import Recipe",
+  },
+  text: {
+    tabLabel: "Paste Text",
+    title: "Paste recipe text",
+    description:
+      "Paste a recipe from notes, chat, email, or anywhere else and we’ll try to organize it for you.",
+    buttonLabel: "Parse Recipe",
+  },
+  image: {
+    tabLabel: "Photo / Screenshot",
+    title: "Upload a recipe photo",
+    description:
+      "We’ll read the text from your photo or screenshot, then you can fix any mistakes before parsing it.",
+    buttonLabel: "Read Text From Image",
+  },
+};
+
 export default function ImportRecipePage() {
   const router = useRouter();
   const [step, setStep] = useState<ImportStep>("input");
@@ -153,7 +180,7 @@ export default function ImportRecipePage() {
               style={{ ...S.modeTab, ...(mode === "url" ? S.modeTabActive : {}) }}
             >
               <Link2 size={16} strokeWidth={2.2} />
-              <span>Website URL</span>
+              <span>{IMPORT_MODE_COPY.url.tabLabel}</span>
             </button>
             <button
               type="button"
@@ -161,7 +188,7 @@ export default function ImportRecipePage() {
               style={{ ...S.modeTab, ...(mode === "text" ? S.modeTabActive : {}) }}
             >
               <FileText size={16} strokeWidth={2.2} />
-              <span>Text / OCR</span>
+              <span>{IMPORT_MODE_COPY.text.tabLabel}</span>
             </button>
             <button
               type="button"
@@ -169,23 +196,15 @@ export default function ImportRecipePage() {
               style={{ ...S.modeTab, ...(mode === "image" ? S.modeTabActive : {}) }}
             >
               <ImageUp size={16} strokeWidth={2.2} />
-              <span>Image OCR</span>
+              <span>{IMPORT_MODE_COPY.image.tabLabel}</span>
             </button>
           </div>
 
           <div style={S.iconWrap}>
             {mode === "url" ? <Link2 size={32} strokeWidth={2.2} /> : <ImageUp size={32} strokeWidth={2.2} />}
           </div>
-          <h2 style={S.cardTitle}>
-            {mode === "url" ? "Paste a URL" : mode === "text" ? "Paste recipe text" : "Upload a recipe image"}
-          </h2>
-          <p style={S.cardSub}>
-            {mode === "url"
-              ? "Works with most recipe websites — NYT Cooking, AllRecipes, Serious Eats, and more."
-              : mode === "text"
-              ? "Paste text copied from notes, a screenshot OCR app, or an image-to-text tool. If the title is missing, you can add one below."
-              : "Upload a screenshot or photo with recipe text. Free OCR runs in your browser, then you can review and save the parsed recipe."}
-          </p>
+          <h2 style={S.cardTitle}>{IMPORT_MODE_COPY[mode].title}</h2>
+          <p style={S.cardSub}>{IMPORT_MODE_COPY[mode].description}</p>
           <form onSubmit={handleImport} style={S.form}>
             {mode === "url" ? (
               <input
@@ -248,12 +267,12 @@ export default function ImportRecipePage() {
                   </div>
                 )}
                 {ocrProgress !== null && (
-                  <p style={S.helperText}>Reading image… {Math.round(ocrProgress * 100)}%</p>
+                  <p style={S.helperText}>Reading text from image… {Math.round(ocrProgress * 100)}%</p>
                 )}
                 {imageOcrText && (
                   <>
                     <p style={S.helperText}>
-                      Review and fix the OCR text before parsing the recipe.
+                      Review and fix the extracted text before parsing the recipe.
                     </p>
                     <textarea
                       style={{ ...S.input, ...S.textarea, minHeight: 220 }}
@@ -274,12 +293,12 @@ export default function ImportRecipePage() {
                   ? "Scanning image…"
                   : "Importing…"
                 : mode === "url"
-                ? "Import Recipe"
+                ? IMPORT_MODE_COPY.url.buttonLabel
                 : mode === "text"
-                ? "Parse Recipe"
+                ? IMPORT_MODE_COPY.text.buttonLabel
                 : imageOcrText
-                ? "Parse OCR Text"
-                : "Scan Image"}
+                ? "Parse Corrected Text"
+                : IMPORT_MODE_COPY.image.buttonLabel}
             </button>
           </form>
 
