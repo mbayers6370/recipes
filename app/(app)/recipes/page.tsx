@@ -212,7 +212,14 @@ function SkeletonCard() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { padding: "16px", minHeight: "100dvh", background: "rgb(var(--warm-50))" },
+  page: {
+    padding: "16px",
+    minHeight: "100dvh",
+    background: "rgb(var(--warm-50))",
+    width: "100%",
+    maxWidth: 960,
+    margin: "0 auto",
+  },
   header: {},
   title: { fontSize: 26, fontWeight: 700, fontFamily: "var(--font-serif)", color: "rgb(var(--warm-900))" },
   headerActions: { display: "flex", gap: 8 },

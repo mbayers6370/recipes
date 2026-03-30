@@ -35,6 +35,41 @@ class RecipeImportError extends Error {
   }
 }
 
+const HTML_ENTITY_MAP: Record<string, string> = {
+  nbsp: " ",
+  amp: "&",
+  quot: "\"",
+  apos: "'",
+  lt: "<",
+  gt: ">",
+  rsquo: "'",
+  lsquo: "'",
+  rdquo: "\"",
+  ldquo: "\"",
+  hellip: "...",
+  ndash: "-",
+  mdash: "-",
+  bull: "•",
+};
+
+function decodeHtmlEntities(text: string) {
+  return text.replace(/&(#x?[0-9a-f]+|[a-z]+);?/gi, (entity, value: string) => {
+    const normalized = value.toLowerCase();
+
+    if (normalized.startsWith("#x")) {
+      const codePoint = Number.parseInt(normalized.slice(2), 16);
+      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : entity;
+    }
+
+    if (normalized.startsWith("#")) {
+      const codePoint = Number.parseInt(normalized.slice(1), 10);
+      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : entity;
+    }
+
+    return HTML_ENTITY_MAP[normalized] ?? entity;
+  });
+}
+
 function parseISODuration(duration?: string): number | undefined {
   if (!duration) return undefined;
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
@@ -144,12 +179,33 @@ const SOCIAL_NOISE_PATTERNS = [
 ];
 
 function normalizeTextLine(line: string) {
-  return line
+  return decodeHtmlEntities(line)
+    .replace(/<[^>]+>/g, " ")
     .replace(/\u00a0/g, " ")
+    .replace(/\uFFFD/g, "")
     .replace(/[“”]/g, "\"")
     .replace(/[’‘]/g, "'")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeImportedText(text?: string | null) {
+  if (!text) return undefined;
+
+  return normalizeTextLine(
+    decodeHtmlEntities(text)
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p>/gi, "\n")
+      .replace(/<[^>]+>/g, " ")
+  );
+}
+
+function normalizeImportedList(items?: string[] | null) {
+  if (!items) return [];
+
+  return items
+    .map((item) => normalizeImportedText(item))
+    .filter((item): item is string => Boolean(item));
 }
 
 function isSectionHeader(line: string, kind: keyof typeof SECTION_HEADER_PATTERNS) {
@@ -323,7 +379,7 @@ function extractFromJsonLd(html: string): Partial<ParsedRecipe> | null {
       if (!recipe) continue;
 
       const ingredients = (recipe.recipeIngredient || []).map(
-        (raw: string) => splitIngredient(raw)
+        (raw: string) => splitIngredient(normalizeImportedText(raw) || raw)
       );
 
       const steps = (
@@ -331,7 +387,8 @@ function extractFromJsonLd(html: string): Partial<ParsedRecipe> | null {
       ).map((step: { "@type"?: string; text?: string } | string, i: number) => ({
         order: i,
         instruction:
-          typeof step === "string" ? step : step.text || String(step),
+          normalizeImportedText(typeof step === "string" ? step : step.text || String(step))
+          || (typeof step === "string" ? step : step.text || String(step)),
       }));
 
       const nutrition = recipe.nutrition
@@ -363,20 +420,20 @@ function extractFromJsonLd(html: string): Partial<ParsedRecipe> | null {
           : imageVal?.url;
 
       return {
-        title: recipe.name,
-        description: recipe.description,
+        title: normalizeImportedText(recipe.name),
+        description: normalizeImportedText(recipe.description),
         imageUrl,
         prepTime: parseISODuration(recipe.prepTime),
         cookTime: parseISODuration(recipe.cookTime),
         totalTime: parseISODuration(recipe.totalTime),
         servings: parseServings(recipe.recipeYield),
         cuisine: Array.isArray(recipe.recipeCuisine)
-          ? recipe.recipeCuisine[0]
-          : recipe.recipeCuisine,
+          ? normalizeImportedText(recipe.recipeCuisine[0])
+          : normalizeImportedText(recipe.recipeCuisine),
         tags: recipe.keywords
           ? typeof recipe.keywords === "string"
-            ? recipe.keywords.split(",").map((s: string) => s.trim())
-            : recipe.keywords
+            ? normalizeImportedList(recipe.keywords.split(","))
+            : normalizeImportedList(recipe.keywords)
           : [],
         ingredients,
         steps,
@@ -397,9 +454,9 @@ function extractOgImage(html: string): string | undefined {
 
 function extractTitle(html: string): string | undefined {
   const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i);
-  if (ogTitle) return ogTitle[1];
+  if (ogTitle) return normalizeImportedText(ogTitle[1]);
   const title = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  return title?.[1]?.trim();
+  return normalizeImportedText(title?.[1]);
 }
 
 export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {

@@ -368,9 +368,16 @@ const SS: Record<string, React.CSSProperties> = {
 };
 
 const S: Record<string, React.CSSProperties> = {
-  page: { padding: "16px", minHeight: "100dvh", background: "rgb(var(--warm-50))", width: "100%", maxWidth: 860, margin: "0 auto" },
+  page: { padding: "16px", minHeight: "100dvh", background: "rgb(var(--warm-50))", width: "100%", maxWidth: 960, margin: "0 auto" },
   header: { marginBottom: 20 },
-  title: { fontSize: 26, fontWeight: 700, fontFamily: "var(--font-serif)", color: "rgb(var(--warm-900))", marginBottom: 12 },
+  title: {
+    fontSize: 26,
+    fontWeight: 700,
+    fontFamily: "var(--font-serif)",
+    color: "rgb(var(--warm-900))",
+    marginBottom: 12,
+    whiteSpace: "nowrap",
+  },
   weekNav: { display: "flex", alignItems: "center", justifyContent: "center", gap: 12, width: "100%" },
   weekBtn: { background: "none", border: "none", cursor: "pointer", color: "rgb(var(--warm-600))", padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" },
   weekLabel: { fontSize: 13, fontWeight: 600, color: "rgb(var(--warm-700))" },
