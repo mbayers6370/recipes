@@ -69,14 +69,6 @@ export function AuthPattern() {
           );
         })}
       </div>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(circle at top, rgba(247, 241, 232, 0.12), transparent 40%), linear-gradient(180deg, rgba(96, 42, 18, 0.16), rgba(96, 42, 18, 0.34))",
-        }}
-      />
     </div>
   );
 }

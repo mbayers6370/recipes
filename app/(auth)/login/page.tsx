@@ -80,6 +80,7 @@ function LoginShell({ form }: { form?: React.ReactNode }) {
   return (
     <div style={styles.page}>
       <AuthPattern />
+      <div aria-hidden="true" style={styles.cardGlow} />
       <div style={styles.card}>
         <div style={styles.logoWrap}>
           <Image
@@ -118,7 +119,18 @@ const styles: Record<string, React.CSSProperties> = {
     position: "relative",
     overflow: "hidden",
     background:
-      "linear-gradient(180deg, rgb(var(--terra-500)) 0%, rgb(150 69 34) 100%)",
+      "radial-gradient(circle at center, rgba(247, 241, 232, 0.18) 0%, rgba(247, 241, 232, 0.1) 16%, rgba(247, 241, 232, 0) 40%), linear-gradient(180deg, rgb(var(--terra-500)) 0%, rgb(150 69 34) 100%)",
+  },
+  cardGlow: {
+    position: "absolute",
+    zIndex: 0,
+    width: "min(88vw, 560px)",
+    height: "min(88vw, 560px)",
+    borderRadius: "50%",
+    background:
+      "radial-gradient(circle, rgba(247, 241, 232, 0.34) 0%, rgba(247, 241, 232, 0.18) 24%, rgba(247, 241, 232, 0.08) 42%, rgba(247, 241, 232, 0) 68%)",
+    filter: "blur(12px)",
+    transform: "translateZ(0)",
   },
   card: {
     position: "relative",
