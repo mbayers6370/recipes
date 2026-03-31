@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
-import { AuthPattern } from "@/components/auth/auth-pattern";
 
 export default function LoginPage() {
   return (
@@ -79,12 +78,10 @@ function LoginContent() {
 function LoginShell({ form }: { form?: React.ReactNode }) {
   return (
     <div style={styles.page}>
-      <AuthPattern />
-      <div aria-hidden="true" style={styles.cardGlow} />
       <div style={styles.card}>
         <div style={styles.logoWrap}>
           <Image
-            src="/abovo_cream.png"
+            src="/abovo_terracotta.png"
             alt="abovo"
             width={144}
             height={34}
@@ -118,30 +115,18 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "24px 16px",
     position: "relative",
     overflow: "hidden",
-    background:
-      "radial-gradient(circle at center, rgba(247, 241, 232, 0.18) 0%, rgba(247, 241, 232, 0.1) 16%, rgba(247, 241, 232, 0) 40%), linear-gradient(180deg, rgb(var(--terra-500)) 0%, rgb(150 69 34) 100%)",
-  },
-  cardGlow: {
-    position: "absolute",
-    zIndex: 0,
-    width: "min(88vw, 560px)",
-    height: "min(88vw, 560px)",
-    borderRadius: "50%",
-    background:
-      "radial-gradient(circle, rgba(247, 241, 232, 0.34) 0%, rgba(247, 241, 232, 0.18) 24%, rgba(247, 241, 232, 0.08) 42%, rgba(247, 241, 232, 0) 68%)",
-    filter: "blur(12px)",
-    transform: "translateZ(0)",
+    background: "rgb(var(--warm-50))",
   },
   card: {
     position: "relative",
     zIndex: 1,
     width: "100%",
     maxWidth: 400,
-    background: "rgba(171, 80, 41, 0.9)",
+    background: "white",
     borderRadius: 20,
     padding: "40px 32px",
-    border: "1px solid rgba(247, 241, 232, 0.24)",
-    backdropFilter: "blur(10px)",
+    border: "1px solid rgb(var(--warm-200))",
+    boxShadow: "0 18px 42px rgba(181, 88, 47, 0.14)",
   },
   logoWrap: {
     marginBottom: 28,
@@ -155,7 +140,7 @@ const styles: Record<string, React.CSSProperties> = {
   heading: {
     fontSize: 26,
     fontWeight: 700,
-    color: "rgb(236 225 211)",
+    color: "rgb(var(--warm-900))",
     marginBottom: 6,
     fontFamily: "var(--font-serif)",
     letterSpacing: "var(--tracking-display)",
@@ -163,13 +148,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   sub: {
     fontSize: 14,
-    color: "rgba(232, 219, 204, 0.9)",
+    color: "rgb(var(--warm-500))",
     marginBottom: 28,
     textAlign: "center",
   },
   form: { display: "flex", flexDirection: "column", gap: 16 },
   field: { display: "flex", flexDirection: "column", gap: 6 },
-  label: { fontSize: 13, fontWeight: 500, color: "rgba(247, 241, 232, 0.88)" },
+  label: { fontSize: 13, fontWeight: 500, color: "rgb(var(--warm-700))" },
   input: {
     border: "1.5px solid rgba(247, 241, 232, 0.7)",
     borderRadius: 10,
@@ -183,15 +168,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   error: {
     fontSize: 13,
-    color: "rgb(var(--warm-50))",
-    background: "rgba(96, 42, 18, 0.34)",
-    border: "1px solid rgba(247, 241, 232, 0.2)",
+    color: "rgb(var(--terra-700))",
+    background: "rgb(var(--terra-50))",
+    border: "1px solid rgb(var(--terra-200))",
     borderRadius: 8,
     padding: "8px 12px",
   },
   btn: {
-    background: "rgb(var(--warm-50))",
-    color: "rgb(var(--terra-600))",
+    background: "rgb(var(--terra-600))",
+    color: "white",
     border: "none",
     borderRadius: 10,
     padding: "13px",
@@ -201,6 +186,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 4,
     transition: "background 0.15s",
   },
-  footer: { textAlign: "center", marginTop: 20, fontSize: 14, color: "rgba(247, 241, 232, 0.78)" },
-  link: { color: "rgb(var(--warm-50))", fontWeight: 700, textDecoration: "none" },
+  footer: { textAlign: "center", marginTop: 20, fontSize: 14, color: "rgb(var(--warm-500))" },
+  link: { color: "rgb(var(--terra-600))", fontWeight: 700, textDecoration: "none" },
 };
