@@ -459,6 +459,28 @@ function extractTitle(html: string): string | undefined {
   return normalizeImportedText(title?.[1]);
 }
 
+function extractHeadingTitle(html: string): string | undefined {
+  const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
+  return normalizeImportedText(h1?.[1]);
+}
+
+function extractReadableTextFromHtml(html: string) {
+  return decodeHtmlEntities(
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, "\n")
+      .replace(/<style[\s\S]*?<\/style>/gi, "\n")
+      .replace(/<noscript[\s\S]*?<\/noscript>/gi, "\n")
+      .replace(/<(br|hr)\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|section|article|header|footer|aside|main|h1|h2|h3|h4|h5|h6|li|ul|ol|blockquote|figure|figcaption)>/gi, "\n")
+      .replace(/<li[^>]*>/gi, "\n• ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\u00a0/g, " ")
+  )
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
   const headersList: HeadersInit[] = [
     {
@@ -531,14 +553,22 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
     };
   }
 
-  // Fallback: return minimal data from OG tags
-  return {
-    sourceUrl: url,
-    title: extractTitle(html) || "Imported Recipe",
-    imageUrl: extractOgImage(html),
-    ingredients: [],
-    steps: [],
-  };
+  const textParsed = parseRecipeFromText(
+    extractReadableTextFromHtml(html),
+    extractHeadingTitle(html) || extractTitle(html)
+  );
+
+  if (textParsed.ingredients.length > 0 && textParsed.steps.length > 0) {
+    return {
+      ...textParsed,
+      sourceUrl: url,
+      imageUrl: extractOgImage(html),
+    };
+  }
+
+  throw new RecipeImportError(
+    "We could read the page, but couldn't reliably extract the recipe. Please paste the recipe text instead."
+  );
 }
 
 export { RecipeImportError };
