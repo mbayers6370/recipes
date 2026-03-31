@@ -21,6 +21,7 @@ export default function CookModePage() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const announcedTimersRef = useRef<Set<number>>(new Set());
   const audioContextRef = useRef<AudioContext | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   // Keep screen awake while cooking
   useEffect(() => {
@@ -50,6 +51,20 @@ export default function CookModePage() {
       .then((json) => { if (json.data?.currentStep) setCurrentStep(json.data.currentStep); });
   }, [id]);
 
+  useEffect(() => {
+    const primeAlarm = () => {
+      void prepareTimerAlarm(audioContextRef, audioElementRef);
+    };
+
+    window.addEventListener("pointerdown", primeAlarm, { passive: true });
+    window.addEventListener("keydown", primeAlarm);
+
+    return () => {
+      window.removeEventListener("pointerdown", primeAlarm);
+      window.removeEventListener("keydown", primeAlarm);
+    };
+  }, []);
+
   // Timer tick
   useEffect(() => {
     const running = Object.entries(timerRunning).filter(([, v]) => v).map(([k]) => Number(k));
@@ -75,7 +90,7 @@ export default function CookModePage() {
       if (seconds !== 0 || announcedTimersRef.current.has(stepIndex)) return;
       announcedTimersRef.current.add(stepIndex);
       if (timerSoundEnabled) {
-        void playTimerDoneSound(audioContextRef);
+        void playTimerDoneSound(audioContextRef, audioElementRef);
       }
     });
   }, [timerSoundEnabled, timers]);
@@ -161,17 +176,17 @@ export default function CookModePage() {
               idleLabel={`Ready for ${stepTimer.label}`}
               soundEnabled={timerSoundEnabled}
               onToggleSound={() => {
-                void unlockAudioContext(audioContextRef);
+                void prepareTimerAlarm(audioContextRef, audioElementRef);
                 setTimerSoundEnabled((prev) => !prev);
               }}
               onToggle={() => {
-                void unlockAudioContext(audioContextRef);
+                void prepareTimerAlarm(audioContextRef, audioElementRef);
                 announcedTimersRef.current.delete(currentStep);
                 setTimers((prev) => ({ ...prev, [currentStep]: stepTimer.seconds }));
                 setTimerRunning((prev) => ({ ...prev, [currentStep]: true }));
               }}
               onReset={() => {
-                void unlockAudioContext(audioContextRef);
+                void prepareTimerAlarm(audioContextRef, audioElementRef);
                 announcedTimersRef.current.delete(currentStep);
                 setTimers((prev) => ({ ...prev, [currentStep]: stepTimer.seconds }));
                 setTimerRunning((prev) => ({ ...prev, [currentStep]: false }));
@@ -186,15 +201,15 @@ export default function CookModePage() {
               label={stepTimer.label}
               soundEnabled={timerSoundEnabled}
               onToggleSound={() => {
-                void unlockAudioContext(audioContextRef);
+                void prepareTimerAlarm(audioContextRef, audioElementRef);
                 setTimerSoundEnabled((prev) => !prev);
               }}
               onToggle={() => {
-                void unlockAudioContext(audioContextRef);
+                void prepareTimerAlarm(audioContextRef, audioElementRef);
                 setTimerRunning((r) => ({ ...r, [currentStep]: !r[currentStep] }));
               }}
               onReset={() => {
-                void unlockAudioContext(audioContextRef);
+                void prepareTimerAlarm(audioContextRef, audioElementRef);
                 announcedTimersRef.current.delete(currentStep);
                 setTimers((t) => ({ ...t, [currentStep]: stepTimer.seconds }));
                 setTimerRunning((r) => ({ ...r, [currentStep]: false }));
@@ -376,9 +391,116 @@ async function unlockAudioContext(audioContextRef: React.MutableRefObject<AudioC
   return audioContextRef.current;
 }
 
-async function playTimerDoneSound(
-  audioContextRef: React.MutableRefObject<AudioContext | null>
+function createTimerAlarmDataUrl() {
+  const sampleRate = 44100;
+  const durationSeconds = 1.8;
+  const frameCount = Math.floor(sampleRate * durationSeconds);
+  const samples = new Int16Array(frameCount);
+
+  for (let i = 0; i < frameCount; i++) {
+    const t = i / sampleRate;
+    const envelope =
+      t < 0.04
+        ? t / 0.04
+        : t > durationSeconds - 0.25
+          ? Math.max(0, (durationSeconds - t) / 0.25)
+          : 1;
+
+    const toneA = Math.sin(2 * Math.PI * 1046.5 * t);
+    const toneB = t > 0.18 ? Math.sin(2 * Math.PI * 1318.5 * (t - 0.18)) : 0;
+    const toneC = t > 0.4 ? Math.sin(2 * Math.PI * 1567.98 * (t - 0.4)) : 0;
+    const signal = (toneA * 0.45 + toneB * 0.3 + toneC * 0.22) * envelope;
+    samples[i] = Math.max(-1, Math.min(1, signal)) * 32767;
+  }
+
+  const wavBuffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(wavBuffer);
+
+  writeAscii(view, 0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeAscii(view, 8, "WAVE");
+  writeAscii(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeAscii(view, 36, "data");
+  view.setUint32(40, samples.length * 2, true);
+
+  samples.forEach((sample, index) => {
+    view.setInt16(44 + index * 2, sample, true);
+  });
+
+  let binary = "";
+  const bytes = new Uint8Array(wavBuffer);
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+function writeAscii(view: DataView, offset: number, value: string) {
+  for (let i = 0; i < value.length; i++) {
+    view.setUint8(offset + i, value.charCodeAt(i));
+  }
+}
+
+async function prepareTimerAlarm(
+  audioContextRef: React.MutableRefObject<AudioContext | null>,
+  audioElementRef: React.MutableRefObject<HTMLAudioElement | null>
 ) {
+  await unlockAudioContext(audioContextRef);
+
+  if (typeof window === "undefined") return;
+
+  if (!audioElementRef.current) {
+    const audio = new Audio(createTimerAlarmDataUrl());
+    audio.preload = "auto";
+    audio.playsInline = true;
+    audioElementRef.current = audio;
+  }
+
+  const audio = audioElementRef.current;
+  if (!audio) return;
+
+  try {
+    audio.currentTime = 0;
+    audio.muted = true;
+    await audio.play();
+    audio.pause();
+    audio.currentTime = 0;
+    audio.muted = false;
+  } catch {
+    audio.muted = false;
+  }
+}
+
+async function playTimerDoneSound(
+  audioContextRef: React.MutableRefObject<AudioContext | null>,
+  audioElementRef: React.MutableRefObject<HTMLAudioElement | null>
+) {
+  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+    navigator.vibrate?.([180, 120, 220]);
+  }
+
+  const audio = audioElementRef.current;
+  if (audio) {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
+      await audio.play();
+      return;
+    } catch {
+      // Fall back to oscillator alarm below.
+    }
+  }
+
   const context = await unlockAudioContext(audioContextRef);
   if (!context) return;
 
