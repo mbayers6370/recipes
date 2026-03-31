@@ -11,8 +11,16 @@ const urbanist = Urbanist({
   display: "swap",
 });
 
+const appUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000");
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(appUrl),
   title: "abovo — Recipe App",
   description: "From recipe capture to dinner, all in one place.",
   manifest: "/manifest.json",
@@ -22,11 +30,12 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
+    url: appUrl,
     title: "abovo — Recipe App",
     description: "From recipe capture to dinner, all in one place.",
     images: [
       {
-        url: "/sharing_image.png",
+        url: `${appUrl}/sharing_image.png`,
         width: 1200,
         height: 630,
         alt: "abovo recipe app preview",
@@ -37,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "abovo — Recipe App",
     description: "From recipe capture to dinner, all in one place.",
-    images: ["/sharing_image.png"],
+    images: [`${appUrl}/sharing_image.png`],
   },
   appleWebApp: {
     capable: true,
