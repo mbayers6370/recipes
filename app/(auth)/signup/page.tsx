@@ -143,7 +143,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   logoWrap: { marginBottom: 28, display: "flex", justifyContent: "center" },
   logoImage: { width: "144px", height: "auto" },
-  heading: { fontSize: 26, fontWeight: 700, color: "rgb(236 225 211)", marginBottom: 6, fontFamily: "var(--font-serif)", textAlign: "center" },
+  heading: { fontSize: 26, fontWeight: 700, color: "rgb(236 225 211)", marginBottom: 6, fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)", textAlign: "center" },
   sub: { fontSize: 14, color: "rgba(232, 219, 204, 0.9)", marginBottom: 28, textAlign: "center" },
   form: { display: "flex", flexDirection: "column", gap: 14 },
   input: { border: "1.5px solid rgba(247, 241, 232, 0.7)", borderRadius: 10, padding: "11px 14px", fontSize: 15, color: "rgb(var(--warm-900))", background: "white", outline: "none", width: "100%" },

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { AlarmClock, ArrowLeft, Pause, Play, RotateCcw, X } from "lucide-react";
+import { ArrowLeft, Check, Pause, Play, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import type { Recipe, Step } from "@/types";
 import { getStepTimerSuggestion } from "@/lib/step-timers";
 
@@ -16,7 +16,11 @@ export default function CookModePage() {
   const [loading, setLoading] = useState(true);
   const [timers, setTimers] = useState<Record<number, number>>({}); // stepIndex → seconds remaining
   const [timerRunning, setTimerRunning] = useState<Record<number, boolean>>({});
+  const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
+  const [timerSoundEnabled, setTimerSoundEnabled] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const announcedTimersRef = useRef<Set<number>>(new Set());
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Keep screen awake while cooking
   useEffect(() => {
@@ -65,6 +69,17 @@ export default function CookModePage() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [timerRunning]);
 
+  useEffect(() => {
+    Object.entries(timers).forEach(([key, seconds]) => {
+      const stepIndex = Number(key);
+      if (seconds !== 0 || announcedTimersRef.current.has(stepIndex)) return;
+      announcedTimersRef.current.add(stepIndex);
+      if (timerSoundEnabled) {
+        void playTimerDoneSound(audioContextRef);
+      }
+    });
+  }, [timerSoundEnabled, timers]);
+
   const saveProgress = useCallback(async (step: number, completed = false) => {
     await fetch(`/api/recipes/${id}/cook`, {
       method: "POST",
@@ -93,7 +108,9 @@ export default function CookModePage() {
   const step = steps[currentStep];
   const stepTimer = step ? getStepTimerSuggestion(step) : null;
   const isLast = currentStep === steps.length - 1;
-  const progress = ((currentStep) / steps.length) * 100;
+  const progress = ((currentStep + 1) / steps.length) * 100;
+  const nextStep = !isLast ? steps[currentStep + 1] : null;
+  const initialTimerSeconds = stepTimer?.seconds ?? 0;
 
   const ingredients = (recipe.ingredients as Array<{ amount?: string; unit?: string; name: string }>)
     .filter((_, i) => {
@@ -125,54 +142,107 @@ export default function CookModePage() {
 
       {/* Step display */}
       <div style={S.stepArea} className="recipe-copy">
-        <div style={S.stepNumBadge}>{currentStep + 1}</div>
-        <p style={S.stepText}>{step?.instruction}</p>
-
-        {stepTimer && timers[currentStep] === undefined && (
-          <button
-            type="button"
-            style={S.timerChip}
-            onClick={() => {
-              setTimers((prev) => ({ ...prev, [currentStep]: stepTimer.seconds }));
-              setTimerRunning((prev) => ({ ...prev, [currentStep]: true }));
-            }}
-          >
-            <span style={S.timerChipIconWrap}>
-              <AlarmClock size={14} strokeWidth={2.1} />
-            </span>
-            <span style={S.timerChipCopy}>
-              <span style={S.timerChipLabel}>Start {stepTimer.label} timer</span>
-            </span>
-          </button>
-        )}
-
-        {/* Timer for this step */}
-        {timers[currentStep] !== undefined && stepTimer && (
-          <TimerBlock
-            seconds={timers[currentStep]}
-            running={timerRunning[currentStep] || false}
-            label={stepTimer.label}
-            onToggle={() =>
-              setTimerRunning((r) => ({ ...r, [currentStep]: !r[currentStep] }))
-            }
-            onReset={() => {
-              setTimers((t) => ({ ...t, [currentStep]: stepTimer.seconds }));
-              setTimerRunning((r) => ({ ...r, [currentStep]: false }));
-            }}
-          />
-        )}
-
-        {/* Inline ingredients */}
-        {ingredients.length > 0 && ingredients.length < 6 && (
-          <div style={S.inlineIngredients}>
-            <p style={S.inlineTitle}>Ingredients for this step:</p>
-            {ingredients.map((ing, i) => (
-              <span key={i} style={S.inlineIng}>
-                {[ing.amount, ing.unit, ing.name].filter(Boolean).join(" ")}
-              </span>
-            ))}
+        <div style={S.stepCard}>
+          <div style={S.stepHeader}>
+            <div style={S.stepNumBadge}>{currentStep + 1}</div>
+            <div style={S.stepMetaCopy}>
+              <span style={S.stepEyebrow}>{isLast ? "Final step" : "Now cooking"}</span>
+              <span style={S.stepCount}>Step {currentStep + 1} of {steps.length}</span>
+            </div>
           </div>
-        )}
+
+          <p style={S.stepText}>{step?.instruction}</p>
+
+          {stepTimer && timers[currentStep] === undefined && (
+            <TimerBlock
+              seconds={initialTimerSeconds}
+              running={false}
+              label={stepTimer.label}
+              idleLabel={`Ready for ${stepTimer.label}`}
+              soundEnabled={timerSoundEnabled}
+              onToggleSound={() => {
+                void unlockAudioContext(audioContextRef);
+                setTimerSoundEnabled((prev) => !prev);
+              }}
+              onToggle={() => {
+                void unlockAudioContext(audioContextRef);
+                announcedTimersRef.current.delete(currentStep);
+                setTimers((prev) => ({ ...prev, [currentStep]: stepTimer.seconds }));
+                setTimerRunning((prev) => ({ ...prev, [currentStep]: true }));
+              }}
+              onReset={() => {
+                void unlockAudioContext(audioContextRef);
+                announcedTimersRef.current.delete(currentStep);
+                setTimers((prev) => ({ ...prev, [currentStep]: stepTimer.seconds }));
+                setTimerRunning((prev) => ({ ...prev, [currentStep]: false }));
+              }}
+            />
+          )}
+
+          {timers[currentStep] !== undefined && stepTimer && (
+            <TimerBlock
+              seconds={timers[currentStep]}
+              running={timerRunning[currentStep] || false}
+              label={stepTimer.label}
+              soundEnabled={timerSoundEnabled}
+              onToggleSound={() => {
+                void unlockAudioContext(audioContextRef);
+                setTimerSoundEnabled((prev) => !prev);
+              }}
+              onToggle={() => {
+                void unlockAudioContext(audioContextRef);
+                setTimerRunning((r) => ({ ...r, [currentStep]: !r[currentStep] }));
+              }}
+              onReset={() => {
+                void unlockAudioContext(audioContextRef);
+                announcedTimersRef.current.delete(currentStep);
+                setTimers((t) => ({ ...t, [currentStep]: stepTimer.seconds }));
+                setTimerRunning((r) => ({ ...r, [currentStep]: false }));
+              }}
+            />
+          )}
+
+          {ingredients.length > 0 && ingredients.length < 7 && (
+            <div style={S.inlineIngredients}>
+              <p style={S.inlineTitle}>Pull these for this step</p>
+              <div style={S.inlineIngredientList}>
+                {ingredients.map((ing, i) => {
+                  const ingredientKey = `${currentStep}:${i}`;
+                  const checked = Boolean(checkedIngredients[ingredientKey]);
+
+                  return (
+                    <button
+                      key={ingredientKey}
+                      type="button"
+                      style={{ ...S.inlineIng, ...(checked ? S.inlineIngChecked : {}) }}
+                      onClick={() =>
+                        setCheckedIngredients((prev) => ({
+                          ...prev,
+                          [ingredientKey]: !prev[ingredientKey],
+                        }))
+                      }
+                    >
+                      <span
+                        style={{
+                          ...S.inlineIngCheck,
+                          ...(checked ? S.inlineIngCheckDone : {}),
+                        }}
+                      >
+                        {checked ? <Check size={12} strokeWidth={3} /> : null}
+                      </span>
+                      <span>{[ing.amount, ing.unit, ing.name].filter(Boolean).join(" ")}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div style={S.nextCard}>
+            <span style={S.nextLabel}>{nextStep ? "Next up" : "Almost there"}</span>
+            <p style={S.nextText}>{nextStep ? nextStep.instruction : "Plate it up and enjoy."}</p>
+          </div>
+        </div>
       </div>
 
       {/* Step navigation */}
@@ -219,12 +289,18 @@ function TimerBlock({
   seconds,
   label,
   running,
+  idleLabel,
+  soundEnabled,
+  onToggleSound,
   onToggle,
   onReset,
 }: {
   seconds: number;
   label: string;
   running: boolean;
+  idleLabel?: string;
+  soundEnabled: boolean;
+  onToggleSound: () => void;
   onToggle: () => void;
   onReset: () => void;
 }) {
@@ -236,10 +312,13 @@ function TimerBlock({
   return (
     <div style={{ ...T.wrap, ...(done ? T.wrapDone : {}) }}>
       <div style={T.info}>
-        <span style={T.label}>{label}</span>
+        <span style={T.label}>{idleLabel || label}</span>
         <span style={T.time}>{done ? "Done!" : display}</span>
       </div>
       <div style={T.actions}>
+        <button onClick={onToggleSound} style={{ ...T.btn, ...T.btnMute }}>
+          {soundEnabled ? <Volume2 size={14} strokeWidth={2.2} /> : <VolumeX size={14} strokeWidth={2.2} />}
+        </button>
         <button onClick={onToggle} style={T.btn}>
           {running ? <Pause size={14} strokeWidth={2.4} /> : <Play size={14} strokeWidth={2.4} />}
           <span>{running ? "Pause" : "Start"}</span>
@@ -259,10 +338,10 @@ const T: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     gap: 12,
     width: "100%",
-    maxWidth: 360,
+    maxWidth: "100%",
     margin: "16px auto 0",
     background: "linear-gradient(180deg, rgb(var(--terra-50)) 0%, rgb(255 247 241) 100%)",
-    borderRadius: 16,
+    borderRadius: "var(--radius-card)",
     padding: "14px 16px",
     border: "1px solid rgba(196, 90, 44, 0.18)",
     fontFamily: "var(--font-body)",
@@ -272,31 +351,102 @@ const T: Record<string, React.CSSProperties> = {
   label: { fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgb(var(--terra-600))" },
   time: { fontSize: 28, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "rgb(var(--warm-900))", fontFamily: "var(--font-body)" },
   actions: { display: "flex", gap: 8 },
-  btn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-body)" },
+  btn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: "var(--radius-control)", padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-body)" },
+  btnMute: { background: "white", color: "rgb(var(--warm-700))", border: "1px solid rgb(var(--warm-200))", padding: "8px 10px" },
   btnReset: { background: "rgb(var(--warm-200))", color: "rgb(var(--warm-700))" },
 };
 
+async function unlockAudioContext(audioContextRef: React.MutableRefObject<AudioContext | null>) {
+  if (typeof window === "undefined") return null;
+
+  const AudioCtx =
+    window.AudioContext ||
+    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+  if (!AudioCtx) return null;
+
+  if (!audioContextRef.current) {
+    audioContextRef.current = new AudioCtx();
+  }
+
+  if (audioContextRef.current.state === "suspended") {
+    await audioContextRef.current.resume();
+  }
+
+  return audioContextRef.current;
+}
+
+async function playTimerDoneSound(
+  audioContextRef: React.MutableRefObject<AudioContext | null>
+) {
+  const context = await unlockAudioContext(audioContextRef);
+  if (!context) return;
+
+  const now = context.currentTime;
+  const master = context.createGain();
+  master.gain.setValueAtTime(0.0001, now);
+  master.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
+  master.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+  master.connect(context.destination);
+
+  const notes = [
+    { frequency: 1046.5, start: 0, duration: 0.42 },
+    { frequency: 1318.5, start: 0.18, duration: 0.48 },
+    { frequency: 1567.98, start: 0.4, duration: 0.62 },
+  ];
+
+  notes.forEach((note) => {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(note.frequency, now + note.start);
+
+    gain.gain.setValueAtTime(0.0001, now + note.start);
+    gain.gain.exponentialRampToValueAtTime(0.16, now + note.start + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + note.start + note.duration);
+
+    oscillator.connect(gain);
+    gain.connect(master);
+    oscillator.start(now + note.start);
+    oscillator.stop(now + note.start + note.duration + 0.02);
+  });
+}
+
 const S: Record<string, React.CSSProperties> = {
   loading: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh", fontSize: 16, color: "rgb(var(--warm-500))" },
-  page: { display: "flex", flexDirection: "column", height: "100dvh", background: "white", overflow: "hidden" },
-  topBar: { display: "flex", alignItems: "center", gap: 12, padding: "16px 16px 12px", borderBottom: "1px solid rgb(var(--warm-100))" },
+  page: { display: "flex", flexDirection: "column", height: "100dvh", background: "linear-gradient(180deg, rgb(255 250 246) 0%, rgb(var(--warm-50)) 42%, white 100%)", overflow: "hidden" },
+  topBar: { display: "flex", alignItems: "center", gap: 12, padding: "18px 16px 12px", borderBottom: "1px solid rgba(181, 88, 47, 0.08)" },
   topBackBtn: { background: "none", border: "none", cursor: "pointer", color: "rgb(var(--warm-500))", padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" },
   topMeta: { flex: 1, display: "flex", flexDirection: "column", gap: 2 },
-  topTitle: { fontSize: 14, fontWeight: 600, color: "rgb(var(--warm-800))", lineHeight: 1.2 },
-  topProgress: { fontSize: 12, color: "rgb(var(--warm-400))" },
-  progressTrack: { height: 4, background: "rgb(var(--warm-100))" },
+  topTitle: { fontSize: 14, fontWeight: 700, color: "rgb(var(--warm-800))", lineHeight: 1.2 },
+  topProgress: { fontSize: 12, color: "rgb(var(--terra-600))", fontWeight: 600 },
+  progressTrack: { height: 5, background: "rgba(181, 88, 47, 0.08)" },
   progressBar: { height: "100%", background: "rgb(var(--terra-500))", transition: "width 0.3s" },
-  stepArea: { flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "32px 20px 24px", display: "flex", flexDirection: "column" },
-  stepNumBadge: { width: 40, height: 40, borderRadius: "50%", background: "rgb(var(--terra-600))", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, marginBottom: 20 },
-  stepText: { fontSize: 22, lineHeight: 1.7, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", flex: 1 },
+  stepArea: { flex: 1, minHeight: 0, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "28px 18px 24px", display: "flex", flexDirection: "column" },
+  stepCard: {
+    background: "linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(247,241,232,0.58) 100%)",
+    border: "1px solid rgba(181, 88, 47, 0.12)",
+    boxShadow: "0 24px 60px rgba(93, 64, 43, 0.08)",
+    borderRadius: "var(--radius-modal)",
+    padding: "24px 20px 22px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 18,
+  },
+  stepHeader: { display: "flex", alignItems: "center", gap: 14 },
+  stepMetaCopy: { display: "flex", flexDirection: "column", gap: 4 },
+  stepEyebrow: { fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-600))", textTransform: "uppercase", letterSpacing: "0.08em" },
+  stepCount: { fontSize: 13, color: "rgb(var(--warm-500))", fontWeight: 600 },
+  stepNumBadge: { width: 48, height: 48, borderRadius: "50%", background: "rgb(var(--terra-600))", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, fontWeight: 700, flexShrink: 0 },
+  stepText: { fontSize: 25, lineHeight: 1.6, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
   timerChip: {
-    marginTop: 20,
-    alignSelf: "center",
+    alignSelf: "flex-start",
     display: "inline-flex",
     alignItems: "center",
     gap: 12,
     border: "1px solid rgb(var(--terra-600))",
-    borderRadius: 999,
+    borderRadius: "var(--radius-pill)",
     background: "linear-gradient(180deg, rgb(var(--terra-500)) 0%, rgb(163,70,36) 100%)",
     color: "white",
     padding: "10px 14px 10px 10px",
@@ -316,11 +466,18 @@ const S: Record<string, React.CSSProperties> = {
   },
   timerChipCopy: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 },
   timerChipLabel: { fontSize: 13, fontWeight: 700, color: "white", fontFamily: "var(--font-body)" },
-  inlineIngredients: { marginTop: 24, background: "rgb(var(--warm-50))", borderRadius: 12, padding: "14px" },
+  inlineIngredients: { background: "rgba(255,255,255,0.8)", borderRadius: "var(--radius-card)", padding: "16px", border: "1px solid rgb(var(--warm-100))" },
   inlineTitle: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 },
-  inlineIng: { display: "inline-block", fontSize: 13, color: "rgb(var(--warm-700))", background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: 20, padding: "3px 10px", margin: "2px 3px" },
-  nav: { padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgb(var(--warm-100))", background: "white", paddingBottom: "max(16px, env(safe-area-inset-bottom))", position: "sticky", bottom: 0 },
-  navBtn: { background: "rgb(var(--warm-100))", color: "rgb(var(--warm-800))", border: "none", borderRadius: 10, padding: "12px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 },
+  inlineIngredientList: { display: "flex", flexDirection: "column", gap: 8 },
+  inlineIng: { display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "rgb(var(--warm-700))", background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-card-inner)", padding: "10px 12px", textAlign: "left", cursor: "pointer" },
+  inlineIngChecked: { background: "rgb(var(--terra-50))", border: "1px solid rgb(var(--terra-200))", color: "rgb(var(--warm-900))" },
+  inlineIngCheck: { width: 18, height: 18, borderRadius: "50%", border: "1.5px solid rgb(var(--warm-300))", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "white" },
+  inlineIngCheckDone: { background: "rgb(var(--terra-600))", borderColor: "rgb(var(--terra-600))" },
+  nextCard: { background: "rgba(181, 88, 47, 0.08)", borderRadius: "var(--radius-card)", padding: "15px 16px", border: "1px solid rgba(181, 88, 47, 0.12)" },
+  nextLabel: { display: "block", fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-600))", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 },
+  nextText: { fontSize: 14, lineHeight: 1.5, color: "rgb(var(--warm-700))" },
+  nav: { padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgb(var(--warm-100))", background: "rgba(255,255,255,0.94)", backdropFilter: "blur(14px)", paddingBottom: "max(16px, env(safe-area-inset-bottom))", position: "sticky", bottom: 0 },
+  navBtn: { background: "rgb(var(--warm-100))", color: "rgb(var(--warm-800))", border: "none", borderRadius: "var(--radius-control)", padding: "12px 20px", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 },
   navBtnDisabled: { opacity: 0.35, cursor: "not-allowed" },
   navBtnFinish: { background: "rgb(var(--terra-600))", color: "white" },
   dots: { display: "flex", gap: 5, alignItems: "center", flexWrap: "wrap", justifyContent: "center", maxWidth: 160 },

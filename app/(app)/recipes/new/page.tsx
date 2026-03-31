@@ -213,7 +213,7 @@ const S: Record<string, React.CSSProperties> = {
   header: {},
   headerActions: { display: "flex", gap: 8 },
   backBtn: { background: "none", border: "none", fontSize: 14, color: "rgb(var(--terra-600))", cursor: "pointer", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
-  title: { fontSize: 20, fontWeight: 700, fontFamily: "var(--font-serif)", color: "rgb(var(--warm-900))" },
+  title: { fontSize: 20, fontWeight: 700, fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)", color: "rgb(var(--warm-900))" },
   saveBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: 8, padding: "8px 16px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
   form: { display: "flex", flexDirection: "column", gap: 16 },
   input: { border: "1.5px solid rgb(var(--warm-200))", borderRadius: 10, padding: "11px 14px", fontSize: 14, color: "rgb(var(--warm-900))", background: "white", outline: "none", width: "100%", boxSizing: "border-box" as const },

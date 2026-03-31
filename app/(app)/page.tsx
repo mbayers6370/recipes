@@ -158,18 +158,16 @@ export default function HomePage() {
         )}
 
         {/* Today's plan */}
-        <Section
-          title="Planner"
-          titleClassName="home-plan-title"
-          right={
-            <Link href="/plan" style={S.seeAll}>
-              <span>Planner</span>
-              <ArrowRight size={14} strokeWidth={2.2} />
-            </Link>
-          }
-        >
+        <Section>
           {todayItems.length > 0 ? (
             <div style={S.planCard}>
+              <div style={S.cardSectionHeader}>
+                <h2 style={S.sectionTitle} className="home-plan-title">Planner</h2>
+                <Link href="/plan" style={S.seeAll}>
+                  <span>Planner</span>
+                  <ArrowRight size={14} strokeWidth={2.2} />
+                </Link>
+              </div>
               <div style={S.planHeader}>
                 <div style={S.planHeaderLabel}>
                   <span style={S.planToday}>
@@ -179,7 +177,6 @@ export default function HomePage() {
                     {timeContext?.todayDateLabel ?? ""}
                   </span>
                 </div>
-                <span style={S.todayPill}>Today</span>
               </div>
               {todayItems.map((item, index) => (
                 <TodayMealRow
@@ -192,6 +189,13 @@ export default function HomePage() {
             </div>
           ) : (
             <div style={S.emptyCard}>
+              <div style={S.cardSectionHeader}>
+                <h2 style={S.sectionTitle} className="home-plan-title">Planner</h2>
+                <Link href="/plan" style={S.seeAll}>
+                  <span>Planner</span>
+                  <ArrowRight size={14} strokeWidth={2.2} />
+                </Link>
+              </div>
               <p style={S.emptyText}>Nothing planned for today yet.</p>
               <Link href="/plan" style={S.emptyLink}>
                 <span>Plan your week</span>
@@ -215,10 +219,12 @@ export default function HomePage() {
         </div>
 
         {/* Recently saved */}
-        <Section
-          title="Recently Saved"
-          right={<Link href="/recipes" style={S.seeAll}><span>See all</span><ArrowRight size={14} strokeWidth={2.2} /></Link>}
-        >
+        <Section>
+          <div style={S.savedPanel}>
+            <div style={S.cardSectionHeaderTerracottaBand}>
+              <h2 style={S.sectionTitleOnTerracotta}>Recently Saved</h2>
+              <Link href="/recipes" style={S.seeAllOnTerracotta}><span>See all</span><ArrowRight size={14} strokeWidth={2.2} /></Link>
+            </div>
       {loading ? (
             <div style={S.loadingGrid} className="home-recipe-grid">
               {[...Array(effectiveRecentRecipeLimit)].map((_, i) => <SkeletonCard key={i} className="home-recipe-card" />)}
@@ -230,7 +236,7 @@ export default function HomePage() {
               ))}
             </div>
           ) : (
-            <div style={S.emptyCard}>
+            <div style={S.savedEmptyState}>
               <p style={S.emptyText}>Your saved recipes will appear here.</p>
               <Link href="/recipes/import" style={S.emptyLink}>
                 <Download size={14} strokeWidth={2.2} />
@@ -238,14 +244,15 @@ export default function HomePage() {
               </Link>
             </div>
           )}
+          </div>
         </Section>
 
-        <Section
-          title="Shared Kitchen"
-          bottomMargin={0}
-          right={<Link href="/kitchen" style={S.seeAll}><span>{household ? "Open kitchen" : "Set up kitchen"}</span><ArrowRight size={14} strokeWidth={2.2} /></Link>}
-        >
+        <Section bottomMargin={0}>
           <div style={S.kitchenPanel}>
+            <div style={S.cardSectionHeaderTerracottaBand}>
+              <h2 style={S.sectionTitleOnTerracotta}>Shared Kitchen</h2>
+              <Link href="/kitchen" style={S.seeAllOnTerracotta}><span>{household ? "Open kitchen" : "Set up kitchen"}</span><ArrowRight size={14} strokeWidth={2.2} /></Link>
+            </div>
             {household ? (
               <>
                 <div style={S.kitchenHeader}>
@@ -254,10 +261,6 @@ export default function HomePage() {
                     <p style={S.kitchenHelper}>
                       {household.memberCount} of {household.memberLimit} seats filled
                     </p>
-                  </div>
-                  <div style={S.kitchenRoleBadge}>
-                    <Users size={15} strokeWidth={2.2} />
-                    <span>{household.role === "owner" ? "Owner" : "Member"}</span>
                   </div>
                 </div>
 
@@ -336,7 +339,7 @@ function Section({
   titleClassName,
   bottomMargin = 32,
 }: {
-  title: string;
+  title?: string;
   right?: React.ReactNode;
   children: React.ReactNode;
   titleClassName?: string;
@@ -458,6 +461,7 @@ const S: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     color: "white",
     fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-display)",
     marginBottom: 6,
     lineHeight: 1.2,
   },
@@ -474,7 +478,7 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 12,
     background: "white",
-    borderRadius: 14,
+    borderRadius: "var(--radius-card-inner)",
     padding: "16px",
     border: "1px solid rgb(var(--warm-200))",
   },
@@ -483,7 +487,7 @@ const S: Record<string, React.CSSProperties> = {
   resumeBtn: {
     background: "rgb(var(--terra-600))",
     color: "white",
-    borderRadius: 8,
+    borderRadius: "var(--radius-control)",
     padding: "8px 14px",
     fontSize: 13,
     fontWeight: 600,
@@ -497,34 +501,51 @@ const S: Record<string, React.CSSProperties> = {
   // Plan
   planCard: {
     background: "linear-gradient(180deg, rgba(243, 232, 224, 0.9) 0%, rgba(255,255,255,0.98) 100%)",
-    borderRadius: 18,
+    borderRadius: "var(--radius-card)",
     border: "1px solid rgb(var(--terra-200))",
     overflow: "hidden",
     padding: 14,
+  },
+  cardSectionHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingBottom: 12,
+    marginBottom: 12,
+    borderBottom: "1px solid rgb(var(--warm-100))",
+  },
+  cardSectionHeaderTerracotta: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    paddingBottom: 12,
+    marginBottom: 14,
+    borderBottom: "1px solid rgba(255,255,255,0.18)",
+  },
+  cardSectionHeaderTerracottaBand: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    margin: "-16px -16px 14px",
+    padding: "14px 16px 13px",
+    background: "linear-gradient(180deg, rgb(var(--terra-700)) 0%, rgb(var(--terra-600)) 100%)",
+    borderBottom: "1px solid rgba(112, 48, 26, 0.24)",
+    borderTopLeftRadius: "var(--radius-card-inner)",
+    borderTopRightRadius: "var(--radius-card-inner)",
   },
   planHeader: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingBottom: 12,
+    paddingBottom: 8,
     marginBottom: 12,
-    borderBottom: "1px solid rgb(var(--warm-100))",
   },
   planHeaderLabel: { display: "flex", alignItems: "center", gap: 10 },
   planToday: { fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-700))", textTransform: "uppercase", letterSpacing: "0.06em" },
   planDate: { fontSize: 12, color: "rgb(var(--warm-500))", fontWeight: 600 },
-  todayPill: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "5px 9px",
-    borderRadius: 999,
-    background: "rgba(181, 88, 47, 0.12)",
-    color: "rgb(var(--terra-700))",
-    fontSize: 11,
-    fontWeight: 700,
-    letterSpacing: "0.04em",
-    textTransform: "uppercase",
-  },
   planRow: {
     display: "grid",
     gridTemplateColumns: "72px 1fr",
@@ -540,7 +561,7 @@ const S: Record<string, React.CSSProperties> = {
     gap: 8,
     background: "rgb(var(--warm-50))",
     border: "1px solid rgb(var(--warm-100))",
-    borderRadius: 12,
+    borderRadius: "var(--radius-card-inner)",
     padding: "8px 10px",
     minWidth: 0,
   },
@@ -559,13 +580,15 @@ const S: Record<string, React.CSSProperties> = {
 
   // Section
   sectionHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
+  sectionTitle: { fontSize: 18, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
   seeAll: { fontSize: 13, color: "rgb(var(--terra-600))", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
+  sectionTitleOnTerracotta: { fontSize: 18, fontWeight: 700, color: "rgba(255,255,255,0.98)", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
+  seeAllOnTerracotta: { fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
   kitchenPanel: {
     background: "white",
     border: "1px solid rgb(var(--warm-100))",
-    borderRadius: 14,
-    padding: "0 16px",
+    borderRadius: "var(--radius-card-inner)",
+    padding: "16px",
     display: "flex",
     flexDirection: "column",
   },
@@ -574,29 +597,20 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "flex-start",
     justifyContent: "space-between",
     gap: 12,
-    padding: "16px 0 12px",
+    padding: "0 0 12px",
     borderBottom: "1px solid rgb(var(--warm-100))",
   },
   kitchenName: {
     fontSize: 16,
     fontWeight: 700,
     color: "rgb(var(--warm-900))",
+    fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-brand)",
   },
   kitchenHelper: {
     fontSize: 12,
     color: "rgb(var(--warm-500))",
     marginTop: 4,
-  },
-  kitchenRoleBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    borderRadius: 999,
-    background: "rgb(var(--terra-50))",
-    color: "rgb(var(--terra-700))",
-    padding: "6px 10px",
-    fontSize: 12,
-    fontWeight: 700,
   },
   kitchenMemberList: { display: "flex", flexDirection: "column" },
   kitchenMemberRow: {
@@ -634,7 +648,7 @@ const S: Record<string, React.CSSProperties> = {
     width: 40,
     height: 40,
     position: "relative",
-    borderRadius: 10,
+    borderRadius: "var(--radius-control)",
     overflow: "hidden",
     background: "rgb(var(--warm-100))",
     flexShrink: 0,
@@ -676,7 +690,7 @@ const S: Record<string, React.CSSProperties> = {
     gap: 8,
     width: "fit-content",
     padding: "12px 14px",
-    borderRadius: 12,
+    borderRadius: "var(--radius-control)",
     background: "rgb(var(--terra-600))",
     color: "white",
     textDecoration: "none",
@@ -687,9 +701,15 @@ const S: Record<string, React.CSSProperties> = {
   // Recipe grid
   recipeGrid: { display: "grid", gap: 12 },
   loadingGrid: { display: "grid", gap: 12 },
+  savedPanel: {
+    background: "white",
+    borderRadius: "var(--radius-card-inner)",
+    border: "1px solid rgb(var(--warm-100))",
+    padding: "16px",
+  },
   recipeCard: {
     background: "white",
-    borderRadius: 14,
+    borderRadius: "var(--radius-card-inner)",
     overflow: "hidden",
     textDecoration: "none",
     border: "1px solid rgb(var(--warm-100))",
@@ -701,24 +721,37 @@ const S: Record<string, React.CSSProperties> = {
   recipeThumb: { aspectRatio: "4/3", overflow: "hidden", background: "rgb(var(--warm-100))", position: "relative" },
   recipeImg: { width: "100%", height: "100%", objectFit: "cover" },
   recipeInfo: { padding: "12px 12px 14px", display: "flex", flexDirection: "column", minHeight: 76, flex: 1 },
-  recipeTitle: { fontSize: 13, fontWeight: 600, color: "rgb(var(--warm-900))", lineHeight: 1.35, marginBottom: 10, flex: 1 },
+  recipeTitle: {
+    fontSize: 13,
+    fontWeight: 600,
+    color: "rgb(var(--warm-900))",
+    fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-brand)",
+    lineHeight: 1.35,
+    marginBottom: 10,
+    flex: 1,
+  },
   recipeMeta: { fontSize: 11, color: "rgb(var(--warm-500))", display: "flex", gap: 4, flexWrap: "wrap" as const, alignItems: "center", marginTop: "auto" },
   dot: { color: "rgb(var(--warm-300))" },
 
   // Empty
   emptyCard: {
     background: "white",
-    borderRadius: 14,
-    padding: "28px 20px",
+    borderRadius: "var(--radius-card-inner)",
+    padding: "16px 20px 28px",
     textAlign: "center",
     border: "1.5px dashed rgb(var(--warm-200))",
+  },
+  savedEmptyState: {
+    padding: "12px 4px 4px",
+    textAlign: "center",
   },
   emptyText: { fontSize: 14, color: "rgb(var(--warm-500))", marginBottom: 10 },
   emptyLink: { fontSize: 14, color: "rgb(var(--terra-600))", fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 },
   floatingPrimary: {
     background: "rgb(var(--terra-600))",
     color: "white",
-    borderRadius: 14,
+    borderRadius: "var(--radius-card-inner)",
     padding: "14px 16px",
     fontSize: 14,
     fontWeight: 700,
@@ -730,7 +763,7 @@ const S: Record<string, React.CSSProperties> = {
   floatingSecondary: {
     background: "white",
     color: "rgb(var(--warm-800))",
-    borderRadius: 14,
+    borderRadius: "var(--radius-card-inner)",
     padding: "14px 16px",
     fontSize: 14,
     fontWeight: 700,

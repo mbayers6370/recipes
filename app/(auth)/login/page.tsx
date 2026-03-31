@@ -158,6 +158,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: "rgb(236 225 211)",
     marginBottom: 6,
     fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-display)",
     textAlign: "center",
   },
   sub: {

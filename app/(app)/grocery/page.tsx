@@ -195,6 +195,7 @@ export default function GroceryPage() {
     activeList?.items.filter((i) => i.isChecked && isRenderableGroceryItem(i)) || [],
     sortMode
   );
+  const visibleSections = sortMode === "aisle" ? groupItemsBySection(unchecked) : [];
 
   return (
     <div style={S.page}>
@@ -264,6 +265,21 @@ export default function GroceryPage() {
             </div>
           </div>
 
+          <div style={S.shopSummary}>
+            <div style={S.shopCard}>
+              <span style={S.shopValue}>{unchecked.length}</span>
+              <span style={S.shopCopy}>left to grab</span>
+            </div>
+            <div style={S.shopCard}>
+              <span style={S.shopValue}>{sortMode === "aisle" ? visibleSections.length : 1}</span>
+              <span style={S.shopCopy}>{sortMode === "aisle" ? "aisles in play" : "sorted view"}</span>
+            </div>
+            <div style={S.shopCard}>
+              <span style={S.shopValue}>{checked.length}</span>
+              <span style={S.shopCopy}>checked off</span>
+            </div>
+          </div>
+
           {/* Items */}
           {unchecked.length === 0 && checked.length === 0 ? (
             <div style={S.emptyList}>
@@ -276,7 +292,7 @@ export default function GroceryPage() {
               {unchecked.length > 0 && (
                 <div style={S.itemGroup}>
                   {sortMode === "aisle"
-                    ? groupItemsBySection(unchecked).map((section) => (
+                    ? visibleSections.map((section) => (
                         <div key={section.id}>
                           <p style={S.sectionHeader}>{section.label}</p>
                           {section.items.map((item) => (
@@ -428,24 +444,37 @@ const S: Record<string, React.CSSProperties> = {
     margin: "0 auto",
   },
   header: {},
-  title: { fontSize: 26, fontWeight: 700, fontFamily: "var(--font-serif)", color: "rgb(var(--warm-900))" },
-  newListBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  deleteListBtn: { background: "rgb(var(--warm-50))", color: "rgb(var(--terra-700))", border: "1px solid rgb(var(--terra-200))", borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  title: { fontSize: 26, fontWeight: 700, fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)", color: "rgb(var(--warm-900))" },
+  newListBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: "var(--radius-control)", padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  deleteListBtn: { background: "rgb(var(--warm-50))", color: "rgb(var(--terra-700))", border: "1px solid rgb(var(--terra-200))", borderRadius: "var(--radius-control)", padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
   listTabs: { display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", paddingBottom: 2 },
-  listTab: { border: "1px solid rgb(var(--warm-200))", borderRadius: 14, padding: "10px 12px", fontSize: 13, fontWeight: 600, background: "white", cursor: "pointer", color: "rgb(var(--warm-700))", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 8 },
+  listTab: { border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-card-inner)", padding: "10px 12px", fontSize: 13, fontWeight: 600, background: "white", cursor: "pointer", color: "rgb(var(--warm-700))", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 8 },
   listTabActive: { background: "linear-gradient(180deg, rgba(243, 232, 224, 0.9) 0%, rgba(255,255,255,0.98) 100%)", borderColor: "rgb(var(--terra-200))", color: "rgb(var(--warm-900))" },
-  listCount: { fontSize: 11, fontWeight: 700, padding: "3px 7px", borderRadius: 999, background: "rgba(53,49,46,0.08)", color: "inherit" },
-  addForm: { display: "flex", gap: 8, marginBottom: 16, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: 16, padding: 10 },
-  addInput: { flex: 1, border: "1.5px solid rgb(var(--warm-200))", borderRadius: 10, padding: "11px 14px", fontSize: 14, background: "white", outline: "none", color: "rgb(var(--warm-900))" },
-  addBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: 10, padding: "11px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  listCount: { fontSize: 11, fontWeight: 700, padding: "3px 7px", borderRadius: "var(--radius-pill)", background: "rgba(53,49,46,0.08)", color: "inherit" },
+  addForm: { display: "flex", gap: 8, marginBottom: 16, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-card)", padding: 10 },
+  addInput: { flex: 1, border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-input)", padding: "11px 14px", fontSize: 14, background: "white", outline: "none", color: "rgb(var(--warm-900))" },
+  addBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: "var(--radius-control)", padding: "11px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
   sortRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" },
   sortLabel: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase", letterSpacing: "0.06em" },
-  sortToggle: { display: "inline-flex", alignItems: "center", gap: 6, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: 999, padding: 4 },
-  sortBtn: { border: "none", background: "transparent", color: "rgb(var(--warm-500))", borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  sortToggle: { display: "inline-flex", alignItems: "center", gap: 6, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-pill)", padding: 4 },
+  sortBtn: { border: "none", background: "transparent", color: "rgb(var(--warm-500))", borderRadius: "var(--radius-pill)", padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   sortBtnActive: { background: "rgb(var(--terra-50))", color: "rgb(var(--terra-700))" },
-  itemsWrap: { background: "white", borderRadius: 18, border: "1px solid rgb(var(--warm-200))", overflow: "hidden" },
+  shopSummary: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 14 },
+  shopCard: {
+    background: "rgba(255,255,255,0.82)",
+    border: "1px solid rgb(var(--warm-200))",
+    borderRadius: "var(--radius-card)",
+    padding: "13px 10px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
+  },
+  shopValue: { fontSize: 20, lineHeight: 1, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
+  shopCopy: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" },
+  itemsWrap: { background: "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.88) 100%)", borderRadius: "var(--radius-card)", border: "1px solid rgb(var(--warm-200))", overflow: "hidden", boxShadow: "0 16px 34px rgba(71, 55, 46, 0.04)" },
   itemGroup: {},
-  sectionHeader: { fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-700))", textTransform: "uppercase", padding: "14px 14px 6px", letterSpacing: "0.06em", background: "rgba(243, 232, 224, 0.38)" },
+  sectionHeader: { fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-700))", textTransform: "uppercase", padding: "15px 14px 8px", letterSpacing: "0.08em", background: "rgba(243, 232, 224, 0.48)" },
   checkedHeader: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-400))", textTransform: "uppercase", padding: "10px 14px 6px", letterSpacing: "0.05em" },
-  emptyList: { textAlign: "center", padding: "40px 20px", background: "white", borderRadius: 18, border: "1px solid rgb(var(--warm-200))" },
+  emptyList: { textAlign: "center", padding: "40px 20px", background: "white", borderRadius: "var(--radius-card)", border: "1px solid rgb(var(--warm-200))" },
 };

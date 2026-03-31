@@ -94,6 +94,15 @@ export default function PlanPage() {
   const startOfToday = new Date(today);
   startOfToday.setHours(0, 0, 0, 0);
   const todayIndex = today.getDay();
+  const planItems = plan?.items || [];
+  const upcomingItems = [...planItems]
+    .filter((item) => item.recipe || item.note?.trim())
+    .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+  const featuredItem =
+    upcomingItems.find((item) => item.dayOfWeek >= todayIndex) || upcomingItems[0] || null;
+  const plannedCount = upcomingItems.length;
+  const recipeCount = upcomingItems.filter((item) => item.recipe).length;
+  const noteCount = upcomingItems.filter((item) => !item.recipe && item.note?.trim()).length;
 
   return (
     <div style={S.page}>
@@ -117,8 +126,50 @@ export default function PlanPage() {
           {[...Array(7)].map((_, i) => <div key={i} style={S.skeletonRow} />)}
         </div>
       ) : (
-        <div style={S.planGrid}>
-          {WEEK_DAYS.map((day, i) => {
+        <>
+          <div style={S.editorialIntro}>
+            <div style={S.summaryStrip}>
+              <div style={S.summaryChip}>
+                <span style={S.summaryValue}>{plannedCount}</span>
+                <span style={S.summaryLabel}>planned</span>
+              </div>
+              <div style={S.summaryChip}>
+                <span style={S.summaryValue}>{recipeCount}</span>
+                <span style={S.summaryLabel}>recipes</span>
+              </div>
+              <div style={S.summaryChip}>
+                <span style={S.summaryValue}>{noteCount}</span>
+                <span style={S.summaryLabel}>quick notes</span>
+              </div>
+            </div>
+
+            {featuredItem && (
+              <div style={S.featuredCard}>
+                <div style={S.featuredCopy}>
+                  <span style={S.featuredEyebrow}>
+                    {featuredItem.dayOfWeek === todayIndex ? "Tonight" : "Coming up"}
+                  </span>
+                  <h2 style={S.featuredTitle}>
+                    {featuredItem.recipe?.title || featuredItem.note}
+                  </h2>
+                  <p style={S.featuredMeta}>
+                    {WEEK_DAYS[featuredItem.dayOfWeek]} ·{" "}
+                    {MEAL_TYPE_LABELS[featuredItem.mealType] || featuredItem.mealType}
+                  </p>
+                </div>
+                {featuredItem.recipe?.id ? (
+                  <Link href={`/recipes/${featuredItem.recipe.id}`} style={S.featuredLink}>
+                    View recipe
+                  </Link>
+                ) : (
+                  <span style={S.featuredTag}>Quick plan</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div style={S.planGrid}>
+            {WEEK_DAYS.map((day, i) => {
             const dayDate = addDays(weekStart, i);
             const dayStart = new Date(dayDate);
             dayStart.setHours(0, 0, 0, 0);
@@ -131,8 +182,8 @@ export default function PlanPage() {
               dayItems.some((item) => item.mealType === type)
             );
 
-            return (
-              <div key={day} style={{ ...S.dayRow, ...(isToday ? S.dayRowToday : {}), ...(isPastDay ? S.dayRowPast : {}) }}>
+              return (
+                <div key={day} style={{ ...S.dayRow, ...(isToday ? S.dayRowToday : {}), ...(isPastDay ? S.dayRowPast : {}) }}>
                 <div style={S.dayHeader}>
                   <div style={S.dayLabel}>
                     <span style={{ ...S.dayName, ...(isToday ? S.dayNameToday : {}) }}>{day}</span>
@@ -179,9 +230,10 @@ export default function PlanPage() {
                   )}
                 </div>
               </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {/* Recipe picker modal */}
@@ -332,7 +384,7 @@ const SS: Record<string, React.CSSProperties> = {
     minWidth: 0,
     background: "rgb(var(--warm-50))",
     border: "1px solid rgb(var(--warm-100))",
-    borderRadius: 12,
+    borderRadius: "var(--radius-card-inner)",
     padding: "8px 10px",
   },
   slotContent: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 },
@@ -345,13 +397,13 @@ const SS: Record<string, React.CSSProperties> = {
     fontStyle: "italic",
     background: "rgb(var(--warm-50))",
     border: "1px solid rgb(var(--warm-100))",
-    borderRadius: 12,
+    borderRadius: "var(--radius-card-inner)",
     padding: "9px 10px",
   },
   addBtn: {
     background: "rgb(var(--warm-50))",
     border: "1px dashed rgb(var(--warm-300))",
-    borderRadius: 12,
+    borderRadius: "var(--radius-card-inner)",
     minHeight: 36,
     color: "rgb(var(--terra-600))",
     cursor: "pointer",
@@ -374,6 +426,7 @@ const S: Record<string, React.CSSProperties> = {
     fontSize: 26,
     fontWeight: 700,
     fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-display)",
     color: "rgb(var(--warm-900))",
     marginBottom: 12,
     whiteSpace: "nowrap",
@@ -381,15 +434,65 @@ const S: Record<string, React.CSSProperties> = {
   weekNav: { display: "flex", alignItems: "center", justifyContent: "center", gap: 12, width: "100%" },
   weekBtn: { background: "none", border: "none", cursor: "pointer", color: "rgb(var(--warm-600))", padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" },
   weekLabel: { fontSize: 13, fontWeight: 600, color: "rgb(var(--warm-700))" },
+  editorialIntro: { display: "grid", gap: 12, marginBottom: 16 },
+  summaryStrip: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 },
+  summaryChip: {
+    background: "rgba(255,255,255,0.75)",
+    border: "1px solid rgb(var(--warm-200))",
+    borderRadius: "var(--radius-card)",
+    padding: "12px 10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 3,
+    alignItems: "center",
+  },
+  summaryValue: { fontSize: 20, lineHeight: 1, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
+  summaryLabel: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", letterSpacing: "0.05em", textTransform: "uppercase" as const },
+  featuredCard: {
+    background: "linear-gradient(135deg, rgba(181,88,47,0.96) 0%, rgba(146,67,38,0.98) 100%)",
+    borderRadius: "var(--radius-card)",
+    padding: "18px 18px 20px",
+    color: "white",
+    display: "flex",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  featuredCopy: { display: "flex", flexDirection: "column", gap: 8 },
+  featuredEyebrow: { fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: "rgba(255,255,255,0.78)" },
+  featuredTitle: { fontSize: 22, lineHeight: 1.15, fontWeight: 700, maxWidth: 420 },
+  featuredMeta: { fontSize: 13, color: "rgba(255,255,255,0.82)" },
+  featuredLink: {
+    borderRadius: "var(--radius-pill)",
+    background: "rgba(255,255,255,0.14)",
+    color: "white",
+    padding: "10px 14px",
+    textDecoration: "none",
+    fontSize: 13,
+    fontWeight: 700,
+    whiteSpace: "nowrap" as const,
+    border: "1px solid rgba(255,255,255,0.16)",
+  },
+  featuredTag: {
+    borderRadius: "var(--radius-pill)",
+    background: "rgba(255,255,255,0.14)",
+    color: "white",
+    padding: "10px 14px",
+    fontSize: 13,
+    fontWeight: 700,
+    whiteSpace: "nowrap" as const,
+    border: "1px solid rgba(255,255,255,0.16)",
+  },
   planGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 },
   dayRow: {
     display: "flex",
     flexDirection: "column",
     gap: 14,
     padding: "14px",
-    background: "white",
+    background: "rgba(255,255,255,0.85)",
     border: "1px solid rgb(var(--warm-200))",
-    borderRadius: 18,
+    borderRadius: "var(--radius-card)",
+    boxShadow: "0 12px 30px rgba(71, 55, 46, 0.04)",
   },
   dayRowToday: {
     background: "linear-gradient(180deg, rgba(243, 232, 224, 0.9) 0%, rgba(255,255,255,0.98) 100%)",
@@ -410,7 +513,7 @@ const S: Record<string, React.CSSProperties> = {
     display: "inline-flex",
     alignItems: "center",
     padding: "5px 9px",
-    borderRadius: 999,
+    borderRadius: "var(--radius-pill)",
     background: "rgba(181, 88, 47, 0.12)",
     color: "rgb(var(--terra-700))",
     fontSize: 11,
@@ -427,7 +530,7 @@ const S: Record<string, React.CSSProperties> = {
     alignSelf: "flex-start",
     background: "rgb(var(--warm-50))",
     border: "1px dashed rgb(var(--warm-300))",
-    borderRadius: 999,
+    borderRadius: "var(--radius-pill)",
     color: "rgb(var(--terra-600))",
     cursor: "pointer",
     fontSize: 12,
@@ -438,17 +541,17 @@ const S: Record<string, React.CSSProperties> = {
     padding: "7px 12px",
   },
   skeleton: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 },
-  skeletonRow: { height: 188, background: "rgb(var(--warm-100))", borderRadius: 18 },
+  skeletonRow: { height: 188, background: "rgb(var(--warm-100))", borderRadius: "var(--radius-card)" },
   // Modal
   modalBackdrop: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", zIndex: 100, display: "flex", alignItems: "flex-end" },
-  modal: { background: "white", borderRadius: "20px 20px 0 0", padding: "24px 20px", width: "100%", maxHeight: "80dvh", overflowY: "auto" as const },
+  modal: { background: "white", borderRadius: "var(--radius-modal) var(--radius-modal) 0 0", padding: "24px 20px", width: "100%", maxHeight: "80dvh", overflowY: "auto" as const },
   modalHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
   modalTitle: { fontSize: 17, fontWeight: 700, color: "rgb(var(--warm-900))", textTransform: "capitalize" as const },
   modalClose: { background: "none", border: "none", cursor: "pointer", color: "rgb(var(--warm-400))", display: "flex", alignItems: "center", justifyContent: "center" },
   extraTypePicker: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginBottom: 16 },
   extraTypeChip: {
     border: "1px solid rgb(var(--warm-200))",
-    borderRadius: 999,
+    borderRadius: "var(--radius-pill)",
     background: "white",
     color: "rgb(var(--warm-600))",
     padding: "7px 12px",
@@ -463,11 +566,11 @@ const S: Record<string, React.CSSProperties> = {
     color: "rgb(var(--terra-700))",
   },
   modalOptions: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 16 },
-  noteOption: { background: "rgb(var(--warm-50))", border: "1.5px solid rgb(var(--warm-200))", borderRadius: 10, padding: "12px 8px", fontSize: 13, fontWeight: 500, cursor: "pointer", color: "rgb(var(--warm-700))", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 },
+  noteOption: { background: "rgb(var(--warm-50))", border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)", padding: "12px 8px", fontSize: 13, fontWeight: 500, cursor: "pointer", color: "rgb(var(--warm-700))", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 },
   modalSub: { fontSize: 12, color: "rgb(var(--warm-400))", marginBottom: 10 },
   recipeList: { display: "flex", flexDirection: "column", gap: 8 },
-  recipeOption: { display: "flex", alignItems: "center", gap: 12, background: "rgb(var(--warm-50))", border: "1px solid rgb(var(--warm-100))", borderRadius: 10, padding: "10px 12px", cursor: "pointer", textAlign: "left" as const },
-  recipeOptImgWrap: { width: 44, height: 44, position: "relative", overflow: "hidden", borderRadius: 8, flexShrink: 0, background: "rgb(var(--warm-100))" },
+  recipeOption: { display: "flex", alignItems: "center", gap: 12, background: "rgb(var(--warm-50))", border: "1px solid rgb(var(--warm-100))", borderRadius: "var(--radius-control)", padding: "10px 12px", cursor: "pointer", textAlign: "left" as const },
+  recipeOptImgWrap: { width: 44, height: 44, position: "relative", overflow: "hidden", borderRadius: "var(--radius-control)", flexShrink: 0, background: "rgb(var(--warm-100))" },
   recipeOptImg: { objectFit: "cover" as const },
   recipeOptTitle: { fontSize: 14, fontWeight: 600, color: "rgb(var(--warm-800))" },
   recipeOptMeta: { fontSize: 12, color: "rgb(var(--warm-400))" },

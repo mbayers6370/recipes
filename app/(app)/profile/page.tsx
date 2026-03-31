@@ -251,7 +251,7 @@ const S: Record<string, React.CSSProperties> = {
   avatar: { flexShrink: 0, width: 72, height: 72, position: "relative" },
   avatarImg: { width: 72, height: 72, borderRadius: "50%", objectFit: "cover" },
   avatarPlaceholder: { width: 72, height: 72, borderRadius: "50%", background: "rgb(var(--terra-600))", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontWeight: 700 },
-  name: { fontSize: 22, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
+  name: { fontSize: 22, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
   username: { fontSize: 14, color: "rgb(var(--warm-500))", marginTop: 2 },
   bio: { fontSize: 14, color: "rgb(var(--warm-600))", marginTop: 6, lineHeight: 1.5, maxWidth: 420 },
   statsRow: { display: "flex", gap: 24, background: "white", borderRadius: 14, padding: "16px 20px", marginBottom: 24, border: "1px solid rgb(var(--warm-100))" },

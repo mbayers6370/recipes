@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChefHat, Download, Heart, Search } from "lucide-react";
 import type { RecipeSummary } from "@/types";
-import { RECIPE_TYPE_OPTIONS, formatRecipeType, getRecipeType, isImportedRecipe } from "@/lib/recipe-taxonomy";
+import { RECIPE_TYPE_OPTIONS, formatRecipeType, isImportedRecipe } from "@/lib/recipe-taxonomy";
 import { RecipeImage } from "@/components/recipe-image";
 
 const SORT_OPTIONS = [
@@ -96,7 +96,7 @@ export default function RecipesPage() {
           className="recipes-folder-chip"
           onClick={() => { setRecipeType(""); setPage(1); }}
         >
-          All recipes
+          <span style={S.folderLabel}>All recipes</span>
         </button>
         {RECIPE_TYPE_OPTIONS.map((type) => (
           <button
@@ -105,7 +105,7 @@ export default function RecipesPage() {
             className="recipes-folder-chip"
             onClick={() => { setRecipeType(type); setPage(1); }}
           >
-            {formatRecipeType(type)}
+            <span style={S.folderLabel}>{formatRecipeType(type)}</span>
           </button>
         ))}
       </div>
@@ -161,16 +161,13 @@ export default function RecipesPage() {
 
 function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
   const mins = recipe.totalTime || (recipe.prepTime ?? 0) + (recipe.cookTime ?? 0);
-  const recipeType = getRecipeType(recipe.tags);
   const meta = [
     mins > 0 ? `${mins} min` : null,
-    isImportedRecipe(recipe.tags) ? "Imported" : null,
-    recipeType ? formatRecipeType(recipeType) : null,
     recipe.cuisine || null,
   ].filter(Boolean);
 
   return (
-    <Link href={`/recipes/${recipe.id}`} style={S.card}>
+    <Link href={`/recipes/${recipe.id}`} style={S.card} className="recipes-editorial-card">
       <div style={S.cardThumb}>
         <RecipeImage
           imageUrl={recipe.imageUrl}
@@ -180,6 +177,10 @@ function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
           iconSize={28}
           imageStyle={S.cardImg}
         />
+        <div style={S.cardShade} />
+        <div style={S.cardBadges}>
+          {isImportedRecipe(recipe.tags) ? <span style={S.importedBadge}>Imported</span> : null}
+        </div>
         {recipe.isFavorite && <div style={S.favBadge}><Heart size={13} strokeWidth={2.2} fill="currentColor" /></div>}
       </div>
       <div style={S.cardBody}>
@@ -221,28 +222,28 @@ const S: Record<string, React.CSSProperties> = {
     margin: "0 auto",
   },
   header: {},
-  title: { fontSize: 26, fontWeight: 700, fontFamily: "var(--font-serif)", color: "rgb(var(--warm-900))" },
+  title: { fontSize: 26, fontWeight: 700, fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)", color: "rgb(var(--warm-900))" },
   headerActions: { display: "flex", gap: 8 },
   importBtn: {
-    background: "rgb(var(--terra-600))", color: "white", borderRadius: 8,
+    background: "rgb(var(--terra-600))", color: "white", borderRadius: "var(--radius-control)",
     padding: "8px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none",
     display: "inline-flex", alignItems: "center", gap: 8,
   },
   newBtn: {
     background: "white", color: "rgb(var(--warm-700))",
-    border: "1.5px solid rgb(var(--warm-200))", borderRadius: 8,
+    border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)",
     padding: "8px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none",
   },
   searchBar: { position: "relative", marginBottom: 12 },
   searchIcon: { position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgb(var(--warm-400))" },
   searchInput: {
     width: "100%", paddingLeft: 38, paddingRight: 14, paddingTop: 11, paddingBottom: 11,
-    border: "1.5px solid rgb(var(--warm-200))", borderRadius: 12, fontSize: 14,
+    border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-input)", fontSize: 14,
     background: "white", outline: "none", color: "rgb(var(--warm-900))", boxSizing: "border-box",
   },
   filters: { display: "flex", gap: 8, marginBottom: 16, overflowX: "auto" as const },
   filterChip: {
-    borderWidth: "1.5px", borderStyle: "solid", borderColor: "rgb(var(--warm-200))", borderRadius: 20, padding: "6px 14px",
+    borderWidth: "1.5px", borderStyle: "solid", borderColor: "rgb(var(--warm-200))", borderRadius: "var(--radius-pill)", padding: "6px 14px",
     fontSize: 13, fontWeight: 500, background: "white", cursor: "pointer",
     color: "rgb(var(--warm-600))", whiteSpace: "nowrap" as const, display: "inline-flex",
     alignItems: "center", gap: 6,
@@ -253,38 +254,68 @@ const S: Record<string, React.CSSProperties> = {
   },
   folderRow: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, marginBottom: 14 },
   folderChip: {
-    borderWidth: "1px", borderStyle: "solid", borderColor: "rgb(var(--warm-200))",
-    borderRadius: 999, padding: "8px 10px", fontSize: 12, fontWeight: 600,
-    background: "white", color: "rgb(var(--warm-600))", whiteSpace: "normal" as const,
-    cursor: "pointer", textAlign: "center" as const, minHeight: 40,
+    position: "relative",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "rgb(var(--warm-300))",
+    borderRadius: "12px 12px 10px 10px",
+    padding: "10px 12px 9px",
+    fontSize: 12,
+    fontWeight: 600,
+    background: "rgb(233, 221, 206)",
+    color: "rgb(var(--warm-600))",
+    whiteSpace: "normal" as const,
+    cursor: "pointer",
+    textAlign: "center" as const,
+    minHeight: 42,
+    overflow: "hidden",
+  },
+  folderLabel: {
+    display: "block",
+    lineHeight: 1.2,
   },
   folderChipActive: {
-    background: "rgb(var(--terra-50))", borderColor: "rgb(var(--terra-300))", color: "rgb(var(--terra-700))",
+    background: "rgb(var(--terra-600))",
+    borderColor: "rgb(var(--terra-600))",
+    color: "white",
   },
   sortRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 16 },
   sortLabel: { fontSize: 12, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase" as const, letterSpacing: "0.04em" },
   sortSelect: {
     borderWidth: "1.5px", borderStyle: "solid", borderColor: "rgb(var(--warm-200))",
-    borderRadius: 10, padding: "9px 12px", fontSize: 13, color: "rgb(var(--warm-800))",
+    borderRadius: "var(--radius-control)", padding: "9px 12px", fontSize: 13, color: "rgb(var(--warm-800))",
     background: "white", outline: "none", minWidth: 180,
   },
   count: { fontSize: 12, color: "rgb(var(--warm-500))", marginBottom: 12 },
   grid: { display: "grid", gap: 12 },
   card: {
-    background: "white", borderRadius: 14, overflow: "hidden",
+    background: "white", borderRadius: "var(--radius-card-inner)", overflow: "hidden",
     textDecoration: "none", border: "1px solid rgb(var(--warm-100))",
     display: "flex", flexDirection: "column", height: "100%",
+    boxShadow: "0 10px 26px rgba(71, 55, 46, 0.04)",
+    transition: "transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease",
   },
   cardThumb: { aspectRatio: "4/3", overflow: "hidden", background: "rgb(var(--warm-100))", position: "relative" },
   cardImg: { width: "100%", height: "100%", objectFit: "cover" },
+  cardShade: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 48%, rgba(36,24,18,0.12) 100%)" },
+  cardBadges: { position: "absolute", top: 10, left: 10, display: "flex", gap: 6, flexWrap: "wrap" },
+  importedBadge: { display: "inline-flex", alignItems: "center", padding: "5px 8px", borderRadius: "var(--radius-pill)", background: "rgba(181, 88, 47, 0.92)", color: "white", fontSize: 11, fontWeight: 700 },
   favBadge: { position: "absolute", top: 8, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "rgb(var(--terra-600))" },
-  cardBody: { padding: "12px 12px 14px", display: "flex", flexDirection: "column", minHeight: 78, flex: 1 },
-  cardTitle: { fontSize: 13, fontWeight: 600, color: "rgb(var(--warm-900))", lineHeight: 1.35, marginBottom: 10, flex: 1 },
-  cardMeta: { fontSize: 11, color: "rgb(var(--warm-500))", display: "flex", gap: 4, flexWrap: "wrap" as const, alignItems: "center", marginTop: "auto" },
+  cardBody: { padding: "13px 13px 15px", display: "flex", flexDirection: "column", minHeight: 90, flex: 1, gap: 8 },
+  cardTitle: {
+    fontSize: 13,
+    fontWeight: 700,
+    color: "rgb(var(--warm-900))",
+    fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-brand)",
+    lineHeight: 1.38,
+    flex: 1,
+  },
+  cardMeta: { fontSize: 11, color: "rgb(var(--warm-500))", display: "flex", gap: 4, flexWrap: "wrap" as const, alignItems: "center", marginTop: "auto", borderTop: "1px solid rgb(var(--warm-100))", paddingTop: 9 },
   dot: { color: "rgb(var(--warm-300))" },
   empty: { textAlign: "center", padding: "60px 20px" },
   emptyIcon: { marginBottom: 16, color: "rgb(var(--terra-600))", display: "flex", alignItems: "center", justifyContent: "center" },
   emptyTitle: { fontSize: 17, fontWeight: 600, color: "rgb(var(--warm-800))", marginBottom: 8 },
   emptySub: { fontSize: 14, color: "rgb(var(--warm-500))", marginBottom: 20 },
-  emptyBtn: { background: "rgb(var(--terra-600))", color: "white", borderRadius: 10, padding: "12px 24px", fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 },
+  emptyBtn: { background: "rgb(var(--terra-600))", color: "white", borderRadius: "var(--radius-control)", padding: "12px 24px", fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 },
 };

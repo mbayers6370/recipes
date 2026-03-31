@@ -284,6 +284,7 @@ const S: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     color: "rgb(var(--warm-900))",
     fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-display)",
     marginBottom: 10,
   },
   description: {
