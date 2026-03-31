@@ -36,27 +36,27 @@ abovo is designed to cover the whole path from finding a recipe to making dinner
 
 ### Home Dashboard
 
-![abovo home dashboard](./public/readme-home-dashboard.png)
+![abovo home dashboard](https://raw.githubusercontent.com/mbayers6370/recipes/main/public/readme-home-dashboard.png)
 
 ### Recipes
 
-![abovo recipes page](./public/readme-recipes.png)
+![abovo recipes page](https://raw.githubusercontent.com/mbayers6370/recipes/main/public/readme-recipes.png)
 
 ### Shared Kitchen
 
-![abovo shared kitchen page](./public/readme-shared-kitchen.png)
+![abovo shared kitchen page](https://raw.githubusercontent.com/mbayers6370/recipes/main/public/readme-shared-kitchen.png)
 
 ### Meal Plan
 
-![abovo meal plan page](./public/readme-meal-plan.png)
+![abovo meal plan page](https://raw.githubusercontent.com/mbayers6370/recipes/main/public/readme-meal-plan.png)
 
 ### Grocery
 
-![abovo grocery page](./public/readme-grocery.png)
+![abovo grocery page](https://raw.githubusercontent.com/mbayers6370/recipes/main/public/readme-grocery.png)
 
 ### Profile
 
-![abovo profile page](./public/readme-profile.png)
+![abovo profile page](https://raw.githubusercontent.com/mbayers6370/recipes/main/public/readme-profile.png)
 
 ## Tech Stack
 

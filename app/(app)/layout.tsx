@@ -7,6 +7,8 @@ import { BottomNav, DesktopNav } from "@/components/layout/nav";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isImmersiveRecipePage = /^\/recipes\/[^/]+\/cook$/.test(pathname);
+  const isPrintRecipePage = /^\/recipes\/[^/]+\/print$/.test(pathname);
+  const isChromeHiddenPage = isImmersiveRecipePage || isPrintRecipePage;
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
@@ -29,17 +31,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      {!isImmersiveRecipePage && <DesktopNav />}
+      {!isChromeHiddenPage && <DesktopNav />}
       <main
         className="app-main-shell"
         style={{
           flex: 1,
-          paddingBottom: isImmersiveRecipePage ? 0 : isStandalone ? "92px" : "72px",
+          paddingBottom: isChromeHiddenPage ? 0 : isStandalone ? "92px" : "72px",
         }}
       >
         {children}
       </main>
-      {!isImmersiveRecipePage && <BottomNav />}
+      {!isChromeHiddenPage && <BottomNav />}
     </div>
   );
 }
