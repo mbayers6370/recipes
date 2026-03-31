@@ -4,15 +4,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BookOpen, CalendarDays, Home, LogOut, ShoppingBasket, UserRound } from "lucide-react";
+import { BookOpenText, CalendarDays, CircleUser, Home, LogOut, ShoppingBag, Users } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
-const NAV_ITEMS = [
+const MOBILE_NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/recipes", label: "Recipes", icon: BookOpen },
+  { href: "/recipes", label: "Recipes", icon: BookOpenText },
   { href: "/plan", label: "Plan", icon: CalendarDays },
-  { href: "/grocery", label: "Grocery", icon: ShoppingBasket },
-  { href: "/profile", label: "Profile", icon: UserRound },
+  { href: "/grocery", label: "Grocery", icon: ShoppingBag },
+  { href: "/profile", label: "Profile", icon: CircleUser },
+];
+
+const DESKTOP_NAV_ITEMS = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/recipes", label: "Recipes", icon: BookOpenText },
+  { href: "/plan", label: "Plan", icon: CalendarDays },
+  { href: "/kitchen", label: "Kitchen", icon: Users },
+  { href: "/grocery", label: "Grocery", icon: ShoppingBag },
+  { href: "/profile", label: "Profile", icon: CircleUser },
 ];
 
 function isActivePath(pathname: string, href: string) {
@@ -62,7 +71,7 @@ export function BottomNav() {
         transform: "translateZ(0)",
       }}
     >
-      {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+      {MOBILE_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
         const active = isActivePath(pathname, href);
         return (
           <Link
@@ -74,7 +83,7 @@ export function BottomNav() {
               flexDirection: "column",
               alignItems: "center",
               gap: "5px",
-              padding: isStandalone ? "12px 4px 14px" : "9px 4px 10px",
+              padding: isStandalone ? "20px 4px 13px" : "20px 4px 13px",
               color: active ? "rgb(var(--terra-600))" : "rgb(var(--warm-500))",
               textDecoration: "none",
               transition: "color 0.15s",
@@ -82,7 +91,7 @@ export function BottomNav() {
               fontWeight: active ? 600 : 400,
             }}
           >
-            <Icon size={22} strokeWidth={active ? 2.3 : 2} />
+            <Icon size={22} strokeWidth={active ? 2.0 : 1.7} />
             <span>{label}</span>
           </Link>
         );
@@ -142,7 +151,7 @@ export function DesktopNav() {
         </Link>
 
         <nav style={{ display: "flex", alignItems: "center", gap: 6, justifySelf: "center" }}>
-          {NAV_ITEMS.map(({ href, label }) => {
+          {DESKTOP_NAV_ITEMS.map(({ href, label }) => {
             const active = isActivePath(pathname, href);
             return (
               <Link

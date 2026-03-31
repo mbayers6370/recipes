@@ -199,8 +199,11 @@ export default function GroceryPage() {
 
   return (
     <div style={S.page}>
+      <div className="page-banner">
+        <h1 className="page-banner-title">Grocery</h1>
+      </div>
+
       <div style={S.header} className="page-header">
-        <h1 style={S.title} className="page-header-title">Grocery</h1>
         <div className="page-header-actions">
           <button onClick={createList} style={S.newListBtn}>+ New List</button>
           {activeList && (

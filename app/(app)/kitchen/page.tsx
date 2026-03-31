@@ -6,8 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CirclePlus,
-  Crown,
-  Soup,
+  UtensilsCrossed,
   UserPlus,
   Users,
   X,
@@ -297,12 +296,16 @@ export default function KitchenPage() {
   return (
     <div style={S.page}>
       <div style={S.shell}>
-        <div style={S.header} className="kitchen-page-header">
+        <div className="page-banner">
+          <h1 className="page-banner-title">Kitchen</h1>
+        </div>
+
+        <div style={S.header}>
           <div>
-            <p style={S.kicker}>Shared Kitchen</p>
+            <p style={S.kicker}>Current kitchen</p>
             <h1 style={S.title}>{household.name}</h1>
             <p style={S.sub}>
-              {household.memberCount} people connected.
+              {household.memberCount} {household.memberCount === 1 ? "person" : "people"} connected.
             </p>
           </div>
         </div>
@@ -319,8 +322,9 @@ export default function KitchenPage() {
               onClick={() => setIdeaPickerOpen(true)}
               disabled={sharedRecipesForIdeaPicker.length === 0}
             >
-              <Soup size={15} strokeWidth={2.2} />
+              <UtensilsCrossed size={15} strokeWidth={2.2} />
               <span>Suggest idea</span>
+              <ArrowRight size={14} strokeWidth={2.2} />
             </button>
           </div>
 
@@ -591,10 +595,6 @@ export default function KitchenPage() {
                 {household.memberCount} of {household.memberLimit} seats filled
               </p>
             </div>
-            <div style={S.roleBadge}>
-              <Users size={15} strokeWidth={2.2} />
-              <span>{household.role === "owner" ? "Owner" : "Member"}</span>
-            </div>
           </div>
 
           <div style={S.memberList}>
@@ -607,7 +607,6 @@ export default function KitchenPage() {
                 <div style={S.memberActions}>
                   {member.role === "owner" && (
                     <span style={S.ownerBadge}>
-                      <Crown size={12} strokeWidth={2.2} />
                       <span>Owner</span>
                     </span>
                   )}
@@ -782,7 +781,6 @@ const S: Record<string, React.CSSProperties> = {
     letterSpacing: "var(--tracking-brand)",
   },
   cardSub: { fontSize: 12, color: "rgb(var(--warm-500))", marginTop: 4 },
-  roleBadge: { display: "inline-flex", alignItems: "center", gap: 6, borderRadius: "var(--radius-pill)", background: "rgb(var(--terra-50))", color: "rgb(var(--terra-700))", padding: "6px 10px", fontSize: 12, fontWeight: 700 },
   memberList: { display: "flex", flexDirection: "column" },
   memberRow: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12, padding: "14px 0", borderBottom: "1px solid rgb(var(--warm-100))" },
   memberInfo: { display: "flex", flexDirection: "column", gap: 2 },
@@ -796,7 +794,19 @@ const S: Record<string, React.CSSProperties> = {
   formStack: { display: "flex", flexDirection: "column", gap: 10 },
   input: { width: "100%", border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-input)", padding: "11px 14px", fontSize: 14, background: "white", color: "rgb(var(--warm-900))", outline: "none" },
   primaryBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: "var(--radius-control)", padding: "11px 16px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
-  primaryGhostBtn: { display: "inline-flex", alignItems: "center", gap: 8, background: "rgb(var(--terra-50))", color: "rgb(var(--terra-700))", border: "1px solid rgb(var(--terra-200))", borderRadius: "var(--radius-control)", padding: "10px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  primaryGhostBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    background: "transparent",
+    color: "rgb(var(--terra-600))",
+    border: "none",
+    padding: "0",
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: "pointer",
+    textDecoration: "none",
+  },
   secondaryBtn: { width: "100%", marginTop: 16, background: "white", color: "rgb(var(--warm-700))", border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)", padding: "11px 16px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
   error: { marginTop: 10, fontSize: 13, color: "rgb(var(--terra-700))" },
   sectionCard: { background: "white", border: "1px solid rgb(var(--warm-100))", borderRadius: "var(--radius-card)", padding: "18px 16px", marginBottom: 28 },

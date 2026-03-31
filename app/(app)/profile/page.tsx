@@ -130,6 +130,10 @@ export default function ProfilePage() {
 
   return (
     <div style={S.page} className="profile-page">
+      <div className="page-banner">
+        <h1 className="page-banner-title">Profile</h1>
+      </div>
+
       <div style={S.header} className="profile-header">
         <div style={S.avatar}>
           {user.avatarUrl ? (

@@ -21,6 +21,7 @@ type RecipeImageProps = {
   iconSize?: number;
   showLabel?: boolean;
   imageStyle?: ImageProps["style"];
+  priority?: boolean;
 };
 
 const TYPE_STYLES: Record<
@@ -73,6 +74,7 @@ export function RecipeImage({
   iconSize = 28,
   showLabel = false,
   imageStyle,
+  priority = false,
 }: RecipeImageProps) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
 
@@ -114,6 +116,7 @@ export function RecipeImage({
       alt={title}
       fill
       unoptimized
+      priority={priority}
       sizes={sizes}
       style={imageStyle}
       onError={() => setFailedUrl(imageUrl)}

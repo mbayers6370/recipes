@@ -231,8 +231,32 @@
     text-align: center;
   }
 
+  .home-plan-header {
+    justify-content: flex-start;
+  }
+
   .home-plan-title {
-    width: 100%;
+    flex: 1;
+    text-align: left;
+  }
+
+  .home-plan-link {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .page-banner {
+    margin: -24px -16px 18px;
+    padding: 20px 16px 18px;
+    background: linear-gradient(180deg, rgb(var(--terra-700)) 0%, rgb(var(--terra-600)) 100%);
+  }
+
+  .page-banner-title {
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    font-family: var(--font-serif);
+    letter-spacing: var(--tracking-display);
     text-align: center;
   }
 
@@ -302,6 +326,10 @@
   }
 
   @media (min-width: 768px) {
+    .page-banner {
+      display: none;
+    }
+
     .profile-header {
       flex-direction: row;
       align-items: center;
@@ -404,6 +432,11 @@
       width: auto;
       justify-content: flex-end;
       flex-wrap: nowrap;
+    }
+
+    .page-banner {
+      margin: -24px -16px 22px;
+      padding: 24px max(16px, calc(50vw - 480px + 16px)) 22px;
     }
 
     .recipe-detail-hero {

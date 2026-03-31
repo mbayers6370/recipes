@@ -1,6 +1,6 @@
-const STATIC_CACHE = "ab-ovo-static-v1";
-const PAGE_CACHE = "ab-ovo-pages-v1";
-const RUNTIME_CACHE = "ab-ovo-runtime-v1";
+const STATIC_CACHE = "ab-ovo-static-v2";
+const PAGE_CACHE = "ab-ovo-pages-v2";
+const RUNTIME_CACHE = "ab-ovo-runtime-v2";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [
   OFFLINE_URL,
@@ -71,7 +71,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.pathname.startsWith("/_next/static/") || isStaticAsset(url.pathname)) {
+  if (url.pathname.startsWith("/_next/static/")) {
+    event.respondWith(handleNextStaticRequest(request));
+    return;
+  }
+
+  if (isStaticAsset(url.pathname)) {
     event.respondWith(handleAssetRequest(request));
   }
 });
@@ -115,6 +120,23 @@ async function handleAssetRequest(request) {
     .catch(() => cachedResponse);
 
   return cachedResponse || networkFetch;
+}
+
+async function handleNextStaticRequest(request) {
+  const runtimeCache = await caches.open(RUNTIME_CACHE);
+
+  try {
+    const response = await fetch(request);
+
+    if (response.ok) {
+      await runtimeCache.put(request, response.clone());
+    }
+
+    return response;
+  } catch {
+    const cachedResponse = await runtimeCache.match(request);
+    return cachedResponse || Response.error();
+  }
 }
 
 function isStaticAsset(pathname) {

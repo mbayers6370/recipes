@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useSyncExternalStore } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowRight, Download, Plus, Users } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
@@ -10,11 +9,6 @@ import type { RecipeSummary, CookingSession, Household, MealPlan } from "@/types
 import { DAY_NAMES } from "@/lib/date-utils";
 import { startOfWeek } from "@/lib/date-utils";
 import { RecipeImage } from "@/components/recipe-image";
-
-const FoodIconPattern = dynamic(
-  () => import("@/components/auth/auth-pattern").then((mod) => mod.FoodIconPattern),
-  { ssr: false }
-);
 
 const HOME_MEAL_TYPE_ORDER = ["breakfast", "brunch", "lunch", "dinner", "side", "snack", "dessert"] as const;
 const HOME_MEAL_TYPE_LABELS: Record<string, string> = {
@@ -114,19 +108,12 @@ export default function HomePage() {
     <div style={S.page}>
       {/* Hero */}
       <div style={S.hero}>
-        <FoodIconPattern
-          iconColor="rgba(247, 241, 232, 0.26)"
-          opacity={0.14}
-          overlay="linear-gradient(180deg, rgba(255,255,255,0.04), rgba(96, 42, 18, 0.1))"
-          columns={7}
-          gap="22px 14px"
-          rotation={-6}
-          scale={1.04}
-        />
         <div style={S.heroContent} className="home-hero-copy">
           <h1 style={S.heroTitle}>
-            {greeting},{" "}
-            <span style={{ color: "rgba(255,255,255,0.85)" }}>
+            <span style={{ color: "rgb(var(--terra-200))" }}>
+              {greeting},
+            </span>{" "}
+            <span style={{ color: "rgb(var(--warm-50))" }}>
               {user?.displayName || user?.username || "chef"}
             </span>
           </h1>
@@ -161,9 +148,9 @@ export default function HomePage() {
         <Section>
           {todayItems.length > 0 ? (
             <div style={S.planCard}>
-              <div style={S.cardSectionHeader}>
-                <h2 style={S.sectionTitle} className="home-plan-title">Planner</h2>
-                <Link href="/plan" style={S.seeAll}>
+              <div style={S.cardSectionHeader} className="home-plan-header">
+                <h2 style={S.sectionTitleOnTerracotta} className="home-plan-title">Planner</h2>
+                <Link href="/plan" style={S.seeAllOnTerracotta} className="home-plan-link">
                   <span>Planner</span>
                   <ArrowRight size={14} strokeWidth={2.2} />
                 </Link>
@@ -189,9 +176,9 @@ export default function HomePage() {
             </div>
           ) : (
             <div style={S.emptyCard}>
-              <div style={S.cardSectionHeader}>
-                <h2 style={S.sectionTitle} className="home-plan-title">Planner</h2>
-                <Link href="/plan" style={S.seeAll}>
+              <div style={S.cardSectionHeader} className="home-plan-header">
+                <h2 style={S.sectionTitleOnTerracotta} className="home-plan-title">Planner</h2>
+                <Link href="/plan" style={S.seeAllOnTerracotta} className="home-plan-link">
                   <span>Planner</span>
                   <ArrowRight size={14} strokeWidth={2.2} />
                 </Link>
@@ -231,8 +218,13 @@ export default function HomePage() {
             </div>
           ) : recentRecipes.length > 0 ? (
             <div style={S.recipeGrid} className="home-recipe-grid">
-              {recentRecipes.slice(0, effectiveRecentRecipeLimit).map((r) => (
-                <RecipeCard key={r.id} recipe={r} className="home-recipe-card" />
+              {recentRecipes.slice(0, effectiveRecentRecipeLimit).map((r, index) => (
+                <RecipeCard
+                  key={r.id}
+                  recipe={r}
+                  className="home-recipe-card"
+                  prioritizeImage={index === 0}
+                />
               ))}
             </div>
           ) : (
@@ -390,7 +382,15 @@ function TodayMealRow({
   );
 }
 
-function RecipeCard({ recipe, className }: { recipe: RecipeSummary; className?: string }) {
+function RecipeCard({
+  recipe,
+  className,
+  prioritizeImage = false,
+}: {
+  recipe: RecipeSummary;
+  className?: string;
+  prioritizeImage?: boolean;
+}) {
   const meta = [
     recipe.totalTime ? `${recipe.totalTime} min` : null,
     recipe.cuisine || null,
@@ -407,6 +407,7 @@ function RecipeCard({ recipe, className }: { recipe: RecipeSummary; className?: 
           sizes="(max-width: 768px) 50vw, 240px"
           iconSize={28}
           imageStyle={S.recipeImg}
+          priority={prioritizeImage}
         />
       </div>
       <div style={S.recipeInfo}>
@@ -450,23 +451,34 @@ const S: Record<string, React.CSSProperties> = {
 
   // Hero
   hero: {
-    background: "linear-gradient(135deg, rgb(196,90,44) 0%, rgb(163,70,36) 60%, rgb(133,58,33) 100%)",
-    padding: "32px 20px 36px",
+    background: "rgb(var(--terra-600))",
+    padding: "34px 20px 36px",
     position: "relative",
     overflow: "hidden",
+    borderBottom: "1px solid rgba(97, 45, 24, 0.2)",
   },
-  heroContent: { position: "relative", zIndex: 1, width: "100%", maxWidth: 960, margin: "0 auto", padding: "0 16px" },
+  heroContent: {
+    position: "relative",
+    zIndex: 1,
+    width: "100%",
+    maxWidth: 960,
+    margin: "0 auto",
+    padding: "0 16px",
+  },
   heroTitle: {
     fontSize: 28,
     fontWeight: 700,
-    color: "white",
+    color: "rgb(var(--warm-50))",
     fontFamily: "var(--font-serif)",
     letterSpacing: "var(--tracking-display)",
     marginBottom: 6,
     lineHeight: 1.2,
   },
-  heroSub: { fontSize: 15, color: "rgba(255,255,255,0.75)", marginBottom: 8 },
-  heroNote: { fontSize: 13, color: "rgba(255,255,255,0.68)" },
+  heroSub: {
+    fontSize: 15,
+    color: "rgba(247, 241, 232, 0.76)",
+    marginBottom: 0,
+  },
 
   actionRowWrap: { marginBottom: 28 },
   actionRow: { width: "100%", maxWidth: 960, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
@@ -500,11 +512,12 @@ const S: Record<string, React.CSSProperties> = {
 
   // Plan
   planCard: {
-    background: "linear-gradient(180deg, rgba(243, 232, 224, 0.9) 0%, rgba(255,255,255,0.98) 100%)",
+    background: "linear-gradient(180deg, rgb(var(--terra-700)) 0%, rgb(var(--terra-600)) 100%)",
     borderRadius: "var(--radius-card)",
-    border: "1px solid rgb(var(--terra-200))",
+    border: "1px solid rgba(112, 48, 26, 0.22)",
     overflow: "hidden",
     padding: 14,
+    boxShadow: "0 16px 34px rgba(112, 48, 26, 0.18)",
   },
   cardSectionHeader: {
     display: "flex",
@@ -513,7 +526,7 @@ const S: Record<string, React.CSSProperties> = {
     gap: 12,
     paddingBottom: 12,
     marginBottom: 12,
-    borderBottom: "1px solid rgb(var(--warm-100))",
+    borderBottom: "1px solid rgba(255,255,255,0.16)",
   },
   cardSectionHeaderTerracotta: {
     display: "flex",
@@ -544,8 +557,8 @@ const S: Record<string, React.CSSProperties> = {
     marginBottom: 12,
   },
   planHeaderLabel: { display: "flex", alignItems: "center", gap: 10 },
-  planToday: { fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-700))", textTransform: "uppercase", letterSpacing: "0.06em" },
-  planDate: { fontSize: 12, color: "rgb(var(--warm-500))", fontWeight: 600 },
+  planToday: { fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textTransform: "uppercase", letterSpacing: "0.06em" },
+  planDate: { fontSize: 12, color: "rgba(255,255,255,0.84)", fontWeight: 600 },
   planRow: {
     display: "grid",
     gridTemplateColumns: "72px 1fr",
@@ -553,36 +566,37 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "start",
     padding: "0 0 10px",
   },
-  planRowDivider: { borderTop: "1px solid rgb(var(--warm-100))", paddingTop: 10 },
-  planDay: { fontSize: 11, fontWeight: 600, color: "rgb(var(--warm-500))", paddingTop: 10 },
+  planRowDivider: { borderTop: "1px solid rgba(255,255,255,0.14)", paddingTop: 10 },
+  planDay: { fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.72)", paddingTop: 10 },
   planRowCard: {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    background: "rgb(var(--warm-50))",
-    border: "1px solid rgb(var(--warm-100))",
+    background: "rgba(255,255,255,0.14)",
+    border: "1px solid rgba(255,255,255,0.12)",
     borderRadius: "var(--radius-card-inner)",
     padding: "8px 10px",
     minWidth: 0,
+    backdropFilter: "blur(2px)",
   },
   planMealWrap: { flex: 1, minWidth: 0 },
-  planMeal: { fontSize: 13, color: "rgb(var(--warm-800))", fontWeight: 500, lineHeight: 1.4 },
+  planMeal: { fontSize: 13, color: "rgba(255,255,255,0.96)", fontWeight: 500, lineHeight: 1.4 },
   cookBtn: {
     fontSize: 12,
-    color: "rgb(var(--terra-600))",
+    color: "rgb(var(--warm-50))",
     textDecoration: "none",
-    fontWeight: 600,
-    background: "transparent",
-    padding: "0 2px",
-    borderRadius: 6,
+    fontWeight: 700,
+    background: "rgba(255,255,255,0.14)",
+    padding: "4px 8px",
+    borderRadius: 999,
     flexShrink: 0,
   },
 
   // Section
   sectionHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
-  seeAll: { fontSize: 13, color: "rgb(var(--terra-600))", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
-  sectionTitleOnTerracotta: { fontSize: 18, fontWeight: 700, color: "rgba(255,255,255,0.98)", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
+  seeAll: { fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
+  sectionTitleOnTerracotta: { fontSize: 18, fontWeight: 700, color: "rgb(var(--warm-50))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
   seeAllOnTerracotta: { fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
   kitchenPanel: {
     background: "white",
@@ -736,18 +750,19 @@ const S: Record<string, React.CSSProperties> = {
 
   // Empty
   emptyCard: {
-    background: "white",
+    background: "linear-gradient(180deg, rgb(var(--terra-700)) 0%, rgb(var(--terra-600)) 100%)",
     borderRadius: "var(--radius-card-inner)",
     padding: "16px 20px 28px",
     textAlign: "center",
-    border: "1.5px dashed rgb(var(--warm-200))",
+    border: "1px solid rgba(112, 48, 26, 0.22)",
+    boxShadow: "0 16px 34px rgba(112, 48, 26, 0.18)",
   },
   savedEmptyState: {
     padding: "12px 4px 4px",
     textAlign: "center",
   },
-  emptyText: { fontSize: 14, color: "rgb(var(--warm-500))", marginBottom: 10 },
-  emptyLink: { fontSize: 14, color: "rgb(var(--terra-600))", fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 },
+  emptyText: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 10 },
+  emptyLink: { fontSize: 14, color: "rgb(var(--warm-50))", fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 },
   floatingPrimary: {
     background: "rgb(var(--terra-600))",
     color: "white",

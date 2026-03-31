@@ -53,9 +53,11 @@ export default function RecipesPage() {
 
   return (
     <div style={S.page}>
-      {/* Header */}
+      <div className="page-banner">
+        <h1 className="page-banner-title">Recipes</h1>
+      </div>
+
       <div style={S.header} className="page-header">
-        <h1 style={S.title} className="page-header-title">Recipes</h1>
         <div style={S.headerActions} className="page-header-actions">
           <Link href="/recipes/import" style={S.importBtn}>
             <Download size={14} strokeWidth={2.2} />

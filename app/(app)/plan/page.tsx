@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, CirclePlus, Download, Recycle, Trash2, UtensilsCrossed, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, CirclePlus, Download, Recycle, Trash2, UtensilsCrossed, X } from "lucide-react";
 import type { MealPlan, RecipeSummary } from "@/types";
 import { DAY_NAMES, startOfWeek, addDays } from "@/lib/date-utils";
 import { RecipeImage } from "@/components/recipe-image";
@@ -27,6 +27,8 @@ export default function PlanPage() {
   const [showPickerFor, setShowPickerFor] = useState<{ day: number; meal: string } | null>(null);
   const [pickerMealType, setPickerMealType] = useState<string>("lunch");
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [expandedPastDays, setExpandedPastDays] = useState<Set<number>>(new Set());
 
   const weekLabel = `${weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" })} – ${addDays(weekStart, 6).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`;
 
@@ -53,6 +55,24 @@ export default function PlanPage() {
     return () => {
       cancelled = true;
     };
+  }, [weekStart]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const syncIsMobile = () => setIsMobile(mediaQuery.matches);
+
+    syncIsMobile();
+    mediaQuery.addEventListener("change", syncIsMobile);
+
+    return () => {
+      mediaQuery.removeEventListener("change", syncIsMobile);
+    };
+  }, []);
+
+  useEffect(() => {
+    setExpandedPastDays(new Set());
   }, [weekStart]);
 
   const openPicker = async (day: number, meal: string) => {
@@ -100,15 +120,14 @@ export default function PlanPage() {
     .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
   const featuredItem =
     upcomingItems.find((item) => item.dayOfWeek >= todayIndex) || upcomingItems[0] || null;
-  const plannedCount = upcomingItems.length;
-  const recipeCount = upcomingItems.filter((item) => item.recipe).length;
-  const noteCount = upcomingItems.filter((item) => !item.recipe && item.note?.trim()).length;
 
   return (
     <div style={S.page}>
-      {/* Header */}
+      <div className="page-banner">
+        <h1 className="page-banner-title">Meal Plan</h1>
+      </div>
+
       <div style={S.header} className="page-header">
-        <h1 style={S.title} className="page-header-title">Meal Plan</h1>
         <div style={S.weekNav} className="page-header-actions">
           <button style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, -7))}>
             <ArrowLeft size={18} strokeWidth={2.2} />
@@ -128,21 +147,6 @@ export default function PlanPage() {
       ) : (
         <>
           <div style={S.editorialIntro}>
-            <div style={S.summaryStrip}>
-              <div style={S.summaryChip}>
-                <span style={S.summaryValue}>{plannedCount}</span>
-                <span style={S.summaryLabel}>planned</span>
-              </div>
-              <div style={S.summaryChip}>
-                <span style={S.summaryValue}>{recipeCount}</span>
-                <span style={S.summaryLabel}>recipes</span>
-              </div>
-              <div style={S.summaryChip}>
-                <span style={S.summaryValue}>{noteCount}</span>
-                <span style={S.summaryLabel}>quick notes</span>
-              </div>
-            </div>
-
             {featuredItem && (
               <div style={S.featuredCard}>
                 <div style={S.featuredCopy}>
@@ -175,23 +179,45 @@ export default function PlanPage() {
             dayStart.setHours(0, 0, 0, 0);
             const isPastDay = dayStart.getTime() < startOfToday.getTime();
             const isToday = i === todayIndex && weekStart <= today && today <= addDays(weekStart, 6);
+            const isCollapsed = isMobile && isPastDay && !expandedPastDays.has(i);
             const dayItems = (plan?.items || []).filter(
               (it) => it.dayOfWeek === i && Boolean(it.recipe?.id || it.note?.trim())
             );
             const extraTypes = EXTRA_MEAL_TYPES.filter((type) =>
               dayItems.some((item) => item.mealType === type)
             );
+            const toggleCollapsedDay = () => {
+              setExpandedPastDays((current) => {
+                const next = new Set(current);
+                if (next.has(i)) next.delete(i);
+                else next.add(i);
+                return next;
+              });
+            };
 
               return (
                 <div key={day} style={{ ...S.dayRow, ...(isToday ? S.dayRowToday : {}), ...(isPastDay ? S.dayRowPast : {}) }}>
-                <div style={S.dayHeader}>
-                  <div style={S.dayLabel}>
-                    <span style={{ ...S.dayName, ...(isToday ? S.dayNameToday : {}) }}>{day}</span>
-                    <span style={S.dayDate}>{dayDate.getDate()}</span>
+                {isMobile && isPastDay ? (
+                  <button type="button" style={S.dayHeaderButton} onClick={toggleCollapsedDay}>
+                    <div style={S.dayLabel}>
+                      <span style={{ ...S.dayName, ...(isToday ? S.dayNameToday : {}) }}>{day}</span>
+                      <span style={{ ...S.dayDate, ...(isToday ? S.dayDateToday : {}) }}>{dayDate.getDate()}</span>
+                    </div>
+                    <div style={S.dayHeaderMeta}>
+                      <span style={S.pastPill}>Past</span>
+                      {isCollapsed ? <ChevronDown size={16} strokeWidth={2.2} /> : <ChevronUp size={16} strokeWidth={2.2} />}
+                    </div>
+                  </button>
+                ) : (
+                  <div style={S.dayHeader}>
+                    <div style={S.dayLabel}>
+                      <span style={{ ...S.dayName, ...(isToday ? S.dayNameToday : {}) }}>{day}</span>
+                      <span style={{ ...S.dayDate, ...(isToday ? S.dayDateToday : {}) }}>{dayDate.getDate()}</span>
+                    </div>
+                    {isToday && <span style={S.todayPill}>Today</span>}
                   </div>
-                  {isToday && <span style={S.todayPill}>Today</span>}
-                </div>
-                <div style={S.mealSlots}>
+                )}
+                {!isCollapsed && <div style={S.mealSlots}>
                   {PRIMARY_MEAL_TYPES.map((mealType) => (
                     <MealSlot
                       key={mealType}
@@ -200,12 +226,13 @@ export default function PlanPage() {
                       isLocked={isPastDay}
                       onDelete={deleteMeal}
                       onAdd={() => openPicker(i, mealType)}
+                      tone={isToday ? "today" : "default"}
                     />
                   ))}
 
                   {extraTypes.length > 0 && (
-                    <div style={S.extraSection}>
-                      <p style={S.extraHeading}>Extras</p>
+                    <div style={{ ...S.extraSection, ...(isToday ? S.extraSectionToday : {}) }}>
+                      <p style={{ ...S.extraHeading, ...(isToday ? S.extraHeadingToday : {}) }}>Extras</p>
                       <div style={S.extraStack}>
                         {extraTypes.map((mealType) => (
                           <MealSlot
@@ -216,6 +243,7 @@ export default function PlanPage() {
                             onDelete={deleteMeal}
                             onAdd={() => openPicker(i, mealType)}
                             compact
+                            tone={isToday ? "today" : "default"}
                           />
                         ))}
                       </div>
@@ -223,12 +251,12 @@ export default function PlanPage() {
                   )}
 
                   {!isPastDay && (
-                    <button style={S.addExtraBtn} onClick={() => openPicker(i, "extra")}>
+                    <button style={{ ...S.addExtraBtn, ...(isToday ? S.addExtraBtnToday : {}) }} onClick={() => openPicker(i, "extra")}>
                       <CirclePlus size={14} strokeWidth={2.2} />
                       <span>Add extra</span>
                     </button>
                   )}
-                </div>
+                </div>}
               </div>
               );
             })}
@@ -315,36 +343,38 @@ export default function PlanPage() {
   );
 }
 
-function MealSlot({ label, items, isLocked, onAdd, onDelete, compact = false }: {
+function MealSlot({ label, items, isLocked, onAdd, onDelete, compact = false, tone = "default" }: {
   label: string;
   items: MealPlan["items"];
   isLocked: boolean;
   onAdd: () => void;
   onDelete: (itemId: string) => void;
   compact?: boolean;
+  tone?: "default" | "today";
 }) {
   const hasItems = items.length > 0;
+  const isTodayTone = tone === "today";
 
   return (
     <div style={{ ...SS.slot, ...(compact ? SS.slotCompact : {}) }}>
-      <span style={SS.slotLabel}>{label}</span>
+      <span style={{ ...SS.slotLabel, ...(isTodayTone ? SS.slotLabelToday : {}) }}>{label}</span>
       {hasItems ? (
-        <div style={SS.slotFilled}>
+        <div style={{ ...SS.slotFilled, ...(isTodayTone ? SS.slotFilledToday : {}) }}>
           <div style={SS.slotContent}>
             {items.map((item) => (
               <div key={item.id} style={SS.slotItem}>
                 {item.recipe ? (
-                  <Link href={`/recipes/${item.recipe.id}`} style={SS.slotLink}>
+                  <Link href={`/recipes/${item.recipe.id}`} style={{ ...SS.slotLink, ...(isTodayTone ? SS.slotLinkToday : {}) }}>
                     {item.recipe.title}
                   </Link>
                 ) : (
-                  <span style={SS.slotNote}>{item.note || "–"}</span>
+                  <span style={{ ...SS.slotNote, ...(isTodayTone ? SS.slotNoteToday : {}) }}>{item.note || "–"}</span>
                 )}
                 {!isLocked && (
                   <button
                     type="button"
                     aria-label={`Delete ${label.toLowerCase()} meal`}
-                    style={SS.deleteBtn}
+                    style={{ ...SS.deleteBtn, ...(isTodayTone ? SS.deleteBtnToday : {}) }}
                     onClick={() => onDelete(item.id)}
                   >
                     <Trash2 size={14} strokeWidth={2.1} />
@@ -354,16 +384,16 @@ function MealSlot({ label, items, isLocked, onAdd, onDelete, compact = false }: 
             ))}
           </div>
           {!isLocked && (
-            <button style={SS.addBtn} onClick={onAdd}>
+            <button style={{ ...SS.addBtn, ...(isTodayTone ? SS.addBtnToday : {}) }} onClick={onAdd}>
               <CirclePlus size={16} strokeWidth={2.2} />
               <span>Add</span>
             </button>
           )}
         </div>
       ) : isLocked ? (
-        <span style={SS.lockedText}>Past day</span>
+        <span style={{ ...SS.lockedText, ...(isTodayTone ? SS.lockedTextToday : {}) }}>Past day</span>
       ) : (
-        <button style={SS.addBtn} onClick={onAdd}>
+        <button style={{ ...SS.addBtn, ...(isTodayTone ? SS.addBtnToday : {}) }} onClick={onAdd}>
           <CirclePlus size={16} strokeWidth={2.2} />
           <span>Add</span>
         </button>
@@ -376,6 +406,7 @@ const SS: Record<string, React.CSSProperties> = {
   slot: { display: "grid", gridTemplateColumns: "72px 1fr", gap: 10, alignItems: "start" },
   slotCompact: { gridTemplateColumns: "72px 1fr" },
   slotLabel: { fontSize: 11, color: "rgb(var(--warm-500))", fontWeight: 600, paddingTop: 10 },
+  slotLabelToday: { color: "rgba(255,255,255,0.72)" },
   slotFilled: {
     display: "flex",
     flexDirection: "column",
@@ -387,10 +418,17 @@ const SS: Record<string, React.CSSProperties> = {
     borderRadius: "var(--radius-card-inner)",
     padding: "8px 10px",
   },
+  slotFilledToday: {
+    background: "rgba(255,255,255,0.14)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    backdropFilter: "blur(2px)",
+  },
   slotContent: { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 6 },
   slotItem: { display: "flex", alignItems: "center", gap: 8, minHeight: 24 },
   slotLink: { fontSize: 13, color: "rgb(var(--warm-800))", textDecoration: "none", fontWeight: 500, lineHeight: 1.4 },
+  slotLinkToday: { color: "rgba(255,255,255,0.96)" },
   slotNote: { fontSize: 13, color: "rgb(var(--warm-500))", fontStyle: "italic" },
+  slotNoteToday: { color: "rgba(255,255,255,0.84)" },
   lockedText: {
     fontSize: 12,
     color: "rgb(var(--warm-400))",
@@ -399,6 +437,11 @@ const SS: Record<string, React.CSSProperties> = {
     border: "1px solid rgb(var(--warm-100))",
     borderRadius: "var(--radius-card-inner)",
     padding: "9px 10px",
+  },
+  lockedTextToday: {
+    color: "rgba(255,255,255,0.74)",
+    background: "rgba(255,255,255,0.14)",
+    border: "1px solid rgba(255,255,255,0.12)",
   },
   addBtn: {
     background: "rgb(var(--warm-50))",
@@ -416,7 +459,13 @@ const SS: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     width: "100%",
   },
+  addBtnToday: {
+    background: "rgba(255,255,255,0.14)",
+    border: "1px dashed rgba(255,255,255,0.34)",
+    color: "rgb(var(--warm-50))",
+  },
   deleteBtn: { background: "transparent", border: "none", color: "rgb(var(--warm-400))", cursor: "pointer", width: 24, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, padding: 0 },
+  deleteBtnToday: { color: "rgba(255,255,255,0.7)" },
 };
 
 const S: Record<string, React.CSSProperties> = {
@@ -435,19 +484,6 @@ const S: Record<string, React.CSSProperties> = {
   weekBtn: { background: "none", border: "none", cursor: "pointer", color: "rgb(var(--warm-600))", padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" },
   weekLabel: { fontSize: 13, fontWeight: 600, color: "rgb(var(--warm-700))" },
   editorialIntro: { display: "grid", gap: 12, marginBottom: 16 },
-  summaryStrip: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 },
-  summaryChip: {
-    background: "rgba(255,255,255,0.75)",
-    border: "1px solid rgb(var(--warm-200))",
-    borderRadius: "var(--radius-card)",
-    padding: "12px 10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: 3,
-    alignItems: "center",
-  },
-  summaryValue: { fontSize: 20, lineHeight: 1, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
-  summaryLabel: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", letterSpacing: "0.05em", textTransform: "uppercase" as const },
   featuredCard: {
     background: "linear-gradient(135deg, rgba(181,88,47,0.96) 0%, rgba(146,67,38,0.98) 100%)",
     borderRadius: "var(--radius-card)",
@@ -495,8 +531,9 @@ const S: Record<string, React.CSSProperties> = {
     boxShadow: "0 12px 30px rgba(71, 55, 46, 0.04)",
   },
   dayRowToday: {
-    background: "linear-gradient(180deg, rgba(243, 232, 224, 0.9) 0%, rgba(255,255,255,0.98) 100%)",
-    border: "1px solid rgb(var(--terra-200))",
+    background: "linear-gradient(180deg, rgb(var(--terra-700)) 0%, rgb(var(--terra-600)) 100%)",
+    border: "1px solid rgba(112, 48, 26, 0.22)",
+    boxShadow: "0 16px 34px rgba(112, 48, 26, 0.18)",
   },
   dayRowPast: {
     opacity: 0.82,
@@ -505,16 +542,43 @@ const S: Record<string, React.CSSProperties> = {
     filter: "saturate(0.88)",
   },
   dayHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  dayHeaderButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    width: "100%",
+    background: "transparent",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
+    textAlign: "left" as const,
+    color: "inherit",
+  },
+  dayHeaderMeta: { display: "inline-flex", alignItems: "center", gap: 8, color: "rgb(var(--warm-500))" },
   dayLabel: { display: "flex", alignItems: "center", gap: 10 },
   dayName: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase" as const, letterSpacing: "0.06em" },
-  dayNameToday: { color: "rgb(var(--terra-600))" },
+  dayNameToday: { color: "rgba(255,255,255,0.72)" },
   dayDate: { fontSize: 18, fontWeight: 700, color: "rgb(var(--warm-900))" },
+  dayDateToday: { color: "rgb(var(--warm-50))" },
   todayPill: {
     display: "inline-flex",
     alignItems: "center",
     padding: "5px 9px",
     borderRadius: "var(--radius-pill)",
-    background: "rgba(181, 88, 47, 0.12)",
+    background: "rgba(255,255,255,0.14)",
+    color: "rgb(var(--warm-50))",
+    fontSize: 11,
+    fontWeight: 700,
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+  },
+  pastPill: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "5px 9px",
+    borderRadius: "var(--radius-pill)",
+    background: "rgb(var(--terra-50))",
     color: "rgb(var(--terra-700))",
     fontSize: 11,
     fontWeight: 700,
@@ -523,7 +587,9 @@ const S: Record<string, React.CSSProperties> = {
   },
   mealSlots: { display: "flex", flexDirection: "column", gap: 10 },
   extraSection: { paddingTop: 2, marginTop: 2, borderTop: "1px solid rgb(var(--warm-100))" },
+  extraSectionToday: { borderTop: "1px solid rgba(255,255,255,0.14)" },
   extraHeading: { fontSize: 10, fontWeight: 700, color: "rgb(var(--warm-400))", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8, paddingTop: 10 },
+  extraHeadingToday: { color: "rgba(255,255,255,0.64)" },
   extraStack: { display: "flex", flexDirection: "column", gap: 6 },
   addExtraBtn: {
     marginTop: 4,
@@ -539,6 +605,11 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 6,
     padding: "7px 12px",
+  },
+  addExtraBtnToday: {
+    background: "rgba(255,255,255,0.14)",
+    border: "1px dashed rgba(255,255,255,0.34)",
+    color: "rgb(var(--warm-50))",
   },
   skeleton: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12 },
   skeletonRow: { height: 188, background: "rgb(var(--warm-100))", borderRadius: "var(--radius-card)" },
