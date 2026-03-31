@@ -85,32 +85,99 @@ function parseServings(val?: string | number): number | undefined {
   return isNaN(n) ? undefined : n;
 }
 
-function splitIngredient(raw: string): {
+function splitSharedIngredientNames(raw: string) {
+  return raw
+    .split(/,|(?:\s+and\s+)/i)
+    .map((part) => normalizeImportedText(part) || part)
+    .map((part) => part.replace(/^each\s+/i, "").trim())
+    .filter(Boolean);
+}
+
+const INGREDIENT_UNIT_PATTERN =
+  "(cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|oz|ounce|ounces|lb|pound|pounds|g|gram|grams|kg|ml|l|liter|liters|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)";
+
+function cleanIngredientName(name: string) {
+  return name
+    .replace(/^of\s+/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function splitIngredient(raw: string): Array<{
   amount?: string;
   unit?: string;
   name: string;
-} {
+}> {
+  const sharedEachMatch = raw
+    .trim()
+    .match(
+      new RegExp(
+        `^(?:up\\s+to\\s+|to\\s+)?([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/]+)?\\s*${INGREDIENT_UNIT_PATTERN}s?\\s+each\\s+(.+)$`,
+        "i"
+      )
+    );
+
+  if (sharedEachMatch) {
+    const amount = sharedEachMatch[1]?.trim();
+    const unit = sharedEachMatch[2]?.trim();
+    const names = splitSharedIngredientNames(sharedEachMatch[3]);
+
+    if (names.length > 0) {
+      return names.map((name) => ({
+        amount,
+        unit,
+        name: cleanIngredientName(name),
+      }));
+    }
+  }
+
+  const packagedMatch = raw
+    .trim()
+    .match(
+      new RegExp(
+        `^(?:up\\s+to\\s+|to\\s+)?([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/]+)\\s+([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/.-]+\\s*(?:oz|ounce|ounces|lb|lbs|pound|pounds|g|gram|grams|kg|ml|l|liter|liters))?\\s*(can|cans|package|packages|bunch|bunches|head|heads|sprig|sprigs|clove|cloves|stick|sticks)\\s+(.+)$`,
+        "i"
+      )
+    );
+
+  if (packagedMatch) {
+    const packageSize = packagedMatch[2]?.trim();
+    const packageType = packagedMatch[3]?.trim();
+    return [
+      {
+        amount: packagedMatch[1]?.trim(),
+        unit: [packageSize, packageType].filter(Boolean).join(" ").trim() || packageType,
+        name: cleanIngredientName(packagedMatch[4]?.trim() || raw.trim()),
+      },
+    ];
+  }
+
   // Try to extract leading number + unit
   const match = raw
     .trim()
     .match(
-      /^([\d\s\u00BC-\u00BE\u2150-\u215E\/]+)?\s*(cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|oz|ounce|ounces|lb|pound|pounds|g|gram|grams|kg|ml|l|liter|liters|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)s?\s+(.+)/i
+      new RegExp(
+        `^(?:up\\s+to\\s+|to\\s+)?([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/]+)?\\s*${INGREDIENT_UNIT_PATTERN}s?\\s+(.+)$`,
+        "i"
+      )
     );
 
   if (match) {
-    return {
-      amount: match[1]?.trim(),
-      unit: match[2]?.trim(),
-      name: match[3]?.trim(),
-    };
+    return [
+      {
+        amount: match[1]?.trim(),
+        unit: match[2]?.trim(),
+        name: cleanIngredientName(match[3]?.trim() || raw.trim()),
+      },
+    ];
   }
 
   const numMatch = raw.trim().match(/^([\d\s\u00BC-\u00BE\u2150-\u215E\/]+)\s+(.+)/);
   if (numMatch) {
-    return { amount: numMatch[1].trim(), name: numMatch[2].trim() };
+    return [{ amount: numMatch[1].trim(), name: cleanIngredientName(numMatch[2].trim()) }];
   }
 
-  return { name: raw.trim() };
+  return [{ name: cleanIngredientName(raw.trim()) }];
 }
 
 const SECTION_HEADER_PATTERNS = {
@@ -378,7 +445,7 @@ function extractFromJsonLd(html: string): Partial<ParsedRecipe> | null {
 
       if (!recipe) continue;
 
-      const ingredients = (recipe.recipeIngredient || []).map(
+      const ingredients = (recipe.recipeIngredient || []).flatMap(
         (raw: string) => splitIngredient(normalizeImportedText(raw) || raw)
       );
 
@@ -610,7 +677,7 @@ export function parseRecipeFromText(text: string, titleOverride?: string): Parse
   const ingredients = ingredientLines
     .map(cleanIngredientLine)
     .filter(Boolean)
-    .map((line) => splitIngredient(line));
+    .flatMap((line) => splitIngredient(line));
 
   const steps = stepLines
     .map(cleanStepLine)

@@ -186,7 +186,7 @@ export default function SharedRecipePage() {
               <h2 style={S.panelTitle}>Ingredients</h2>
               <ul style={S.list}>
                 {ingredients.map((ingredient, index) => (
-                  <li key={ingredient.id || index} style={S.listItem}>
+                  <li key={`${ingredient.id || "ingredient"}-${index}`} style={S.listItem}>
                     {[ingredient.amount, ingredient.unit, ingredient.name, ingredient.notes].filter(Boolean).join(" ")}
                   </li>
                 ))}
@@ -197,7 +197,7 @@ export default function SharedRecipePage() {
               <h2 style={S.panelTitle}>Steps</h2>
               <ol style={S.stepList}>
                 {steps.map((step, index) => (
-                  <li key={step.id || index} style={S.stepItem}>
+                  <li key={`${step.id || "step"}-${index}`} style={S.stepItem}>
                     {step.instruction}
                   </li>
                 ))}

@@ -168,6 +168,52 @@
     gap: 12px;
   }
 
+  .kitchen-plan-mobile {
+    display: grid;
+    justify-items: center;
+  }
+
+  .kitchen-plan-desktop,
+  .kitchen-planner-desktop-nav {
+    display: none !important;
+  }
+
+  .kitchen-page-header {
+    text-align: center;
+    align-items: center;
+  }
+
+  .kitchen-ideas-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .kitchen-planner-mobile-nav {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .kitchen-section {
+    order: 0;
+  }
+
+  .kitchen-section-ideas {
+    order: 1;
+  }
+
+  .kitchen-section-shared {
+    order: 2;
+  }
+
+  .kitchen-section-planner {
+    order: 3;
+  }
+
+  .kitchen-section-manage {
+    order: 4;
+  }
+
   .home-recipe-card:nth-child(n + 3) {
     display: none;
   }
@@ -280,6 +326,30 @@
 
     .kitchen-plan-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .kitchen-plan-mobile,
+    .kitchen-planner-mobile-nav {
+      display: none !important;
+    }
+
+    .kitchen-page-header {
+      text-align: left;
+      align-items: flex-start;
+    }
+
+    .kitchen-ideas-header {
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+    }
+
+    .kitchen-plan-desktop {
+      display: grid !important;
+    }
+
+    .kitchen-planner-desktop-nav {
+      display: inline-flex !important;
     }
 
     .home-recipe-card:nth-child(n + 3) {

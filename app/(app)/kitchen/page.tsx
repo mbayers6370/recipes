@@ -36,6 +36,9 @@ const IDEA_VOTES = [
 
 export default function KitchenPage() {
   const { user } = useAuth();
+  const today = new Date();
+  const currentWeekStart = startOfWeek(today);
+  const currentDayIndex = today.getDay();
   const [household, setHousehold] = useState<Household | null>(null);
   const [recipes, setRecipes] = useState<RecipeSummary[]>([]);
   const [ideas, setIdeas] = useState<HouseholdIdea[]>([]);
@@ -45,7 +48,8 @@ export default function KitchenPage() {
   const [error, setError] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [householdName, setHouseholdName] = useState("");
-  const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date()));
+  const [weekStart, setWeekStart] = useState<Date>(currentWeekStart);
+  const [selectedDay, setSelectedDay] = useState<number>(Math.min(6, Math.max(0, currentDayIndex)));
   const [pickerState, setPickerState] = useState<{ dayOfWeek: number; mealType: string } | null>(null);
   const [ideaPickerOpen, setIdeaPickerOpen] = useState(false);
 
@@ -223,6 +227,34 @@ export default function KitchenPage() {
     [recipes, ideas]
   );
   const visibleSharedRecipes = useMemo(() => recipes.slice(0, 4), [recipes]);
+  const selectedDate = addDays(weekStart, selectedDay);
+  const selectedDayItems = useMemo(
+    () => (plan?.items || []).filter((item) => item.dayOfWeek === selectedDay),
+    [plan?.items, selectedDay]
+  );
+  const isCurrentWeek =
+    weekStart.getFullYear() === currentWeekStart.getFullYear() &&
+    weekStart.getMonth() === currentWeekStart.getMonth() &&
+    weekStart.getDate() === currentWeekStart.getDate();
+  const isAtCurrentMobileDay = isCurrentWeek && selectedDay <= currentDayIndex;
+
+  const moveSelectedDay = (direction: -1 | 1) => {
+    if (direction < 0 && isAtCurrentMobileDay) {
+      return;
+    }
+    setSelectedDay((current) => {
+      const next = current + direction;
+      if (next < 0) {
+        setWeekStart((week) => addDays(week, -7));
+        return 6;
+      }
+      if (next > 6) {
+        setWeekStart((week) => addDays(week, 7));
+        return 0;
+      }
+      return next;
+    });
+  };
 
   if (loading) {
     return <div style={S.state}>Loading kitchen…</div>;
@@ -265,7 +297,7 @@ export default function KitchenPage() {
   return (
     <div style={S.page}>
       <div style={S.shell}>
-        <div style={S.header}>
+        <div style={S.header} className="kitchen-page-header">
           <div>
             <p style={S.kicker}>Shared Kitchen</p>
             <h1 style={S.title}>{household.name}</h1>
@@ -275,166 +307,8 @@ export default function KitchenPage() {
           </div>
         </div>
 
-        <section style={S.card}>
-          <div style={S.cardHeader}>
-            <div>
-              <p style={S.cardTitle}>{household.name}</p>
-              <p style={S.cardSub}>
-                {household.memberCount} of {household.memberLimit} seats filled
-              </p>
-            </div>
-            <div style={S.roleBadge}>
-              <Users size={15} strokeWidth={2.2} />
-              <span>{household.role === "owner" ? "Owner" : "Member"}</span>
-            </div>
-          </div>
-
-          <div style={S.memberList}>
-            {household.members.map((member) => (
-              <div key={member.id} style={S.memberRow}>
-                <div style={S.memberInfo}>
-                  <span style={S.memberName}>{member.displayName || member.username}</span>
-                  <span style={S.memberMeta}>{member.email}</span>
-                </div>
-                <div style={S.memberActions}>
-                  {member.role === "owner" && (
-                    <span style={S.ownerBadge}>
-                      <Crown size={12} strokeWidth={2.2} />
-                      <span>Owner</span>
-                    </span>
-                  )}
-                  {household.role === "owner" && member.id !== user?.id && (
-                    <button
-                      type="button"
-                      style={S.iconBtn}
-                      onClick={() => void runKitchenAction({ action: "remove_member", userId: member.id })}
-                      disabled={saving}
-                    >
-                      <X size={14} strokeWidth={2.2} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {household.role === "owner" && household.remainingSlots > 0 && (
-            <div style={S.inviteBlock}>
-              <div style={S.inviteLabel}>
-                <UserPlus size={15} strokeWidth={2.2} />
-                <span>Add someone by email</span>
-              </div>
-              <div style={S.formStack}>
-                <input
-                  style={S.input}
-                  type="email"
-                  placeholder="friend@example.com"
-                  value={inviteEmail}
-                  onChange={(event) => setInviteEmail(event.target.value)}
-                />
-                <button
-                  type="button"
-                  style={S.primaryBtn}
-                  onClick={() => void runKitchenAction({ action: "add_member", email: inviteEmail })}
-                  disabled={saving || !inviteEmail.trim()}
-                >
-                  Add
-                </button>
-              </div>
-            </div>
-          )}
-
-          <button
-            type="button"
-            style={S.secondaryBtn}
-            onClick={() => void runKitchenAction({ action: "leave" })}
-            disabled={saving}
-          >
-            {household.role === "owner" ? "Delete kitchen" : "Leave kitchen"}
-          </button>
-          {error && <p style={S.error}>{error}</p>}
-        </section>
-
-        <section style={S.sectionCard}>
-          <div style={S.sectionHeader}>
-            <h2 style={S.sectionTitle}>Shared Plan</h2>
-            <div style={S.weekNav}>
-              <button type="button" style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, -7))}>
-                <ArrowLeft size={16} strokeWidth={2.2} />
-              </button>
-              <span style={S.weekLabel}>{weekLabel}</span>
-              <button type="button" style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, 7))}>
-                <ArrowRight size={16} strokeWidth={2.2} />
-              </button>
-            </div>
-          </div>
-
-          <div style={S.planGrid} className="kitchen-plan-grid">
-            {DAY_NAMES.map((dayName, dayOfWeek) => {
-              const dayDate = addDays(weekStart, dayOfWeek);
-              const dayItems = (plan?.items || []).filter((item) => item.dayOfWeek === dayOfWeek);
-
-              return (
-                <div key={dayName} style={S.planDayCard}>
-                  <div style={S.planDayHeader}>
-                    <span style={S.planDayName}>{dayName}</span>
-                    <span style={S.planDayDate}>{dayDate.getDate()}</span>
-                  </div>
-                  <div style={S.planDayBody}>
-                    {KITCHEN_MEAL_TYPES.map((mealType) => {
-                      const mealItems = dayItems.filter((item) => item.mealType === mealType);
-                      return (
-                        <div key={mealType} style={S.planSlot}>
-                          <div style={S.planSlotTop}>
-                            <span style={S.planSlotLabel}>{KITCHEN_MEAL_LABELS[mealType]}</span>
-                            <button
-                              type="button"
-                              style={S.addMiniBtn}
-                              onClick={() => setPickerState({ dayOfWeek, mealType })}
-                            >
-                              <CirclePlus size={13} strokeWidth={2.2} />
-                              <span>Add</span>
-                            </button>
-                          </div>
-                          {mealItems.length > 0 ? (
-                            <div style={S.planItemStack}>
-                              {mealItems.map((item) => (
-                                <div key={item.id} style={S.planItem}>
-                                  <div style={S.planItemInfo}>
-                                    <span style={S.planItemTitle}>
-                                      {item.recipe?.title || item.note || "Planned"}
-                                    </span>
-                                    {item.createdByUser && (
-                                      <span style={S.planItemMeta}>
-                                        Added by {item.createdByUser.displayName || item.createdByUser.username}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    style={S.iconBtn}
-                                    onClick={() => void deleteKitchenPlanItem(item.id)}
-                                  >
-                                    <X size={14} strokeWidth={2.2} />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p style={S.planEmpty}>Nothing here yet.</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        <section style={S.sectionCard}>
-          <div style={S.sectionHeader}>
+        <section style={S.sectionCard} className="kitchen-section kitchen-section-ideas">
+          <div style={S.sectionHeader} className="kitchen-ideas-header">
             <div>
               <h2 style={S.sectionTitle}>Meal Ideas</h2>
               <p style={S.sectionSub}>What are we feeling this week?</p>
@@ -521,7 +395,7 @@ export default function KitchenPage() {
           )}
         </section>
 
-        <section>
+        <section style={{ marginBottom: 28 }} className="kitchen-section kitchen-section-shared">
           <div style={S.sectionHeader}>
             <h2 style={S.sectionTitle}>Shared Recipes</h2>
             <Link href="/recipes" style={S.inlineLink}>
@@ -559,6 +433,234 @@ export default function KitchenPage() {
               <p style={S.emptyHint}>Open a recipe and tap Share to send it into the kitchen.</p>
             </div>
           )}
+        </section>
+
+        <section style={S.sectionCard} className="kitchen-section kitchen-section-planner">
+          <div style={S.sectionHeader}>
+            <h2 style={S.sectionTitle}>Planner</h2>
+            <div style={S.weekNav} className="kitchen-planner-mobile-nav">
+              {isAtCurrentMobileDay ? (
+                <div style={S.weekBtnSpacer} aria-hidden="true" />
+              ) : (
+                <button type="button" style={S.weekBtn} onClick={() => moveSelectedDay(-1)}>
+                  <ArrowLeft size={16} strokeWidth={2.2} />
+                </button>
+              )}
+              <div style={S.dayFocus}>
+                <span style={S.weekLabel}>{DAY_NAMES[selectedDay]}</span>
+                <span style={S.dayFocusDate}>
+                  {selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+              </div>
+              <button type="button" style={S.weekBtn} onClick={() => moveSelectedDay(1)}>
+                <ArrowRight size={16} strokeWidth={2.2} />
+              </button>
+            </div>
+            <div style={S.weekNav} className="kitchen-planner-desktop-nav">
+              <button type="button" style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, -7))}>
+                <ArrowLeft size={16} strokeWidth={2.2} />
+              </button>
+              <span style={S.weekLabel}>{weekLabel}</span>
+              <button type="button" style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, 7))}>
+                <ArrowRight size={16} strokeWidth={2.2} />
+              </button>
+            </div>
+          </div>
+
+          <div style={S.planMobileWrap} className="kitchen-plan-mobile">
+            <div style={S.planDayCard}>
+              <div style={S.planDayBody}>
+                {KITCHEN_MEAL_TYPES.map((mealType) => {
+                  const mealItems = selectedDayItems.filter((item) => item.mealType === mealType);
+                  return (
+                    <div key={mealType} style={S.planSlot}>
+                      <div style={S.planSlotTop}>
+                        <span style={S.planSlotLabel}>{KITCHEN_MEAL_LABELS[mealType]}</span>
+                        <button
+                          type="button"
+                          style={S.addMiniBtn}
+                          onClick={() => setPickerState({ dayOfWeek: selectedDay, mealType })}
+                        >
+                          <CirclePlus size={13} strokeWidth={2.2} />
+                          <span>Add</span>
+                        </button>
+                      </div>
+                      {mealItems.length > 0 ? (
+                        <div style={S.planItemStack}>
+                          {mealItems.map((item) => (
+                            <div key={item.id} style={S.planItem}>
+                              <div style={S.planItemInfo}>
+                                <span style={S.planItemTitle}>
+                                  {item.recipe?.title || item.note || "Planned"}
+                                </span>
+                                {item.createdByUser && (
+                                  <span style={S.planItemMeta}>
+                                    Added by {item.createdByUser.displayName || item.createdByUser.username}
+                                  </span>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                style={S.iconBtn}
+                                onClick={() => void deleteKitchenPlanItem(item.id)}
+                              >
+                                <X size={14} strokeWidth={2.2} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p style={S.planEmpty}>Nothing here yet.</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <div style={S.planGrid} className="kitchen-plan-grid kitchen-plan-desktop">
+            {DAY_NAMES.map((dayName, dayOfWeek) => {
+              const dayDate = addDays(weekStart, dayOfWeek);
+              const dayItems = (plan?.items || []).filter((item) => item.dayOfWeek === dayOfWeek);
+
+              return (
+                <div key={dayName} style={S.planDayCard}>
+                  <div style={S.planDayHeader}>
+                    <span style={S.planDayName}>{dayName}</span>
+                    <span style={S.planDayDate}>{dayDate.getDate()}</span>
+                  </div>
+                  <div style={S.planDayBody}>
+                    {KITCHEN_MEAL_TYPES.map((mealType) => {
+                      const mealItems = dayItems.filter((item) => item.mealType === mealType);
+                      return (
+                        <div key={mealType} style={S.planSlot}>
+                          <div style={S.planSlotTop}>
+                            <span style={S.planSlotLabel}>{KITCHEN_MEAL_LABELS[mealType]}</span>
+                            <button
+                              type="button"
+                              style={S.addMiniBtn}
+                              onClick={() => setPickerState({ dayOfWeek, mealType })}
+                            >
+                              <CirclePlus size={13} strokeWidth={2.2} />
+                              <span>Add</span>
+                            </button>
+                          </div>
+                          {mealItems.length > 0 ? (
+                            <div style={S.planItemStack}>
+                              {mealItems.map((item) => (
+                                <div key={item.id} style={S.planItem}>
+                                  <div style={S.planItemInfo}>
+                                    <span style={S.planItemTitle}>
+                                      {item.recipe?.title || item.note || "Planned"}
+                                    </span>
+                                    {item.createdByUser && (
+                                      <span style={S.planItemMeta}>
+                                        Added by {item.createdByUser.displayName || item.createdByUser.username}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    style={S.iconBtn}
+                                    onClick={() => void deleteKitchenPlanItem(item.id)}
+                                  >
+                                    <X size={14} strokeWidth={2.2} />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p style={S.planEmpty}>Nothing here yet.</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section style={S.card} className="kitchen-section kitchen-section-manage">
+          <div style={S.cardHeader}>
+            <div>
+              <p style={S.cardTitle}>{household.name}</p>
+              <p style={S.cardSub}>
+                {household.memberCount} of {household.memberLimit} seats filled
+              </p>
+            </div>
+            <div style={S.roleBadge}>
+              <Users size={15} strokeWidth={2.2} />
+              <span>{household.role === "owner" ? "Owner" : "Member"}</span>
+            </div>
+          </div>
+
+          <div style={S.memberList}>
+            {household.members.map((member) => (
+              <div key={member.id} style={S.memberRow}>
+                <div style={S.memberInfo}>
+                  <span style={S.memberName}>{member.displayName || member.username}</span>
+                  <span style={S.memberMeta}>{member.email}</span>
+                </div>
+                <div style={S.memberActions}>
+                  {member.role === "owner" && (
+                    <span style={S.ownerBadge}>
+                      <Crown size={12} strokeWidth={2.2} />
+                      <span>Owner</span>
+                    </span>
+                  )}
+                  {household.role === "owner" && member.id !== user?.id && (
+                    <button
+                      type="button"
+                      style={S.iconBtn}
+                      onClick={() => void runKitchenAction({ action: "remove_member", userId: member.id })}
+                      disabled={saving}
+                    >
+                      <X size={14} strokeWidth={2.2} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {household.role === "owner" && household.remainingSlots > 0 && (
+            <div style={S.inviteBlock}>
+              <div style={S.inviteLabel}>
+                <UserPlus size={15} strokeWidth={2.2} />
+                <span>Add someone by email</span>
+              </div>
+              <div style={S.formStack}>
+                <input
+                  style={S.input}
+                  type="email"
+                  placeholder="friend@example.com"
+                  value={inviteEmail}
+                  onChange={(event) => setInviteEmail(event.target.value)}
+                />
+                <button
+                  type="button"
+                  style={S.primaryBtn}
+                  onClick={() => void runKitchenAction({ action: "add_member", email: inviteEmail })}
+                  disabled={saving || !inviteEmail.trim()}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          )}
+
+          <button
+            type="button"
+            style={S.secondaryBtn}
+            onClick={() => void runKitchenAction({ action: "leave" })}
+            disabled={saving}
+          >
+            {household.role === "owner" ? "Delete kitchen" : "Leave kitchen"}
+          </button>
+          {error && <p style={S.error}>{error}</p>}
         </section>
       </div>
 
@@ -665,7 +767,7 @@ export default function KitchenPage() {
 
 const S: Record<string, React.CSSProperties> = {
   page: { minHeight: "100dvh", background: "rgb(var(--warm-50))", padding: "24px 16px 40px" },
-  shell: { maxWidth: 960, margin: "0 auto" },
+  shell: { maxWidth: 960, margin: "0 auto", display: "flex", flexDirection: "column" },
   header: { marginBottom: 22 },
   kicker: { fontSize: 12, fontWeight: 700, color: "rgb(var(--terra-600))", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 },
   title: { fontSize: 34, lineHeight: 1.08, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", marginBottom: 8 },
@@ -698,9 +800,14 @@ const S: Record<string, React.CSSProperties> = {
   inlineLink: { display: "inline-flex", alignItems: "center", gap: 6, color: "rgb(var(--terra-600))", textDecoration: "none", fontSize: 14, fontWeight: 600 },
   weekNav: { display: "inline-flex", alignItems: "center", gap: 8 },
   weekBtn: { width: 32, height: 32, borderRadius: 999, border: "1px solid rgb(var(--warm-200))", background: "white", color: "rgb(var(--warm-700))", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
+  weekBtnSpacer: { width: 32, height: 32, flexShrink: 0 },
   weekLabel: { fontSize: 13, fontWeight: 700, color: "rgb(var(--warm-700))", minWidth: 120, textAlign: "center" },
+  dayFocus: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, minWidth: 0, textAlign: "center", flex: 1 },
+  dayFocusDate: { fontSize: 18, lineHeight: 1.15, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
+  dayFocusRange: { fontSize: 11, lineHeight: 1.35, color: "rgb(var(--warm-500))" },
+  planMobileWrap: { display: "grid", gap: 12, width: "100%" },
   planGrid: { display: "grid", gap: 12 },
-  planDayCard: { background: "rgb(var(--warm-50))", border: "1px solid rgb(var(--warm-100))", borderRadius: 14, padding: "12px 12px 10px" },
+  planDayCard: { width: "100%", background: "rgb(var(--warm-50))", border: "1px solid rgb(var(--warm-100))", borderRadius: 14, padding: "12px 12px 10px" },
   planDayHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
   planDayName: { fontSize: 12, fontWeight: 700, color: "rgb(var(--terra-700))", textTransform: "uppercase", letterSpacing: "0.06em" },
   planDayDate: { fontSize: 12, color: "rgb(var(--warm-500))", fontWeight: 600 },

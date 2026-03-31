@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { created, err, forbidden, serverError } from "@/lib/api-response";
 import { recipeSchema } from "@/lib/validators";
 import { setImportedRecipeTag } from "@/lib/recipe-taxonomy";
+import { normalizeRecipeIngredients } from "@/lib/ingredient-normalization";
 
 const ingestSchema = z.object({
   userIdentifier: z.string().min(1, "User identifier is required"),
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
       ...step,
       order: index,
     }));
-    const ingredients = (input.ingredients || []).map((ingredient) => ({
+    const ingredients = normalizeRecipeIngredients(input.ingredients).map((ingredient) => ({
       id: nanoid(),
       ...ingredient,
     }));

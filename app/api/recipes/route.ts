@@ -8,6 +8,7 @@ import { nanoid } from "nanoid";
 import { getRecipeType } from "@/lib/recipe-taxonomy";
 import { buildRecipeAccessWhere, getUserHouseholdId } from "@/lib/households";
 import { Prisma } from "@/app/generated/prisma/client";
+import { normalizeRecipeIngredients } from "@/lib/ingredient-normalization";
 
 export async function GET(req: NextRequest) {
   try {
@@ -172,7 +173,7 @@ export async function POST(req: NextRequest) {
       ...s,
       order: i,
     }));
-    const ingredients = (data.ingredients || []).map((ing) => ({
+    const ingredients = normalizeRecipeIngredients(data.ingredients).map((ing) => ({
       id: nanoid(),
       ...ing,
     }));

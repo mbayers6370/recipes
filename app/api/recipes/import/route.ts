@@ -4,6 +4,7 @@ import { parseRecipeFromText, parseRecipeFromUrl, RecipeImportError } from "@/li
 import { importTextSchema, importUrlSchema } from "@/lib/validators";
 import { ok, err, unauthorized, serverError } from "@/lib/api-response";
 import { ZodError } from "zod";
+import { normalizeRecipeIngredients } from "@/lib/ingredient-normalization";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,7 +16,10 @@ export async function POST(req: NextRequest) {
           return parseRecipeFromText(input.text, input.title);
         })()
       : await parseRecipeFromUrl(importUrlSchema.parse(body).url);
-    return ok(parsed);
+    return ok({
+      ...parsed,
+      ingredients: normalizeRecipeIngredients(parsed.ingredients),
+    });
   } catch (error) {
     if ((error as Error).message === "UNAUTHORIZED") return unauthorized();
     if (error instanceof ZodError) return err("Import input is invalid", 422, error.flatten().fieldErrors);

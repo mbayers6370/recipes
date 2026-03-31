@@ -58,11 +58,32 @@ export default function RecipeDetailPage() {
   };
 
   const addToGrocery = async () => {
-    await fetch("/api/grocery", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "add_from_recipe", recipeId: id, servingScale }),
-    });
+    const attemptAdd = async (confirmDuplicateAdd = false) =>
+      fetch("/api/grocery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "add_from_recipe", recipeId: id, servingScale, confirmDuplicateAdd }),
+      });
+
+    let res = await attemptAdd(false);
+
+    if (res.status === 409) {
+      const json = await res.json();
+      const overlapCount = json.details?.overlapCount;
+      const ingredientCount = json.details?.ingredientCount;
+      const confirmed = confirm(
+        overlapCount && ingredientCount
+          ? "It looks like you've already added these ingredients from this recipe to your list. Add them again?"
+          : "It looks like you've already added these ingredients from this recipe to your list. Add them again?"
+      );
+
+      if (!confirmed) return;
+      res = await attemptAdd(true);
+    }
+
+    if (!res.ok) return;
+
+    await res.json();
     setAddedToGrocery(true);
     setTimeout(() => setAddedToGrocery(false), 2500);
   };
@@ -304,7 +325,7 @@ export default function RecipeDetailPage() {
                 const amount = scaleAmountText(ing.amount, servingScale);
                 return (
                   <li
-                    key={ing.id || i}
+                    key={`${ing.id || "ingredient"}-${i}`}
                     style={{
                       ...S.ingredientItem,
                       ...(i === ingredients.length - 1 ? S.ingredientItemLast : {}),
@@ -325,7 +346,7 @@ export default function RecipeDetailPage() {
             <ol style={S.stepList} className="recipe-copy">
               {steps.map((step, i) => (
                 <li
-                  key={step.id || i}
+                  key={`${step.id || "step"}-${i}`}
                   style={{
                     ...S.stepItem,
                     ...(i === steps.length - 1 ? S.stepItemLast : {}),

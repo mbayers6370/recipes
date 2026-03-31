@@ -249,7 +249,7 @@ export default function EditRecipePage() {
         <SectionHeader title="Ingredients" />
         <div style={S.stack}>
           {ingredients.map((ingredient, index) => (
-            <div key={ingredient.id || index} style={S.card}>
+            <div key={`${ingredient.id || "ingredient"}-${index}`} style={S.card}>
               <div style={S.cardHeader}>
                 <strong style={S.cardTitle}>Ingredient {index + 1}</strong>
                 <button type="button" style={S.iconBtn} onClick={() => removeIngredient(index)}>
@@ -275,7 +275,7 @@ export default function EditRecipePage() {
         <SectionHeader title="Steps" />
         <div style={S.stack}>
           {steps.map((step, index) => (
-            <div key={step.id || index} style={S.card}>
+            <div key={`${step.id || "step"}-${index}`} style={S.card}>
               <div style={S.cardHeader}>
                 <strong style={S.cardTitle}>Step {index + 1}</strong>
                 <button type="button" style={S.iconBtn} onClick={() => removeStep(index)}>

@@ -440,7 +440,7 @@ const S: Record<string, React.CSSProperties> = {
     position: "relative",
     overflow: "hidden",
   },
-  heroContent: { position: "relative", zIndex: 1, width: "100%", maxWidth: 960, margin: "0 auto" },
+  heroContent: { position: "relative", zIndex: 1, width: "100%", maxWidth: 960, margin: "0 auto", padding: "0 16px" },
   heroTitle: {
     fontSize: 28,
     fontWeight: 700,
@@ -609,7 +609,7 @@ const S: Record<string, React.CSSProperties> = {
   },
   kitchenTitle: { fontSize: 16, fontWeight: 700, color: "rgb(var(--warm-900))" },
   kitchenSub: { fontSize: 13, lineHeight: 1.6, color: "rgb(var(--warm-500))", padding: "16px 0 0" },
-  kitchenRecipeRow: { display: "grid", gap: 10, padding: "14px 0 0", borderTop: "1px solid rgb(var(--warm-100))", marginTop: 14 },
+  kitchenRecipeRow: { display: "grid", gap: 10, padding: "14px 0 16px", borderTop: "1px solid rgb(var(--warm-100))", marginTop: 14 },
   kitchenRecipeChip: {
     display: "flex",
     alignItems: "center",
@@ -619,16 +619,16 @@ const S: Record<string, React.CSSProperties> = {
     color: "inherit",
   },
   kitchenRecipeThumb: {
-    width: 54,
-    height: 54,
+    width: 40,
+    height: 40,
     position: "relative",
-    borderRadius: 12,
+    borderRadius: 10,
     overflow: "hidden",
     background: "rgb(var(--warm-100))",
     flexShrink: 0,
   },
   kitchenRecipeImage: { objectFit: "cover" },
-  kitchenRecipeLabel: { fontSize: 14, lineHeight: 1.45, color: "rgb(var(--warm-800))", fontWeight: 600 },
+  kitchenRecipeLabel: { fontSize: 13, lineHeight: 1.4, color: "rgb(var(--warm-800))", fontWeight: 600 },
   kitchenFooterLink: {
     display: "inline-flex",
     alignItems: "center",

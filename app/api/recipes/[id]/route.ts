@@ -6,6 +6,7 @@ import { ok, err, unauthorized, forbidden, notFound, serverError } from "@/lib/a
 import { ZodError } from "zod";
 import { nanoid } from "nanoid";
 import { getAccessibleRecipe, getUserHouseholdId } from "@/lib/households";
+import { normalizeRecipeIngredients } from "@/lib/ingredient-normalization";
 
 async function getOwnedRecipe(id: string, userId: string) {
   const recipe = await prisma.recipe.findUnique({ where: { id } });
@@ -64,7 +65,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       : undefined;
 
     const ingredients = hasIngredientsUpdate && data.ingredients
-      ? data.ingredients.map((ingredient) => ({
+      ? normalizeRecipeIngredients(data.ingredients).map((ingredient) => ({
           id: ingredient.id || nanoid(),
           ...ingredient,
         }))

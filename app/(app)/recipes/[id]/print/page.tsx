@@ -49,9 +49,9 @@ export default function PrintRecipePage() {
         {ingredients.length > 0 && (
           <section style={S.section}>
             <h2 style={S.sectionTitle}>Ingredients</h2>
-            <ul style={S.ingredientList}>
-              {ingredients.map((ingredient, index) => (
-                <li key={ingredient.id || index} style={S.ingredientItem}>
+              <ul style={S.ingredientList}>
+                {ingredients.map((ingredient, index) => (
+                <li key={`${ingredient.id || "ingredient"}-${index}`} style={S.ingredientItem}>
                   {[ingredient.amount, ingredient.unit, ingredient.name].filter(Boolean).join(" ")}
                   {ingredient.notes ? ` (${ingredient.notes})` : ""}
                 </li>
@@ -63,9 +63,9 @@ export default function PrintRecipePage() {
         {steps.length > 0 && (
           <section style={S.section}>
             <h2 style={S.sectionTitle}>Steps</h2>
-            <ol style={S.stepList}>
-              {steps.map((step, index) => (
-                <li key={step.id || index} style={S.stepItem}>
+              <ol style={S.stepList}>
+                {steps.map((step, index) => (
+                <li key={`${step.id || "step"}-${index}`} style={S.stepItem}>
                   <span>{step.instruction}</span>
                   {step.timerSeconds ? (
                     <span style={S.timerNote}>Timer: {formatTimer(step.timerSeconds)}</span>

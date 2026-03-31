@@ -108,13 +108,13 @@ export function DesktopNav() {
     >
       <div
         style={{
-          maxWidth: 1120,
+          maxWidth: 960,
           margin: "0 auto",
-          padding: "14px 24px",
+          padding: "12px 18px",
           display: "grid",
           gridTemplateColumns: "1fr auto 1fr",
           alignItems: "center",
-          gap: 24,
+          gap: 16,
         }}
       >
         <Link
@@ -128,20 +128,20 @@ export function DesktopNav() {
           aria-label="abovo"
         >
           <Image
-            src="/abovo_light_charcoal.png"
+            src="/abovo_terracotta.png"
             alt="abovo"
-            width={118}
-            height={28}
+            width={84}
+            height={20}
             priority
             style={{
-              width: "118px",
+              width: "84px",
               height: "auto",
               display: "block",
             }}
           />
         </Link>
 
-        <nav style={{ display: "flex", alignItems: "center", gap: 8, justifySelf: "center" }}>
+        <nav style={{ display: "flex", alignItems: "center", gap: 6, justifySelf: "center" }}>
           {NAV_ITEMS.map(({ href, label }) => {
             const active = isActivePath(pathname, href);
             return (
@@ -151,11 +151,11 @@ export function DesktopNav() {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  padding: "10px 14px",
+                  padding: "8px 11px",
                   borderRadius: 999,
                   color: active ? "rgb(var(--terra-600))" : "rgb(var(--warm-500))",
                   textDecoration: "none",
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: active ? 600 : 500,
                   transition: "color 0.15s, background 0.15s",
                   background: active ? "rgb(var(--terra-50))" : "transparent",
@@ -176,12 +176,12 @@ export function DesktopNav() {
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              padding: "10px 14px",
+              padding: "8px 12px",
               borderRadius: 999,
               border: "1px solid rgb(var(--warm-200))",
               background: "white",
               color: "rgb(var(--warm-600))",
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: 600,
               cursor: "pointer",
               transition: "color 0.15s, border-color 0.15s, background 0.15s",

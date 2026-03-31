@@ -3,6 +3,22 @@
 import { useEffect, useState } from "react";
 import { Check, ShoppingCart, Trash2 } from "lucide-react";
 import type { GroceryList, GroceryItem } from "@/types";
+import {
+  GROCERY_SECTION_LABELS,
+  GROCERY_SECTION_ORDER,
+  getGrocerySection,
+  type GrocerySectionId,
+} from "@/lib/grocery-sections";
+import { normalizeGroceryName } from "@/lib/grocery-normalization";
+import { isMeaningfulIngredientName } from "@/lib/ingredient-normalization";
+
+function getDisplayName(name?: string | null) {
+  return normalizeGroceryName(name) || (name || "").trim();
+}
+
+function isRenderableGroceryItem(item: GroceryItem) {
+  return isMeaningfulIngredientName(item.name);
+}
 
 function sortGroceryItems(items: GroceryItem[]) {
   return [...items].sort((a, b) => {
@@ -13,12 +29,44 @@ function sortGroceryItems(items: GroceryItem[]) {
   });
 }
 
+type GrocerySortMode = "aisle" | "alpha";
+
+function sortVisibleItems(items: GroceryItem[], sortMode: GrocerySortMode) {
+  if (sortMode === "alpha") {
+    return [...items].sort((a, b) =>
+      getDisplayName(a.name).localeCompare(getDisplayName(b.name), undefined, { sensitivity: "base" })
+    );
+  }
+
+  return sortGroceryItems(items);
+}
+
+function groupItemsBySection(items: GroceryItem[]) {
+  const buckets = new Map<GrocerySectionId, GroceryItem[]>();
+
+  for (const sectionId of GROCERY_SECTION_ORDER) {
+    buckets.set(sectionId, []);
+  }
+
+  for (const item of items) {
+    const section = getGrocerySection(item.name, item.category);
+    buckets.get(section)?.push(item);
+  }
+
+  return GROCERY_SECTION_ORDER.map((sectionId) => ({
+    id: sectionId,
+    label: GROCERY_SECTION_LABELS[sectionId],
+    items: buckets.get(sectionId) || [],
+  })).filter((section) => section.items.length > 0);
+}
+
 export default function GroceryPage() {
   const [lists, setLists] = useState<GroceryList[]>([]);
   const [activeList, setActiveList] = useState<GroceryList | null>(null);
   const [loading, setLoading] = useState(true);
   const [newItem, setNewItem] = useState("");
   const [addingItem, setAddingItem] = useState(false);
+  const [sortMode, setSortMode] = useState<GrocerySortMode>("aisle");
 
   const fetchLists = async () => {
     const res = await fetch("/api/grocery");
@@ -139,8 +187,14 @@ export default function GroceryPage() {
     setActiveList(nextLists[0] || null);
   };
 
-  const unchecked = activeList?.items.filter((i) => !i.isChecked) || [];
-  const checked = activeList?.items.filter((i) => i.isChecked) || [];
+  const unchecked = sortVisibleItems(
+    activeList?.items.filter((i) => !i.isChecked && isRenderableGroceryItem(i)) || [],
+    sortMode
+  );
+  const checked = sortVisibleItems(
+    activeList?.items.filter((i) => i.isChecked && isRenderableGroceryItem(i)) || [],
+    sortMode
+  );
 
   return (
     <div style={S.page}>
@@ -190,6 +244,26 @@ export default function GroceryPage() {
             </button>
           </form>
 
+          <div style={S.sortRow}>
+            <span style={S.sortLabel}>Sort</span>
+            <div style={S.sortToggle}>
+              <button
+                type="button"
+                style={{ ...S.sortBtn, ...(sortMode === "aisle" ? S.sortBtnActive : {}) }}
+                onClick={() => setSortMode("aisle")}
+              >
+                By aisle
+              </button>
+              <button
+                type="button"
+                style={{ ...S.sortBtn, ...(sortMode === "alpha" ? S.sortBtnActive : {}) }}
+                onClick={() => setSortMode("alpha")}
+              >
+                A-Z
+              </button>
+            </div>
+          </div>
+
           {/* Items */}
           {unchecked.length === 0 && checked.length === 0 ? (
             <div style={S.emptyList}>
@@ -201,14 +275,28 @@ export default function GroceryPage() {
             <div style={S.itemsWrap}>
               {unchecked.length > 0 && (
                 <div style={S.itemGroup}>
-                  {unchecked.map((item) => (
-                    <GroceryItemRow
-                      key={item.id}
-                      item={item}
-                      onToggle={() => toggleItem(item)}
-                      onDelete={() => deleteItem(item.id)}
-                    />
-                  ))}
+                  {sortMode === "aisle"
+                    ? groupItemsBySection(unchecked).map((section) => (
+                        <div key={section.id}>
+                          <p style={S.sectionHeader}>{section.label}</p>
+                          {section.items.map((item) => (
+                            <GroceryItemRow
+                              key={item.id}
+                              item={item}
+                              onToggle={() => toggleItem(item)}
+                              onDelete={() => deleteItem(item.id)}
+                            />
+                          ))}
+                        </div>
+                      ))
+                    : unchecked.map((item) => (
+                        <GroceryItemRow
+                          key={item.id}
+                          item={item}
+                          onToggle={() => toggleItem(item)}
+                          onDelete={() => deleteItem(item.id)}
+                        />
+                      ))}
                 </div>
               )}
 
@@ -216,14 +304,28 @@ export default function GroceryPage() {
                 <>
                   <p style={S.checkedHeader}>Checked ({checked.length})</p>
                   <div style={{ ...S.itemGroup, opacity: 0.55 }}>
-                    {checked.map((item) => (
-                      <GroceryItemRow
-                        key={item.id}
-                        item={item}
-                        onToggle={() => toggleItem(item)}
-                        onDelete={() => deleteItem(item.id)}
-                      />
-                    ))}
+                    {sortMode === "aisle"
+                      ? groupItemsBySection(checked).map((section) => (
+                          <div key={section.id}>
+                            <p style={S.sectionHeader}>{section.label}</p>
+                            {section.items.map((item) => (
+                              <GroceryItemRow
+                                key={item.id}
+                                item={item}
+                                onToggle={() => toggleItem(item)}
+                                onDelete={() => deleteItem(item.id)}
+                              />
+                            ))}
+                          </div>
+                        ))
+                      : checked.map((item) => (
+                          <GroceryItemRow
+                            key={item.id}
+                            item={item}
+                            onToggle={() => toggleItem(item)}
+                            onDelete={() => deleteItem(item.id)}
+                          />
+                        ))}
                   </div>
                 </>
               )}
@@ -244,11 +346,13 @@ function GroceryItemRow({
   onToggle: () => void;
   onDelete: () => void;
 }) {
+  const displayName = getDisplayName(item.name);
+
   return (
     <div style={{ ...IS.row, ...(item.isChecked ? IS.rowChecked : {}) }}>
       <button
         type="button"
-        aria-label={`Toggle ${item.name}`}
+        aria-label={`Toggle ${displayName}`}
         style={{ ...IS.check, ...(item.isChecked ? IS.checkDone : {}) }}
         onClick={onToggle}
       >
@@ -256,7 +360,7 @@ function GroceryItemRow({
       </button>
       <div style={IS.info}>
         <span style={{ ...IS.name, ...(item.isChecked ? IS.nameChecked : {}) }}>
-          {item.name}
+          {displayName}
         </span>
         {(item.amount || item.unit) && (
           <span style={IS.amount}>
@@ -265,7 +369,7 @@ function GroceryItemRow({
         )}
       </div>
       {item.category && <span style={IS.cat}>{item.category}</span>}
-      <button type="button" aria-label={`Delete ${item.name}`} style={IS.deleteBtn} onClick={onDelete}>
+      <button type="button" aria-label={`Delete ${displayName}`} style={IS.deleteBtn} onClick={onDelete}>
         <Trash2 size={14} strokeWidth={2.1} />
       </button>
     </div>
@@ -334,8 +438,14 @@ const S: Record<string, React.CSSProperties> = {
   addForm: { display: "flex", gap: 8, marginBottom: 16, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: 16, padding: 10 },
   addInput: { flex: 1, border: "1.5px solid rgb(var(--warm-200))", borderRadius: 10, padding: "11px 14px", fontSize: 14, background: "white", outline: "none", color: "rgb(var(--warm-900))" },
   addBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: 10, padding: "11px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  sortRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" },
+  sortLabel: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase", letterSpacing: "0.06em" },
+  sortToggle: { display: "inline-flex", alignItems: "center", gap: 6, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: 999, padding: 4 },
+  sortBtn: { border: "none", background: "transparent", color: "rgb(var(--warm-500))", borderRadius: 999, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  sortBtnActive: { background: "rgb(var(--terra-50))", color: "rgb(var(--terra-700))" },
   itemsWrap: { background: "white", borderRadius: 18, border: "1px solid rgb(var(--warm-200))", overflow: "hidden" },
   itemGroup: {},
+  sectionHeader: { fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-700))", textTransform: "uppercase", padding: "14px 14px 6px", letterSpacing: "0.06em", background: "rgba(243, 232, 224, 0.38)" },
   checkedHeader: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-400))", textTransform: "uppercase", padding: "10px 14px 6px", letterSpacing: "0.05em" },
   emptyList: { textAlign: "center", padding: "40px 20px", background: "white", borderRadius: 18, border: "1px solid rgb(var(--warm-200))" },
 };
