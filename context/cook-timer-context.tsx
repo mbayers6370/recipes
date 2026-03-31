@@ -175,6 +175,7 @@ export function CookTimerProvider({ children }: { children: React.ReactNode }) {
   const [timers, setTimers] = useState<Record<string, CookTimer>>({});
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [hydrated, setHydrated] = useState(false);
+  const [nowTick, setNowTick] = useState(() => Date.now());
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
@@ -229,6 +230,10 @@ export function CookTimerProvider({ children }: { children: React.ReactNode }) {
     const runningTimers = Object.values(timers).filter((timer) => timer.running);
     if (runningTimers.length === 0) return;
 
+    const tickerId = window.setInterval(() => {
+      setNowTick(Date.now());
+    }, 250);
+
     const intervalId = window.setInterval(() => {
       const now = Date.now();
       const expiredTimers = Object.values(timers).filter(
@@ -261,6 +266,7 @@ export function CookTimerProvider({ children }: { children: React.ReactNode }) {
     }, 500);
 
     return () => {
+      window.clearInterval(tickerId);
       window.clearInterval(intervalId);
     };
   }, [soundEnabled, timers]);
@@ -271,15 +277,15 @@ export function CookTimerProvider({ children }: { children: React.ReactNode }) {
 
     return {
       ...timer,
-      remainingSeconds: getRemainingSeconds(timer),
+      remainingSeconds: getRemainingSeconds(timer, nowTick),
     };
-  }, [timers]);
+  }, [nowTick, timers]);
 
   const getTimerSeconds = useCallback((recipeId: string, stepIndex: number) => {
     const timer = timers[getTimerKey(recipeId, stepIndex)];
     if (!timer) return undefined;
-    return getRemainingSeconds(timer);
-  }, [timers]);
+    return getRemainingSeconds(timer, nowTick);
+  }, [nowTick, timers]);
 
   const startTimer = useCallback((input: StartCookTimerInput) => {
     const key = getTimerKey(input.recipeId, input.stepIndex);
