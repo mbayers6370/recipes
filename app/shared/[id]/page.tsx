@@ -60,9 +60,9 @@ export async function generateMetadata({
   }
 
   const ownerLabel = recipe.user?.displayName || recipe.user?.username || "abovo";
-  const title = `${recipe.title} — abovo`;
+  const title = recipe.title;
   const description =
-    recipe.description?.trim() || `Shared from abovo by ${ownerLabel}.`;
+    recipe.description?.trim() || `Save this recipe from abovo. Shared by ${ownerLabel}.`;
   const image = resolveSocialImage(recipe.imageUrl);
   const url = `${appUrl}/shared/${id}`;
 
@@ -73,6 +73,8 @@ export async function generateMetadata({
       url,
       title,
       description,
+      siteName: "abovo",
+      type: "article",
       images: [
         {
           url: image,

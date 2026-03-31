@@ -17,7 +17,7 @@ export async function proxy(req: NextRequest) {
 
   // Allow public paths, static assets, and Next.js internals
   const isPublic =
-    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "?")) ||
+    PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p + "?")) ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/icons") ||
     pathname.startsWith("/manifest") ||
