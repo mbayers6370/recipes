@@ -1,17 +1,62 @@
-# ab ovo
+# abovo
 
-`ab ovo` is a recipe app for saving recipes, planning meals, building grocery lists, and cooking from a clean step-by-step view.
+abovo is a recipe app for capturing recipes from anywhere, planning meals for the week, building a grocery list that is actually useful in the store, and cooking from a clean step-by-step view.
 
-It is built with Next.js, Prisma, PostgreSQL, and a small PWA layer so it can be installed on a phone.
+It is built for real kitchen flow:
 
-## Features
+- import recipes from URLs, pasted text, and photos or screenshots
+- organize recipes into folders like breakfast, dinner, snack, and dessert
+- plan meals by day and meal type
+- turn recipes into a normalized grocery list with aisle-aware sorting
+- cook in a focused step view with inline timers
+- share recipes into a shared kitchen for family or household planning
+- install the app on your phone like a lightweight web app
 
-- Save recipes and organize them by type
-- Import recipes from URLs, pasted text, and screenshots
-- Plan meals by day and meal type
-- Add recipe ingredients to a grocery list
-- Use cook mode with inline step timers
-- Install the app on iPhone or Android
+## What abovo does
+
+abovo is designed to cover the whole path from finding a recipe to making dinner:
+
+1. Save or import a recipe
+2. Clean up and organize it
+3. Add it to a meal plan
+4. Send ingredients to the grocery list
+5. Cook from a simplified recipe screen
+
+## Core Features
+
+- Recipe import from links, pasted text, and screenshots
+- Recipe editing, foldering, notes, and export
+- Step-by-step cook mode with inline timers
+- Weekly meal planning
+- Grocery list merging, normalization, and aisle grouping
+- Shared kitchen with meal ideas, shared recipes, and collaborative planning
+- Mobile-friendly installable PWA experience
+
+## Screenshots
+
+### Home Dashboard
+
+![abovo home dashboard](./public/readme-home-dashboard.png)
+
+### Recipes
+
+![abovo recipes page](./public/readme-recipes.png)
+
+### Shared Kitchen
+
+![abovo shared kitchen page](./public/readme-shared-kitchen.png)
+
+### Meal Plan
+
+![abovo meal plan page](./public/readme-meal-plan.png)
+
+### Grocery
+
+![abovo grocery page](./public/readme-grocery.png)
+
+### Profile
+
+![abovo profile page](./public/readme-profile.png)
 
 ## Tech Stack
 
@@ -36,9 +81,14 @@ npm install
 cp .env.example .env
 ```
 
-3. Fill in your database URL and JWT secrets in `.env`
+3. Fill in your local values:
 
-4. Run migrations
+- `DATABASE_URL`
+- `JWT_ACCESS_SECRET`
+- `JWT_REFRESH_SECRET`
+- `NEXT_PUBLIC_APP_URL`
+
+4. Run the database migrations
 
 ```bash
 npm run db:migrate
@@ -69,15 +119,16 @@ npm run db:studio
 
 ```text
 app/
-  (app)/        Authenticated pages
+  (app)/        Authenticated product pages
   (auth)/       Login and signup
   api/          API route handlers
   offline/      Offline fallback page
-components/     Shared components
-context/        React context providers
-lib/            Helpers, parsers, auth, validators
+components/     Shared UI and layout components
+context/        React providers
+lib/            Auth, parsing, grocery, utilities
 prisma/         Schema and migrations
-public/         Static and PWA assets
+public/         Static assets, icons, PWA files
+scripts/        Data cleanup and maintenance scripts
 types/          Shared TypeScript types
 ```
 
@@ -92,10 +143,11 @@ Vercel is the easiest deployment target for this project.
 
 ## Notes
 
-- PWA install support is configured in `public/manifest.json` and `public/sw.js`
 - Auth uses cookie-based access and refresh tokens
-- Imported recipes are normalized into local app data so the app does not depend on third-party websites at read time
+- Imported recipes are normalized into local app data instead of depending on the source website at read time
+- Grocery items are normalized for cleaner display and smarter grouping
+- The app supports install-to-home-screen on iPhone and Android
 
 ## Setup Guide
 
-For the full setup flow, environment variable details, and deployment notes, see [SETUP.md](./SETUP.md).
+For the full environment setup, deployment flow, and local development details, see [SETUP.md](./SETUP.md).
