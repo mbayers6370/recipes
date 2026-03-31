@@ -149,8 +149,8 @@ export default function HomePage() {
           {todayItems.length > 0 ? (
             <div style={S.planCard}>
               <div style={S.cardSectionHeader} className="home-plan-header">
-                <h2 style={S.sectionTitleOnTerracotta} className="home-plan-title">Planner</h2>
-                <Link href="/plan" style={S.seeAllOnTerracotta} className="home-plan-link">
+                <h2 style={S.sectionTitle} className="home-plan-title">Today</h2>
+                <Link href="/plan" style={S.seeAll} className="home-plan-link">
                   <span>Planner</span>
                   <ArrowRight size={14} strokeWidth={2.2} />
                 </Link>
@@ -177,8 +177,8 @@ export default function HomePage() {
           ) : (
             <div style={S.emptyCard}>
               <div style={S.cardSectionHeader} className="home-plan-header">
-                <h2 style={S.sectionTitleOnTerracotta} className="home-plan-title">Planner</h2>
-                <Link href="/plan" style={S.seeAllOnTerracotta} className="home-plan-link">
+                <h2 style={S.sectionTitle} className="home-plan-title">Today</h2>
+                <Link href="/plan" style={S.seeAll} className="home-plan-link">
                   <span>Planner</span>
                   <ArrowRight size={14} strokeWidth={2.2} />
                 </Link>
@@ -512,12 +512,12 @@ const S: Record<string, React.CSSProperties> = {
 
   // Plan
   planCard: {
-    background: "linear-gradient(180deg, rgb(var(--terra-700)) 0%, rgb(var(--terra-600)) 100%)",
+    background: "white",
     borderRadius: "var(--radius-card)",
-    border: "1px solid rgba(112, 48, 26, 0.22)",
+    border: "2px dashed rgba(181, 88, 47, 0.42)",
     overflow: "hidden",
     padding: 14,
-    boxShadow: "0 16px 34px rgba(112, 48, 26, 0.18)",
+    boxShadow: "0 12px 26px rgba(112, 48, 26, 0.08)",
   },
   cardSectionHeader: {
     display: "flex",
@@ -526,7 +526,7 @@ const S: Record<string, React.CSSProperties> = {
     gap: 12,
     paddingBottom: 12,
     marginBottom: 12,
-    borderBottom: "1px solid rgba(255,255,255,0.16)",
+    borderBottom: "1px solid rgba(181, 88, 47, 0.22)",
   },
   cardSectionHeaderTerracotta: {
     display: "flex",
@@ -557,8 +557,8 @@ const S: Record<string, React.CSSProperties> = {
     marginBottom: 12,
   },
   planHeaderLabel: { display: "flex", alignItems: "center", gap: 10 },
-  planToday: { fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.72)", textTransform: "uppercase", letterSpacing: "0.06em" },
-  planDate: { fontSize: 12, color: "rgba(255,255,255,0.84)", fontWeight: 600 },
+  planToday: { fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-700))", textTransform: "uppercase", letterSpacing: "0.06em" },
+  planDate: { fontSize: 12, color: "rgb(var(--warm-500))", fontWeight: 600 },
   planRow: {
     display: "grid",
     gridTemplateColumns: "72px 1fr",
@@ -566,36 +566,36 @@ const S: Record<string, React.CSSProperties> = {
     alignItems: "start",
     padding: "0 0 10px",
   },
-  planRowDivider: { borderTop: "1px solid rgba(255,255,255,0.14)", paddingTop: 10 },
-  planDay: { fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.72)", paddingTop: 10 },
+  planRowDivider: { borderTop: "1px solid rgba(181, 88, 47, 0.16)", paddingTop: 10 },
+  planDay: { fontSize: 11, fontWeight: 600, color: "rgb(var(--warm-500))", paddingTop: 10 },
   planRowCard: {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    background: "rgba(255,255,255,0.14)",
-    border: "1px solid rgba(255,255,255,0.12)",
+    background: "rgb(var(--warm-50))",
+    border: "1px solid rgba(181, 88, 47, 0.12)",
     borderRadius: "var(--radius-card-inner)",
     padding: "8px 10px",
     minWidth: 0,
-    backdropFilter: "blur(2px)",
   },
   planMealWrap: { flex: 1, minWidth: 0 },
-  planMeal: { fontSize: 13, color: "rgba(255,255,255,0.96)", fontWeight: 500, lineHeight: 1.4 },
+  planMeal: { fontSize: 13, color: "rgb(var(--warm-800))", fontWeight: 500, lineHeight: 1.4 },
   cookBtn: {
     fontSize: 12,
-    color: "rgb(var(--warm-50))",
+    color: "rgb(var(--terra-700))",
     textDecoration: "none",
     fontWeight: 700,
-    background: "rgba(255,255,255,0.14)",
+    background: "rgb(var(--terra-50))",
     padding: "4px 8px",
     borderRadius: 999,
     flexShrink: 0,
+    border: "1px solid rgba(181, 88, 47, 0.16)",
   },
 
   // Section
   sectionHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
-  seeAll: { fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
+  seeAll: { fontSize: 13, color: "rgb(var(--terra-600))", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
   sectionTitleOnTerracotta: { fontSize: 18, fontWeight: 700, color: "rgb(var(--warm-50))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
   seeAllOnTerracotta: { fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
   kitchenPanel: {
@@ -716,9 +716,9 @@ const S: Record<string, React.CSSProperties> = {
   recipeGrid: { display: "grid", gap: 12 },
   loadingGrid: { display: "grid", gap: 12 },
   savedPanel: {
-    background: "white",
+    background: "rgb(var(--warm-50))",
     borderRadius: "var(--radius-card-inner)",
-    border: "1px solid rgb(var(--warm-100))",
+    border: "1px solid rgb(var(--warm-200))",
     padding: "16px",
   },
   recipeCard: {
@@ -750,19 +750,19 @@ const S: Record<string, React.CSSProperties> = {
 
   // Empty
   emptyCard: {
-    background: "linear-gradient(180deg, rgb(var(--terra-700)) 0%, rgb(var(--terra-600)) 100%)",
+    background: "rgb(var(--warm-50))",
     borderRadius: "var(--radius-card-inner)",
     padding: "16px 20px 28px",
     textAlign: "center",
-    border: "1px solid rgba(112, 48, 26, 0.22)",
-    boxShadow: "0 16px 34px rgba(112, 48, 26, 0.18)",
+    border: "2px dashed rgba(181, 88, 47, 0.42)",
+    boxShadow: "0 12px 26px rgba(112, 48, 26, 0.08)",
   },
   savedEmptyState: {
     padding: "12px 4px 4px",
     textAlign: "center",
   },
-  emptyText: { fontSize: 14, color: "rgba(255,255,255,0.8)", marginBottom: 10 },
-  emptyLink: { fontSize: 14, color: "rgb(var(--warm-50))", fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 },
+  emptyText: { fontSize: 14, color: "rgb(var(--warm-500))", marginBottom: 10 },
+  emptyLink: { fontSize: 14, color: "rgb(var(--terra-600))", fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 },
   floatingPrimary: {
     background: "rgb(var(--terra-600))",
     color: "white",

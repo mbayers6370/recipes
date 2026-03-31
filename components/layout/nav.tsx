@@ -166,6 +166,8 @@ export function DesktopNav() {
                   textDecoration: "none",
                   fontSize: 13,
                   fontWeight: active ? 600 : 500,
+                  fontFamily: "var(--font-serif)",
+                  letterSpacing: "var(--tracking-display)",
                   transition: "color 0.15s, background 0.15s",
                   background: active ? "rgb(var(--terra-50))" : "transparent",
                 }}
@@ -186,17 +188,19 @@ export function DesktopNav() {
               alignItems: "center",
               gap: 8,
               padding: "8px 12px",
-              borderRadius: 999,
+              borderRadius: "var(--radius-card-inner)",
               border: "1px solid rgb(var(--warm-200))",
               background: "white",
               color: "rgb(var(--warm-600))",
               fontSize: 13,
-              fontWeight: 600,
+              fontWeight: 500,
+              fontFamily: "var(--font-serif)",
+              letterSpacing: "var(--tracking-display)",
               cursor: "pointer",
               transition: "color 0.15s, border-color 0.15s, background 0.15s",
             }}
           >
-            <LogOut size={16} strokeWidth={2.1} />
+            <LogOut size={16} strokeWidth={1.7} />
             <span>Sign out</span>
           </button>
         </div>
