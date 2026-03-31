@@ -58,6 +58,26 @@ export type MealPlanItem = Prisma.MealPlanItemModel
  */
 export type GroceryList = Prisma.GroceryListModel
 /**
+ * Model HouseholdPlan
+ * 
+ */
+export type HouseholdPlan = Prisma.HouseholdPlanModel
+/**
+ * Model HouseholdPlanItem
+ * 
+ */
+export type HouseholdPlanItem = Prisma.HouseholdPlanItemModel
+/**
+ * Model HouseholdIdea
+ * 
+ */
+export type HouseholdIdea = Prisma.HouseholdIdeaModel
+/**
+ * Model HouseholdIdeaVote
+ * 
+ */
+export type HouseholdIdeaVote = Prisma.HouseholdIdeaVoteModel
+/**
  * Model GroceryItem
  * 
  */

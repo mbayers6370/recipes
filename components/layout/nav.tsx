@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { BookOpen, CalendarDays, Home, LogOut, ShoppingBasket, UserRound } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
@@ -20,10 +21,33 @@ function isActivePath(pathname: string, href: string) {
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [isStandalone, setIsStandalone] = useState(false);
+
+  useEffect(() => {
+    const updateStandalone = () => {
+      const displayModeStandalone =
+        typeof window !== "undefined" &&
+        window.matchMedia("(display-mode: standalone)").matches;
+      const iosStandalone =
+        typeof window !== "undefined" &&
+        "standalone" in window.navigator &&
+        Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+
+      setIsStandalone(displayModeStandalone || iosStandalone);
+    };
+
+    updateStandalone();
+    window.addEventListener("resize", updateStandalone);
+
+    return () => {
+      window.removeEventListener("resize", updateStandalone);
+    };
+  }, []);
 
   return (
     <nav
       className="mobile-bottom-nav"
+      data-standalone={isStandalone ? "true" : "false"}
       style={{
         position: "fixed",
         bottom: 0,
@@ -32,7 +56,10 @@ export function BottomNav() {
         zIndex: 50,
         background: "white",
         borderTop: "1px solid rgb(var(--warm-200))",
-        paddingBottom: "max(10px, env(safe-area-inset-bottom))",
+        paddingBottom: isStandalone
+          ? "max(12px, env(safe-area-inset-bottom))"
+          : "max(6px, env(safe-area-inset-bottom))",
+        transform: "translateZ(0)",
       }}
     >
       {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -47,7 +74,7 @@ export function BottomNav() {
               flexDirection: "column",
               alignItems: "center",
               gap: "5px",
-              padding: "12px 4px 14px",
+              padding: isStandalone ? "12px 4px 14px" : "9px 4px 10px",
               color: active ? "rgb(var(--terra-600))" : "rgb(var(--warm-500))",
               textDecoration: "none",
               transition: "color 0.15s",

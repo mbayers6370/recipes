@@ -185,6 +185,8 @@ export type HouseholdWhereInput = {
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   members?: Prisma.HouseholdMemberListRelationFilter
   recipes?: Prisma.RecipeListRelationFilter
+  plans?: Prisma.HouseholdPlanListRelationFilter
+  ideas?: Prisma.HouseholdIdeaListRelationFilter
 }
 
 export type HouseholdOrderByWithRelationInput = {
@@ -196,6 +198,8 @@ export type HouseholdOrderByWithRelationInput = {
   owner?: Prisma.UserOrderByWithRelationInput
   members?: Prisma.HouseholdMemberOrderByRelationAggregateInput
   recipes?: Prisma.RecipeOrderByRelationAggregateInput
+  plans?: Prisma.HouseholdPlanOrderByRelationAggregateInput
+  ideas?: Prisma.HouseholdIdeaOrderByRelationAggregateInput
 }
 
 export type HouseholdWhereUniqueInput = Prisma.AtLeast<{
@@ -210,6 +214,8 @@ export type HouseholdWhereUniqueInput = Prisma.AtLeast<{
   owner?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
   members?: Prisma.HouseholdMemberListRelationFilter
   recipes?: Prisma.RecipeListRelationFilter
+  plans?: Prisma.HouseholdPlanListRelationFilter
+  ideas?: Prisma.HouseholdIdeaListRelationFilter
 }, "id">
 
 export type HouseholdOrderByWithAggregationInput = {
@@ -242,6 +248,8 @@ export type HouseholdCreateInput = {
   owner: Prisma.UserCreateNestedOneWithoutOwnedHouseholdsInput
   members?: Prisma.HouseholdMemberCreateNestedManyWithoutHouseholdInput
   recipes?: Prisma.RecipeCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaCreateNestedManyWithoutHouseholdInput
 }
 
 export type HouseholdUncheckedCreateInput = {
@@ -252,6 +260,8 @@ export type HouseholdUncheckedCreateInput = {
   updatedAt?: Date | string
   members?: Prisma.HouseholdMemberUncheckedCreateNestedManyWithoutHouseholdInput
   recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanUncheckedCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaUncheckedCreateNestedManyWithoutHouseholdInput
 }
 
 export type HouseholdUpdateInput = {
@@ -262,6 +272,8 @@ export type HouseholdUpdateInput = {
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedHouseholdsNestedInput
   members?: Prisma.HouseholdMemberUpdateManyWithoutHouseholdNestedInput
   recipes?: Prisma.RecipeUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUpdateManyWithoutHouseholdNestedInput
 }
 
 export type HouseholdUncheckedUpdateInput = {
@@ -272,6 +284,8 @@ export type HouseholdUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.HouseholdMemberUncheckedUpdateManyWithoutHouseholdNestedInput
   recipes?: Prisma.RecipeUncheckedUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUncheckedUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUncheckedUpdateManyWithoutHouseholdNestedInput
 }
 
 export type HouseholdCreateManyInput = {
@@ -413,6 +427,34 @@ export type HouseholdUpdateOneWithoutRecipesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.HouseholdUpdateToOneWithWhereWithoutRecipesInput, Prisma.HouseholdUpdateWithoutRecipesInput>, Prisma.HouseholdUncheckedUpdateWithoutRecipesInput>
 }
 
+export type HouseholdCreateNestedOneWithoutPlansInput = {
+  create?: Prisma.XOR<Prisma.HouseholdCreateWithoutPlansInput, Prisma.HouseholdUncheckedCreateWithoutPlansInput>
+  connectOrCreate?: Prisma.HouseholdCreateOrConnectWithoutPlansInput
+  connect?: Prisma.HouseholdWhereUniqueInput
+}
+
+export type HouseholdUpdateOneRequiredWithoutPlansNestedInput = {
+  create?: Prisma.XOR<Prisma.HouseholdCreateWithoutPlansInput, Prisma.HouseholdUncheckedCreateWithoutPlansInput>
+  connectOrCreate?: Prisma.HouseholdCreateOrConnectWithoutPlansInput
+  upsert?: Prisma.HouseholdUpsertWithoutPlansInput
+  connect?: Prisma.HouseholdWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.HouseholdUpdateToOneWithWhereWithoutPlansInput, Prisma.HouseholdUpdateWithoutPlansInput>, Prisma.HouseholdUncheckedUpdateWithoutPlansInput>
+}
+
+export type HouseholdCreateNestedOneWithoutIdeasInput = {
+  create?: Prisma.XOR<Prisma.HouseholdCreateWithoutIdeasInput, Prisma.HouseholdUncheckedCreateWithoutIdeasInput>
+  connectOrCreate?: Prisma.HouseholdCreateOrConnectWithoutIdeasInput
+  connect?: Prisma.HouseholdWhereUniqueInput
+}
+
+export type HouseholdUpdateOneRequiredWithoutIdeasNestedInput = {
+  create?: Prisma.XOR<Prisma.HouseholdCreateWithoutIdeasInput, Prisma.HouseholdUncheckedCreateWithoutIdeasInput>
+  connectOrCreate?: Prisma.HouseholdCreateOrConnectWithoutIdeasInput
+  upsert?: Prisma.HouseholdUpsertWithoutIdeasInput
+  connect?: Prisma.HouseholdWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.HouseholdUpdateToOneWithWhereWithoutIdeasInput, Prisma.HouseholdUpdateWithoutIdeasInput>, Prisma.HouseholdUncheckedUpdateWithoutIdeasInput>
+}
+
 export type HouseholdCreateWithoutOwnerInput = {
   id?: string
   name: string
@@ -420,6 +462,8 @@ export type HouseholdCreateWithoutOwnerInput = {
   updatedAt?: Date | string
   members?: Prisma.HouseholdMemberCreateNestedManyWithoutHouseholdInput
   recipes?: Prisma.RecipeCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaCreateNestedManyWithoutHouseholdInput
 }
 
 export type HouseholdUncheckedCreateWithoutOwnerInput = {
@@ -429,6 +473,8 @@ export type HouseholdUncheckedCreateWithoutOwnerInput = {
   updatedAt?: Date | string
   members?: Prisma.HouseholdMemberUncheckedCreateNestedManyWithoutHouseholdInput
   recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanUncheckedCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaUncheckedCreateNestedManyWithoutHouseholdInput
 }
 
 export type HouseholdCreateOrConnectWithoutOwnerInput = {
@@ -475,6 +521,8 @@ export type HouseholdCreateWithoutMembersInput = {
   updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedHouseholdsInput
   recipes?: Prisma.RecipeCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaCreateNestedManyWithoutHouseholdInput
 }
 
 export type HouseholdUncheckedCreateWithoutMembersInput = {
@@ -484,6 +532,8 @@ export type HouseholdUncheckedCreateWithoutMembersInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanUncheckedCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaUncheckedCreateNestedManyWithoutHouseholdInput
 }
 
 export type HouseholdCreateOrConnectWithoutMembersInput = {
@@ -509,6 +559,8 @@ export type HouseholdUpdateWithoutMembersInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedHouseholdsNestedInput
   recipes?: Prisma.RecipeUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUpdateManyWithoutHouseholdNestedInput
 }
 
 export type HouseholdUncheckedUpdateWithoutMembersInput = {
@@ -518,6 +570,8 @@ export type HouseholdUncheckedUpdateWithoutMembersInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   recipes?: Prisma.RecipeUncheckedUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUncheckedUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUncheckedUpdateManyWithoutHouseholdNestedInput
 }
 
 export type HouseholdCreateWithoutRecipesInput = {
@@ -527,6 +581,8 @@ export type HouseholdCreateWithoutRecipesInput = {
   updatedAt?: Date | string
   owner: Prisma.UserCreateNestedOneWithoutOwnedHouseholdsInput
   members?: Prisma.HouseholdMemberCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaCreateNestedManyWithoutHouseholdInput
 }
 
 export type HouseholdUncheckedCreateWithoutRecipesInput = {
@@ -536,6 +592,8 @@ export type HouseholdUncheckedCreateWithoutRecipesInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   members?: Prisma.HouseholdMemberUncheckedCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanUncheckedCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaUncheckedCreateNestedManyWithoutHouseholdInput
 }
 
 export type HouseholdCreateOrConnectWithoutRecipesInput = {
@@ -561,6 +619,8 @@ export type HouseholdUpdateWithoutRecipesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedHouseholdsNestedInput
   members?: Prisma.HouseholdMemberUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUpdateManyWithoutHouseholdNestedInput
 }
 
 export type HouseholdUncheckedUpdateWithoutRecipesInput = {
@@ -570,6 +630,128 @@ export type HouseholdUncheckedUpdateWithoutRecipesInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.HouseholdMemberUncheckedUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUncheckedUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUncheckedUpdateManyWithoutHouseholdNestedInput
+}
+
+export type HouseholdCreateWithoutPlansInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  owner: Prisma.UserCreateNestedOneWithoutOwnedHouseholdsInput
+  members?: Prisma.HouseholdMemberCreateNestedManyWithoutHouseholdInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaCreateNestedManyWithoutHouseholdInput
+}
+
+export type HouseholdUncheckedCreateWithoutPlansInput = {
+  id?: string
+  name: string
+  ownerId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.HouseholdMemberUncheckedCreateNestedManyWithoutHouseholdInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutHouseholdInput
+  ideas?: Prisma.HouseholdIdeaUncheckedCreateNestedManyWithoutHouseholdInput
+}
+
+export type HouseholdCreateOrConnectWithoutPlansInput = {
+  where: Prisma.HouseholdWhereUniqueInput
+  create: Prisma.XOR<Prisma.HouseholdCreateWithoutPlansInput, Prisma.HouseholdUncheckedCreateWithoutPlansInput>
+}
+
+export type HouseholdUpsertWithoutPlansInput = {
+  update: Prisma.XOR<Prisma.HouseholdUpdateWithoutPlansInput, Prisma.HouseholdUncheckedUpdateWithoutPlansInput>
+  create: Prisma.XOR<Prisma.HouseholdCreateWithoutPlansInput, Prisma.HouseholdUncheckedCreateWithoutPlansInput>
+  where?: Prisma.HouseholdWhereInput
+}
+
+export type HouseholdUpdateToOneWithWhereWithoutPlansInput = {
+  where?: Prisma.HouseholdWhereInput
+  data: Prisma.XOR<Prisma.HouseholdUpdateWithoutPlansInput, Prisma.HouseholdUncheckedUpdateWithoutPlansInput>
+}
+
+export type HouseholdUpdateWithoutPlansInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner?: Prisma.UserUpdateOneRequiredWithoutOwnedHouseholdsNestedInput
+  members?: Prisma.HouseholdMemberUpdateManyWithoutHouseholdNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUpdateManyWithoutHouseholdNestedInput
+}
+
+export type HouseholdUncheckedUpdateWithoutPlansInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.HouseholdMemberUncheckedUpdateManyWithoutHouseholdNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUncheckedUpdateManyWithoutHouseholdNestedInput
+}
+
+export type HouseholdCreateWithoutIdeasInput = {
+  id?: string
+  name: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  owner: Prisma.UserCreateNestedOneWithoutOwnedHouseholdsInput
+  members?: Prisma.HouseholdMemberCreateNestedManyWithoutHouseholdInput
+  recipes?: Prisma.RecipeCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanCreateNestedManyWithoutHouseholdInput
+}
+
+export type HouseholdUncheckedCreateWithoutIdeasInput = {
+  id?: string
+  name: string
+  ownerId: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  members?: Prisma.HouseholdMemberUncheckedCreateNestedManyWithoutHouseholdInput
+  recipes?: Prisma.RecipeUncheckedCreateNestedManyWithoutHouseholdInput
+  plans?: Prisma.HouseholdPlanUncheckedCreateNestedManyWithoutHouseholdInput
+}
+
+export type HouseholdCreateOrConnectWithoutIdeasInput = {
+  where: Prisma.HouseholdWhereUniqueInput
+  create: Prisma.XOR<Prisma.HouseholdCreateWithoutIdeasInput, Prisma.HouseholdUncheckedCreateWithoutIdeasInput>
+}
+
+export type HouseholdUpsertWithoutIdeasInput = {
+  update: Prisma.XOR<Prisma.HouseholdUpdateWithoutIdeasInput, Prisma.HouseholdUncheckedUpdateWithoutIdeasInput>
+  create: Prisma.XOR<Prisma.HouseholdCreateWithoutIdeasInput, Prisma.HouseholdUncheckedCreateWithoutIdeasInput>
+  where?: Prisma.HouseholdWhereInput
+}
+
+export type HouseholdUpdateToOneWithWhereWithoutIdeasInput = {
+  where?: Prisma.HouseholdWhereInput
+  data: Prisma.XOR<Prisma.HouseholdUpdateWithoutIdeasInput, Prisma.HouseholdUncheckedUpdateWithoutIdeasInput>
+}
+
+export type HouseholdUpdateWithoutIdeasInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  owner?: Prisma.UserUpdateOneRequiredWithoutOwnedHouseholdsNestedInput
+  members?: Prisma.HouseholdMemberUpdateManyWithoutHouseholdNestedInput
+  recipes?: Prisma.RecipeUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUpdateManyWithoutHouseholdNestedInput
+}
+
+export type HouseholdUncheckedUpdateWithoutIdeasInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  ownerId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  members?: Prisma.HouseholdMemberUncheckedUpdateManyWithoutHouseholdNestedInput
+  recipes?: Prisma.RecipeUncheckedUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUncheckedUpdateManyWithoutHouseholdNestedInput
 }
 
 export type HouseholdCreateManyOwnerInput = {
@@ -586,6 +768,8 @@ export type HouseholdUpdateWithoutOwnerInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.HouseholdMemberUpdateManyWithoutHouseholdNestedInput
   recipes?: Prisma.RecipeUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUpdateManyWithoutHouseholdNestedInput
 }
 
 export type HouseholdUncheckedUpdateWithoutOwnerInput = {
@@ -595,6 +779,8 @@ export type HouseholdUncheckedUpdateWithoutOwnerInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   members?: Prisma.HouseholdMemberUncheckedUpdateManyWithoutHouseholdNestedInput
   recipes?: Prisma.RecipeUncheckedUpdateManyWithoutHouseholdNestedInput
+  plans?: Prisma.HouseholdPlanUncheckedUpdateManyWithoutHouseholdNestedInput
+  ideas?: Prisma.HouseholdIdeaUncheckedUpdateManyWithoutHouseholdNestedInput
 }
 
 export type HouseholdUncheckedUpdateManyWithoutOwnerInput = {
@@ -612,11 +798,15 @@ export type HouseholdUncheckedUpdateManyWithoutOwnerInput = {
 export type HouseholdCountOutputType = {
   members: number
   recipes: number
+  plans: number
+  ideas: number
 }
 
 export type HouseholdCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   members?: boolean | HouseholdCountOutputTypeCountMembersArgs
   recipes?: boolean | HouseholdCountOutputTypeCountRecipesArgs
+  plans?: boolean | HouseholdCountOutputTypeCountPlansArgs
+  ideas?: boolean | HouseholdCountOutputTypeCountIdeasArgs
 }
 
 /**
@@ -643,6 +833,20 @@ export type HouseholdCountOutputTypeCountRecipesArgs<ExtArgs extends runtime.Typ
   where?: Prisma.RecipeWhereInput
 }
 
+/**
+ * HouseholdCountOutputType without action
+ */
+export type HouseholdCountOutputTypeCountPlansArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.HouseholdPlanWhereInput
+}
+
+/**
+ * HouseholdCountOutputType without action
+ */
+export type HouseholdCountOutputTypeCountIdeasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.HouseholdIdeaWhereInput
+}
+
 
 export type HouseholdSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -653,6 +857,8 @@ export type HouseholdSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   members?: boolean | Prisma.Household$membersArgs<ExtArgs>
   recipes?: boolean | Prisma.Household$recipesArgs<ExtArgs>
+  plans?: boolean | Prisma.Household$plansArgs<ExtArgs>
+  ideas?: boolean | Prisma.Household$ideasArgs<ExtArgs>
   _count?: boolean | Prisma.HouseholdCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["household"]>
 
@@ -687,6 +893,8 @@ export type HouseholdInclude<ExtArgs extends runtime.Types.Extensions.InternalAr
   owner?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   members?: boolean | Prisma.Household$membersArgs<ExtArgs>
   recipes?: boolean | Prisma.Household$recipesArgs<ExtArgs>
+  plans?: boolean | Prisma.Household$plansArgs<ExtArgs>
+  ideas?: boolean | Prisma.Household$ideasArgs<ExtArgs>
   _count?: boolean | Prisma.HouseholdCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type HouseholdIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -702,6 +910,8 @@ export type $HouseholdPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     owner: Prisma.$UserPayload<ExtArgs>
     members: Prisma.$HouseholdMemberPayload<ExtArgs>[]
     recipes: Prisma.$RecipePayload<ExtArgs>[]
+    plans: Prisma.$HouseholdPlanPayload<ExtArgs>[]
+    ideas: Prisma.$HouseholdIdeaPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1106,6 +1316,8 @@ export interface Prisma__HouseholdClient<T, Null = never, ExtArgs extends runtim
   owner<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   members<T extends Prisma.Household$membersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Household$membersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HouseholdMemberPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   recipes<T extends Prisma.Household$recipesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Household$recipesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RecipePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  plans<T extends Prisma.Household$plansArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Household$plansArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HouseholdPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  ideas<T extends Prisma.Household$ideasArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Household$ideasArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$HouseholdIdeaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1586,6 +1798,54 @@ export type Household$recipesArgs<ExtArgs extends runtime.Types.Extensions.Inter
   take?: number
   skip?: number
   distinct?: Prisma.RecipeScalarFieldEnum | Prisma.RecipeScalarFieldEnum[]
+}
+
+/**
+ * Household.plans
+ */
+export type Household$plansArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the HouseholdPlan
+   */
+  select?: Prisma.HouseholdPlanSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the HouseholdPlan
+   */
+  omit?: Prisma.HouseholdPlanOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HouseholdPlanInclude<ExtArgs> | null
+  where?: Prisma.HouseholdPlanWhereInput
+  orderBy?: Prisma.HouseholdPlanOrderByWithRelationInput | Prisma.HouseholdPlanOrderByWithRelationInput[]
+  cursor?: Prisma.HouseholdPlanWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.HouseholdPlanScalarFieldEnum | Prisma.HouseholdPlanScalarFieldEnum[]
+}
+
+/**
+ * Household.ideas
+ */
+export type Household$ideasArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the HouseholdIdea
+   */
+  select?: Prisma.HouseholdIdeaSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the HouseholdIdea
+   */
+  omit?: Prisma.HouseholdIdeaOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.HouseholdIdeaInclude<ExtArgs> | null
+  where?: Prisma.HouseholdIdeaWhereInput
+  orderBy?: Prisma.HouseholdIdeaOrderByWithRelationInput | Prisma.HouseholdIdeaOrderByWithRelationInput[]
+  cursor?: Prisma.HouseholdIdeaWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.HouseholdIdeaScalarFieldEnum | Prisma.HouseholdIdeaScalarFieldEnum[]
 }
 
 /**

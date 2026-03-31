@@ -392,6 +392,10 @@ export const ModelName = {
   MealPlan: 'MealPlan',
   MealPlanItem: 'MealPlanItem',
   GroceryList: 'GroceryList',
+  HouseholdPlan: 'HouseholdPlan',
+  HouseholdPlanItem: 'HouseholdPlanItem',
+  HouseholdIdea: 'HouseholdIdea',
+  HouseholdIdeaVote: 'HouseholdIdeaVote',
   GroceryItem: 'GroceryItem',
   CookingSession: 'CookingSession'
 } as const
@@ -409,7 +413,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "household" | "householdMember" | "refreshToken" | "recipe" | "mealPlan" | "mealPlanItem" | "groceryList" | "groceryItem" | "cookingSession"
+    modelProps: "user" | "household" | "householdMember" | "refreshToken" | "recipe" | "mealPlan" | "mealPlanItem" | "groceryList" | "householdPlan" | "householdPlanItem" | "householdIdea" | "householdIdeaVote" | "groceryItem" | "cookingSession"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1005,6 +1009,302 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    HouseholdPlan: {
+      payload: Prisma.$HouseholdPlanPayload<ExtArgs>
+      fields: Prisma.HouseholdPlanFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HouseholdPlanFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HouseholdPlanFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>
+        }
+        findFirst: {
+          args: Prisma.HouseholdPlanFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HouseholdPlanFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>
+        }
+        findMany: {
+          args: Prisma.HouseholdPlanFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>[]
+        }
+        create: {
+          args: Prisma.HouseholdPlanCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>
+        }
+        createMany: {
+          args: Prisma.HouseholdPlanCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HouseholdPlanCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>[]
+        }
+        delete: {
+          args: Prisma.HouseholdPlanDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>
+        }
+        update: {
+          args: Prisma.HouseholdPlanUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>
+        }
+        deleteMany: {
+          args: Prisma.HouseholdPlanDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HouseholdPlanUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HouseholdPlanUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>[]
+        }
+        upsert: {
+          args: Prisma.HouseholdPlanUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanPayload>
+        }
+        aggregate: {
+          args: Prisma.HouseholdPlanAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHouseholdPlan>
+        }
+        groupBy: {
+          args: Prisma.HouseholdPlanGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HouseholdPlanGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HouseholdPlanCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HouseholdPlanCountAggregateOutputType> | number
+        }
+      }
+    }
+    HouseholdPlanItem: {
+      payload: Prisma.$HouseholdPlanItemPayload<ExtArgs>
+      fields: Prisma.HouseholdPlanItemFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HouseholdPlanItemFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HouseholdPlanItemFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>
+        }
+        findFirst: {
+          args: Prisma.HouseholdPlanItemFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HouseholdPlanItemFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>
+        }
+        findMany: {
+          args: Prisma.HouseholdPlanItemFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>[]
+        }
+        create: {
+          args: Prisma.HouseholdPlanItemCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>
+        }
+        createMany: {
+          args: Prisma.HouseholdPlanItemCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HouseholdPlanItemCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>[]
+        }
+        delete: {
+          args: Prisma.HouseholdPlanItemDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>
+        }
+        update: {
+          args: Prisma.HouseholdPlanItemUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>
+        }
+        deleteMany: {
+          args: Prisma.HouseholdPlanItemDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HouseholdPlanItemUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HouseholdPlanItemUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>[]
+        }
+        upsert: {
+          args: Prisma.HouseholdPlanItemUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdPlanItemPayload>
+        }
+        aggregate: {
+          args: Prisma.HouseholdPlanItemAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHouseholdPlanItem>
+        }
+        groupBy: {
+          args: Prisma.HouseholdPlanItemGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HouseholdPlanItemGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HouseholdPlanItemCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HouseholdPlanItemCountAggregateOutputType> | number
+        }
+      }
+    }
+    HouseholdIdea: {
+      payload: Prisma.$HouseholdIdeaPayload<ExtArgs>
+      fields: Prisma.HouseholdIdeaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HouseholdIdeaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HouseholdIdeaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>
+        }
+        findFirst: {
+          args: Prisma.HouseholdIdeaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HouseholdIdeaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>
+        }
+        findMany: {
+          args: Prisma.HouseholdIdeaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>[]
+        }
+        create: {
+          args: Prisma.HouseholdIdeaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>
+        }
+        createMany: {
+          args: Prisma.HouseholdIdeaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HouseholdIdeaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>[]
+        }
+        delete: {
+          args: Prisma.HouseholdIdeaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>
+        }
+        update: {
+          args: Prisma.HouseholdIdeaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>
+        }
+        deleteMany: {
+          args: Prisma.HouseholdIdeaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HouseholdIdeaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HouseholdIdeaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>[]
+        }
+        upsert: {
+          args: Prisma.HouseholdIdeaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaPayload>
+        }
+        aggregate: {
+          args: Prisma.HouseholdIdeaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHouseholdIdea>
+        }
+        groupBy: {
+          args: Prisma.HouseholdIdeaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HouseholdIdeaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HouseholdIdeaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HouseholdIdeaCountAggregateOutputType> | number
+        }
+      }
+    }
+    HouseholdIdeaVote: {
+      payload: Prisma.$HouseholdIdeaVotePayload<ExtArgs>
+      fields: Prisma.HouseholdIdeaVoteFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.HouseholdIdeaVoteFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.HouseholdIdeaVoteFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>
+        }
+        findFirst: {
+          args: Prisma.HouseholdIdeaVoteFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.HouseholdIdeaVoteFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>
+        }
+        findMany: {
+          args: Prisma.HouseholdIdeaVoteFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>[]
+        }
+        create: {
+          args: Prisma.HouseholdIdeaVoteCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>
+        }
+        createMany: {
+          args: Prisma.HouseholdIdeaVoteCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.HouseholdIdeaVoteCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>[]
+        }
+        delete: {
+          args: Prisma.HouseholdIdeaVoteDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>
+        }
+        update: {
+          args: Prisma.HouseholdIdeaVoteUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>
+        }
+        deleteMany: {
+          args: Prisma.HouseholdIdeaVoteDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.HouseholdIdeaVoteUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.HouseholdIdeaVoteUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>[]
+        }
+        upsert: {
+          args: Prisma.HouseholdIdeaVoteUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$HouseholdIdeaVotePayload>
+        }
+        aggregate: {
+          args: Prisma.HouseholdIdeaVoteAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateHouseholdIdeaVote>
+        }
+        groupBy: {
+          args: Prisma.HouseholdIdeaVoteGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HouseholdIdeaVoteGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.HouseholdIdeaVoteCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.HouseholdIdeaVoteCountAggregateOutputType> | number
+        }
+      }
+    }
     GroceryItem: {
       payload: Prisma.$GroceryItemPayload<ExtArgs>
       fields: Prisma.GroceryItemFieldRefs
@@ -1306,6 +1606,56 @@ export const GroceryListScalarFieldEnum = {
 export type GroceryListScalarFieldEnum = (typeof GroceryListScalarFieldEnum)[keyof typeof GroceryListScalarFieldEnum]
 
 
+export const HouseholdPlanScalarFieldEnum = {
+  id: 'id',
+  householdId: 'householdId',
+  weekStart: 'weekStart',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HouseholdPlanScalarFieldEnum = (typeof HouseholdPlanScalarFieldEnum)[keyof typeof HouseholdPlanScalarFieldEnum]
+
+
+export const HouseholdPlanItemScalarFieldEnum = {
+  id: 'id',
+  householdPlanId: 'householdPlanId',
+  recipeId: 'recipeId',
+  createdByUserId: 'createdByUserId',
+  dayOfWeek: 'dayOfWeek',
+  mealType: 'mealType',
+  note: 'note',
+  servings: 'servings',
+  createdAt: 'createdAt'
+} as const
+
+export type HouseholdPlanItemScalarFieldEnum = (typeof HouseholdPlanItemScalarFieldEnum)[keyof typeof HouseholdPlanItemScalarFieldEnum]
+
+
+export const HouseholdIdeaScalarFieldEnum = {
+  id: 'id',
+  householdId: 'householdId',
+  recipeId: 'recipeId',
+  proposedByUserId: 'proposedByUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HouseholdIdeaScalarFieldEnum = (typeof HouseholdIdeaScalarFieldEnum)[keyof typeof HouseholdIdeaScalarFieldEnum]
+
+
+export const HouseholdIdeaVoteScalarFieldEnum = {
+  id: 'id',
+  householdIdeaId: 'householdIdeaId',
+  userId: 'userId',
+  vote: 'vote',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HouseholdIdeaVoteScalarFieldEnum = (typeof HouseholdIdeaVoteScalarFieldEnum)[keyof typeof HouseholdIdeaVoteScalarFieldEnum]
+
+
 export const GroceryItemScalarFieldEnum = {
   id: 'id',
   groceryListId: 'groceryListId',
@@ -1570,6 +1920,10 @@ export type GlobalOmitConfig = {
   mealPlan?: Prisma.MealPlanOmit
   mealPlanItem?: Prisma.MealPlanItemOmit
   groceryList?: Prisma.GroceryListOmit
+  householdPlan?: Prisma.HouseholdPlanOmit
+  householdPlanItem?: Prisma.HouseholdPlanItemOmit
+  householdIdea?: Prisma.HouseholdIdeaOmit
+  householdIdeaVote?: Prisma.HouseholdIdeaVoteOmit
   groceryItem?: Prisma.GroceryItemOmit
   cookingSession?: Prisma.CookingSessionOmit
 }

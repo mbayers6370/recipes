@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     const cookieConfig = getCookieConfig(req);
     response.cookies.set(ACCESS_COOKIE, accessToken, {
       ...cookieConfig,
-      maxAge: 15 * 60,
+      maxAge: 24 * 60 * 60,
     });
     response.cookies.set(REFRESH_COOKIE, refreshToken, {
       ...cookieConfig,

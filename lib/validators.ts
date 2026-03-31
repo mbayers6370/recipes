@@ -90,6 +90,19 @@ export const mealPlanItemSchema = z.object({
   servings: z.number().int().min(1).optional(),
 });
 
+export const householdPlanItemSchema = mealPlanItemSchema.extend({
+  week: z.string().optional(),
+});
+
+export const householdIdeaSchema = z.object({
+  recipeId: z.string().min(1, "Recipe is required"),
+});
+
+export const householdIdeaVoteSchema = z.object({
+  ideaId: z.string().min(1),
+  vote: z.enum(["cook", "maybe", "skip"]),
+});
+
 // ── Grocery ───────────────────────────────────────────────────────────────────
 
 export const groceryItemSchema = z.object({
@@ -108,5 +121,8 @@ export type RecipeInput = z.infer<typeof recipeSchema>;
 export type IngredientInput = z.infer<typeof ingredientSchema>;
 export type StepInput = z.infer<typeof stepSchema>;
 export type MealPlanItemInput = z.infer<typeof mealPlanItemSchema>;
+export type HouseholdPlanItemInput = z.infer<typeof householdPlanItemSchema>;
+export type HouseholdIdeaInput = z.infer<typeof householdIdeaSchema>;
+export type HouseholdIdeaVoteInput = z.infer<typeof householdIdeaVoteSchema>;
 export type GroceryItemInput = z.infer<typeof groceryItemSchema>;
 export type ImportTextInput = z.infer<typeof importTextSchema>;

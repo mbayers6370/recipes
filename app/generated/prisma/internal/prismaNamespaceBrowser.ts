@@ -59,6 +59,10 @@ export const ModelName = {
   MealPlan: 'MealPlan',
   MealPlanItem: 'MealPlanItem',
   GroceryList: 'GroceryList',
+  HouseholdPlan: 'HouseholdPlan',
+  HouseholdPlanItem: 'HouseholdPlanItem',
+  HouseholdIdea: 'HouseholdIdea',
+  HouseholdIdeaVote: 'HouseholdIdeaVote',
   GroceryItem: 'GroceryItem',
   CookingSession: 'CookingSession'
 } as const
@@ -191,6 +195,56 @@ export const GroceryListScalarFieldEnum = {
 } as const
 
 export type GroceryListScalarFieldEnum = (typeof GroceryListScalarFieldEnum)[keyof typeof GroceryListScalarFieldEnum]
+
+
+export const HouseholdPlanScalarFieldEnum = {
+  id: 'id',
+  householdId: 'householdId',
+  weekStart: 'weekStart',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HouseholdPlanScalarFieldEnum = (typeof HouseholdPlanScalarFieldEnum)[keyof typeof HouseholdPlanScalarFieldEnum]
+
+
+export const HouseholdPlanItemScalarFieldEnum = {
+  id: 'id',
+  householdPlanId: 'householdPlanId',
+  recipeId: 'recipeId',
+  createdByUserId: 'createdByUserId',
+  dayOfWeek: 'dayOfWeek',
+  mealType: 'mealType',
+  note: 'note',
+  servings: 'servings',
+  createdAt: 'createdAt'
+} as const
+
+export type HouseholdPlanItemScalarFieldEnum = (typeof HouseholdPlanItemScalarFieldEnum)[keyof typeof HouseholdPlanItemScalarFieldEnum]
+
+
+export const HouseholdIdeaScalarFieldEnum = {
+  id: 'id',
+  householdId: 'householdId',
+  recipeId: 'recipeId',
+  proposedByUserId: 'proposedByUserId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HouseholdIdeaScalarFieldEnum = (typeof HouseholdIdeaScalarFieldEnum)[keyof typeof HouseholdIdeaScalarFieldEnum]
+
+
+export const HouseholdIdeaVoteScalarFieldEnum = {
+  id: 'id',
+  householdIdeaId: 'householdIdeaId',
+  userId: 'userId',
+  vote: 'vote',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type HouseholdIdeaVoteScalarFieldEnum = (typeof HouseholdIdeaVoteScalarFieldEnum)[keyof typeof HouseholdIdeaVoteScalarFieldEnum]
 
 
 export const GroceryItemScalarFieldEnum = {

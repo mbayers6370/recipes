@@ -26,6 +26,9 @@ model User {
   refreshTokens   RefreshToken[]
   householdMember HouseholdMember?
   ownedHouseholds Household[]       @relation("HouseholdOwner")
+  householdPlanItems HouseholdPlanItem[]
+  householdIdeas HouseholdIdea[]
+  householdIdeaVotes HouseholdIdeaVote[]
 
   @@map("users")
 }
@@ -41,6 +44,8 @@ model Household {
 
   members HouseholdMember[]
   recipes Recipe[]
+  plans   HouseholdPlan[]
+  ideas   HouseholdIdea[]
 
   @@index([ownerId])
   @@map("households")
@@ -102,6 +107,8 @@ model Recipe {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   mealPlanItems   MealPlanItem[]
+  householdPlanItems HouseholdPlanItem[]
+  householdIdeas  HouseholdIdea[]
   cookingSessions CookingSession[]
 
   @@index([userId])
@@ -157,6 +164,78 @@ model GroceryList {
 
   @@index([userId])
   @@map("grocery_lists")
+}
+
+model HouseholdPlan {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  weekStart   DateTime  @map("week_start")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items HouseholdPlanItem[]
+
+  @@unique([householdId, weekStart])
+  @@index([householdId])
+  @@map("household_plans")
+}
+
+model HouseholdPlanItem {
+  id              String        @id @default(cuid())
+  householdPlanId String        @map("household_plan_id")
+  householdPlan   HouseholdPlan @relation(fields: [householdPlanId], references: [id], onDelete: Cascade)
+  recipeId        String?       @map("recipe_id")
+  recipe          Recipe?       @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  createdByUserId String?       @map("created_by_user_id")
+  createdByUser   User?         @relation(fields: [createdByUserId], references: [id], onDelete: SetNull)
+  dayOfWeek       Int           @map("day_of_week")
+  mealType        String        @map("meal_type")
+  note            String?
+  servings        Int?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([householdPlanId])
+  @@index([createdByUserId])
+  @@map("household_plan_items")
+}
+
+model HouseholdIdea {
+  id               String              @id @default(cuid())
+  householdId      String              @map("household_id")
+  household        Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  recipeId         String              @map("recipe_id")
+  recipe           Recipe              @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  proposedByUserId String              @map("proposed_by_user_id")
+  proposedByUser   User                @relation(fields: [proposedByUserId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  votes HouseholdIdeaVote[]
+
+  @@unique([householdId, recipeId])
+  @@index([householdId])
+  @@index([proposedByUserId])
+  @@map("household_ideas")
+}
+
+model HouseholdIdeaVote {
+  id              String        @id @default(cuid())
+  householdIdeaId String        @map("household_idea_id")
+  householdIdea   HouseholdIdea @relation(fields: [householdIdeaId], references: [id], onDelete: Cascade)
+  userId          String        @map("user_id")
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vote            String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([householdIdeaId, userId])
+  @@index([userId])
+  @@map("household_idea_votes")
 }
 
 model GroceryItem {

@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
     const sort = searchParams.get("sort") || "updated_desc";
     const favorites = searchParams.get("favorites") === "true";
     const ownedOnly = searchParams.get("ownedOnly") === "true";
+    const sharedOnly = searchParams.get("sharedOnly") === "true";
     const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
     const limit = Math.min(50, parseInt(searchParams.get("limit") || "20"));
     const skip = (page - 1) * limit;
@@ -48,6 +49,13 @@ export async function GET(req: NextRequest) {
             { userId: user.sub, isFavorite: true },
           ],
         }
+      : sharedOnly
+        ? {
+            AND: [
+              filters,
+              householdId ? { householdId } : { id: "__no_household__" },
+            ],
+          }
       : ownedOnly
         ? {
             AND: [

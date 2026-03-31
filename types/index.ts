@@ -39,6 +39,51 @@ export interface Household {
   members: HouseholdMember[];
 }
 
+export interface HouseholdPlanItem {
+  id: string;
+  householdPlanId: string;
+  recipeId?: string | null;
+  recipe?: Pick<Recipe, "id" | "title" | "imageUrl" | "totalTime" | "servings"> | null;
+  createdByUserId?: string | null;
+  createdByUser?: Pick<User, "id" | "username" | "displayName"> | null;
+  dayOfWeek: number;
+  mealType: string;
+  note?: string | null;
+  servings?: number | null;
+  createdAt: string;
+}
+
+export interface HouseholdPlan {
+  id: string;
+  householdId: string;
+  weekStart: string;
+  items: HouseholdPlanItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HouseholdIdeaVote {
+  id: string;
+  householdIdeaId: string;
+  userId: string;
+  vote: "cook" | "maybe" | "skip";
+  user?: Pick<User, "id" | "username" | "displayName">;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface HouseholdIdea {
+  id: string;
+  householdId: string;
+  recipeId: string;
+  recipe: Pick<Recipe, "id" | "title" | "imageUrl" | "totalTime" | "servings" | "cuisine" | "tags">;
+  proposedByUserId: string;
+  proposedByUser?: Pick<User, "id" | "username" | "displayName">;
+  votes: HouseholdIdeaVote[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Ingredient {
   id?: string;
   amount?: string;

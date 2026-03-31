@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowRight, Download, Plus } from "lucide-react";
+import { ArrowRight, Download, Plus, Users } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
-import type { RecipeSummary, CookingSession, MealPlan } from "@/types";
+import type { RecipeSummary, CookingSession, Household, MealPlan } from "@/types";
 import { DAY_NAMES } from "@/lib/date-utils";
 import { startOfWeek } from "@/lib/date-utils";
 import { RecipeImage } from "@/components/recipe-image";
@@ -45,6 +45,8 @@ export default function HomePage() {
   const [recentRecipes, setRecentRecipes] = useState<RecipeSummary[]>([]);
   const [activeSession] = useState<CookingSession | null>(null);
   const [mealPlan, setMealPlan] = useState<MealPlan | null>(null);
+  const [household, setHousehold] = useState<Household | null>(null);
+  const [sharedRecipes, setSharedRecipes] = useState<RecipeSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeContext, setTimeContext] = useState<ReturnType<typeof getTimeContextSnapshot> | null>(null);
   const [recentRecipeLimit, setRecentRecipeLimit] = useState(2);
@@ -66,10 +68,14 @@ export default function HomePage() {
     Promise.all([
       fetch("/api/recipes?limit=6").then((r) => r.json()),
       fetch(`/api/meal-plan?week=${clientWeek}`).then((r) => r.json()),
+      fetch("/api/household", { credentials: "same-origin" }).then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/recipes?sharedOnly=true&limit=3", { credentials: "same-origin" }).then((r) => (r.ok ? r.json() : null)),
     ])
-      .then(([recipesRes, planRes]) => {
+      .then(([recipesRes, planRes, householdRes, sharedRecipesRes]) => {
         setRecentRecipes(recipesRes.data?.recipes || []);
         setMealPlan(planRes.data || null);
+        setHousehold(householdRes?.data || null);
+        setSharedRecipes(sharedRecipesRes?.data?.recipes || []);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -223,6 +229,89 @@ export default function HomePage() {
               </Link>
             </div>
           )}
+        </Section>
+
+        <Section
+          title="Shared Kitchen"
+          right={<Link href="/kitchen" style={S.seeAll}><span>{household ? "Open kitchen" : "Set up kitchen"}</span><ArrowRight size={14} strokeWidth={2.2} /></Link>}
+        >
+          <div style={S.kitchenPanel}>
+            {household ? (
+              <>
+                <div style={S.kitchenHeader}>
+                  <div>
+                    <p style={S.kitchenName}>{household.name}</p>
+                    <p style={S.kitchenHelper}>
+                      {household.memberCount} of {household.memberLimit} seats filled
+                    </p>
+                  </div>
+                  <div style={S.kitchenRoleBadge}>
+                    <Users size={15} strokeWidth={2.2} />
+                    <span>{household.role === "owner" ? "Owner" : "Member"}</span>
+                  </div>
+                </div>
+
+                <div style={S.kitchenMemberList}>
+                  {household.members.slice(0, 3).map((member) => (
+                    <div key={member.id} style={S.kitchenMemberRow}>
+                      <div style={S.kitchenMemberInfo}>
+                        <span style={S.kitchenMemberName}>
+                          {member.displayName || member.username}
+                        </span>
+                        <span style={S.kitchenMemberMeta}>{member.email}</span>
+                      </div>
+                      {member.role === "owner" && (
+                        <span style={S.kitchenMemberBadge}>
+                          <span>Owner</span>
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <p style={S.kitchenSub}>
+                  {sharedRecipes.length > 0
+                    ? `${sharedRecipes.length} shared recipe${sharedRecipes.length === 1 ? "" : "s"} ready to browse.`
+                    : "No shared recipes yet. Open a recipe and tap Share to add one here."}
+                </p>
+
+                {sharedRecipes.length > 0 && (
+                  <div style={S.kitchenRecipeRow}>
+                    {sharedRecipes.map((recipe) => (
+                      <Link key={recipe.id} href={`/recipes/${recipe.id}`} style={S.kitchenRecipeChip}>
+                        <div style={S.kitchenRecipeThumb}>
+                          <RecipeImage
+                            imageUrl={recipe.imageUrl}
+                            title={recipe.title}
+                            tags={recipe.tags}
+                            sizes="72px"
+                            iconSize={16}
+                            imageStyle={S.kitchenRecipeImage}
+                          />
+                        </div>
+                        <span style={S.kitchenRecipeLabel}>{recipe.title}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+
+              </>
+            ) : (
+              <div style={S.kitchenEmptyState}>
+                <div style={S.kitchenEmptyIcon}>
+                  <Users size={22} strokeWidth={2} />
+                </div>
+                <h3 style={S.kitchenTitle}>Start a shared kitchen</h3>
+                <p style={S.kitchenSub}>
+                  Create one shared spot for family recipes, then connect up to 4 more people.
+                </p>
+                <Link href="/kitchen" style={S.kitchenCreateLink}>
+                  <span>Create kitchen</span>
+                  <ArrowRight size={14} strokeWidth={2.2} />
+                </Link>
+              </div>
+            )}
+          </div>
         </Section>
       </div>
 
@@ -460,6 +549,128 @@ const S: Record<string, React.CSSProperties> = {
   sectionHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
   seeAll: { fontSize: 13, color: "rgb(var(--terra-600))", textDecoration: "none", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
+  kitchenPanel: {
+    background: "white",
+    border: "1px solid rgb(var(--warm-100))",
+    borderRadius: 14,
+    padding: "0 16px",
+    display: "flex",
+    flexDirection: "column",
+  },
+  kitchenHeader: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "16px 0 12px",
+    borderBottom: "1px solid rgb(var(--warm-100))",
+  },
+  kitchenName: {
+    fontSize: 16,
+    fontWeight: 700,
+    color: "rgb(var(--warm-900))",
+  },
+  kitchenHelper: {
+    fontSize: 12,
+    color: "rgb(var(--warm-500))",
+    marginTop: 4,
+  },
+  kitchenRoleBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 999,
+    background: "rgb(var(--terra-50))",
+    color: "rgb(var(--terra-700))",
+    padding: "6px 10px",
+    fontSize: 12,
+    fontWeight: 700,
+  },
+  kitchenMemberList: { display: "flex", flexDirection: "column" },
+  kitchenMemberRow: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "14px 0",
+    borderBottom: "1px solid rgb(var(--warm-100))",
+  },
+  kitchenMemberInfo: { display: "flex", flexDirection: "column", gap: 2 },
+  kitchenMemberName: { fontSize: 14, fontWeight: 600, color: "rgb(var(--warm-800))" },
+  kitchenMemberMeta: { fontSize: 12, color: "rgb(var(--warm-400))" },
+  kitchenMemberBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    fontSize: 12,
+    color: "rgb(var(--terra-700))",
+    fontWeight: 700,
+    flexShrink: 0,
+  },
+  kitchenTitle: { fontSize: 16, fontWeight: 700, color: "rgb(var(--warm-900))" },
+  kitchenSub: { fontSize: 13, lineHeight: 1.6, color: "rgb(var(--warm-500))", padding: "16px 0 0" },
+  kitchenRecipeRow: { display: "grid", gap: 10, padding: "14px 0 0", borderTop: "1px solid rgb(var(--warm-100))", marginTop: 14 },
+  kitchenRecipeChip: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "0",
+    textDecoration: "none",
+    color: "inherit",
+  },
+  kitchenRecipeThumb: {
+    width: 54,
+    height: 54,
+    position: "relative",
+    borderRadius: 12,
+    overflow: "hidden",
+    background: "rgb(var(--warm-100))",
+    flexShrink: 0,
+  },
+  kitchenRecipeImage: { objectFit: "cover" },
+  kitchenRecipeLabel: { fontSize: 14, lineHeight: 1.45, color: "rgb(var(--warm-800))", fontWeight: 600 },
+  kitchenFooterLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    width: "fit-content",
+    margin: "16px 0",
+    color: "rgb(var(--terra-600))",
+    textDecoration: "none",
+    fontSize: 14,
+    fontWeight: 600,
+  },
+  kitchenEmptyState: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+    gap: 10,
+    padding: "24px 0",
+  },
+  kitchenEmptyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: "50%",
+    background: "rgb(var(--terra-50))",
+    color: "rgb(var(--terra-600))",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  kitchenCreateLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 8,
+    width: "fit-content",
+    padding: "12px 14px",
+    borderRadius: 12,
+    background: "rgb(var(--terra-600))",
+    color: "white",
+    textDecoration: "none",
+    fontSize: 14,
+    fontWeight: 600,
+  },
 
   // Recipe grid
   recipeGrid: { display: "grid", gap: 12 },

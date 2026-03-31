@@ -7,7 +7,7 @@ import { prisma } from "./db";
 
 const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET!;
 const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET!;
-const ACCESS_TOKEN_EXPIRY = "15m";
+const ACCESS_TOKEN_EXPIRY = "24h";
 const REFRESH_TOKEN_EXPIRY = "30d";
 const BCRYPT_ROUNDS = 12;
 
