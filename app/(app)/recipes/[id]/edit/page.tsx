@@ -246,11 +246,7 @@ export default function EditRecipePage() {
           </Field>
         </div>
 
-        <SectionHeader
-          title="Ingredients"
-          actionLabel="Add ingredient"
-          onAction={addIngredient}
-        />
+        <SectionHeader title="Ingredients" />
         <div style={S.stack}>
           {ingredients.map((ingredient, index) => (
             <div key={ingredient.id || index} style={S.card}>
@@ -269,8 +265,14 @@ export default function EditRecipePage() {
             </div>
           ))}
         </div>
+        <div style={S.sectionFooter}>
+          <button type="button" style={S.addInlineBtn} onClick={addIngredient}>
+            <Plus size={14} strokeWidth={2.2} />
+            <span>Add ingredient</span>
+          </button>
+        </div>
 
-        <SectionHeader title="Steps" actionLabel="Add step" onAction={addStep} />
+        <SectionHeader title="Steps" />
         <div style={S.stack}>
           {steps.map((step, index) => (
             <div key={step.id || index} style={S.card}>
@@ -297,6 +299,12 @@ export default function EditRecipePage() {
               />
             </div>
           ))}
+        </div>
+        <div style={S.sectionFooter}>
+          <button type="button" style={S.addInlineBtn} onClick={addStep}>
+            <Plus size={14} strokeWidth={2.2} />
+            <span>Add step</span>
+          </button>
         </div>
 
         <Field label="Notes">
@@ -335,20 +343,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function SectionHeader({
   title,
-  actionLabel,
-  onAction,
 }: {
   title: string;
-  actionLabel: string;
-  onAction: () => void;
 }) {
   return (
     <div style={S.sectionHeader}>
       <h2 style={S.sectionTitle}>{title}</h2>
-      <button type="button" style={S.addInlineBtn} onClick={onAction}>
-        <Plus size={14} strokeWidth={2.2} />
-        <span>{actionLabel}</span>
-      </button>
     </div>
   );
 }
@@ -372,6 +372,7 @@ const S: Record<string, React.CSSProperties> = {
   imagePlaceholder: { aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8, color: "rgb(var(--warm-500))", background: "linear-gradient(135deg, rgb(var(--warm-100)), rgb(var(--terra-50)))" },
   sectionHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
   sectionTitle: { fontSize: 16, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
+  sectionFooter: { display: "flex", justifyContent: "flex-start", marginTop: 4 },
   addInlineBtn: { background: "white", border: "1.5px solid rgb(var(--warm-200))", borderRadius: 10, padding: "8px 12px", fontSize: 13, fontWeight: 600, color: "rgb(var(--warm-700))", display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" },
   stack: { display: "flex", flexDirection: "column", gap: 12 },
   card: { background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: 14, padding: 14, display: "flex", flexDirection: "column", gap: 10 },
