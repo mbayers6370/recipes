@@ -419,3 +419,14 @@
     }
   }
 }
+
+@media print {
+  @page {
+    margin: 0.95in 0.78in 0.82in;
+  }
+
+  html,
+  body {
+    background: white !important;
+  }
+}

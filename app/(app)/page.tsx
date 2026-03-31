@@ -158,7 +158,16 @@ export default function HomePage() {
         )}
 
         {/* Today's plan */}
-        <Section title="" titleClassName="home-plan-title">
+        <Section
+          title="Planner"
+          titleClassName="home-plan-title"
+          right={
+            <Link href="/plan" style={S.seeAll}>
+              <span>Planner</span>
+              <ArrowRight size={14} strokeWidth={2.2} />
+            </Link>
+          }
+        >
           {todayItems.length > 0 ? (
             <div style={S.planCard}>
               <div style={S.planHeader}>
@@ -233,6 +242,7 @@ export default function HomePage() {
 
         <Section
           title="Shared Kitchen"
+          bottomMargin={0}
           right={<Link href="/kitchen" style={S.seeAll}><span>{household ? "Open kitchen" : "Set up kitchen"}</span><ArrowRight size={14} strokeWidth={2.2} /></Link>}
         >
           <div style={S.kitchenPanel}>
@@ -324,14 +334,16 @@ function Section({
   right,
   children,
   titleClassName,
+  bottomMargin = 32,
 }: {
   title: string;
   right?: React.ReactNode;
   children: React.ReactNode;
   titleClassName?: string;
+  bottomMargin?: number;
 }) {
   return (
-    <section style={{ marginBottom: 32 }}>
+    <section style={{ marginBottom: bottomMargin }}>
       {(title || right) && (
         <div style={S.sectionHeader}>
           {title ? <h2 style={S.sectionTitle} className={titleClassName}>{title}</h2> : <div />}
@@ -431,7 +443,7 @@ function getGreeting(now: Date) {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { background: "rgb(var(--warm-50))", minHeight: "100dvh" },
+  page: { background: "rgb(var(--warm-50))" },
 
   // Hero
   hero: {
@@ -454,7 +466,7 @@ const S: Record<string, React.CSSProperties> = {
 
   actionRowWrap: { marginBottom: 28 },
   actionRow: { width: "100%", maxWidth: 960, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
-  content: { padding: "24px 16px 96px", width: "100%", maxWidth: 960, margin: "0 auto" },
+  content: { padding: "24px 16px 24px", width: "100%", maxWidth: 960, margin: "0 auto" },
 
   // Active session
   sessionCard: {

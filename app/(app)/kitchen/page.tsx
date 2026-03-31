@@ -583,7 +583,7 @@ export default function KitchenPage() {
           </div>
         </section>
 
-        <section style={S.card} className="kitchen-section kitchen-section-manage">
+        <section style={{ ...S.card, marginBottom: 0 }} className="kitchen-section kitchen-section-manage">
           <div style={S.cardHeader}>
             <div>
               <p style={S.cardTitle}>{household.name}</p>
@@ -766,7 +766,7 @@ export default function KitchenPage() {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { minHeight: "100dvh", background: "rgb(var(--warm-50))", padding: "24px 16px 40px" },
+  page: { background: "rgb(var(--warm-50))", padding: "24px 16px 16px" },
   shell: { maxWidth: 960, margin: "0 auto", display: "flex", flexDirection: "column" },
   header: { marginBottom: 22 },
   kicker: { fontSize: 12, fontWeight: 700, color: "rgb(var(--terra-600))", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 },
