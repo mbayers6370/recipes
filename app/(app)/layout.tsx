@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { BottomNav, DesktopNav } from "@/components/layout/nav";
+import { CookTimerProvider } from "@/context/cook-timer-context";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -30,18 +31,20 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
-      {!isChromeHiddenPage && <DesktopNav />}
-      <main
-        className="app-main-shell"
-        style={{
-          flex: 1,
-          paddingBottom: isChromeHiddenPage ? 0 : isStandalone ? "92px" : "72px",
-        }}
-      >
-        {children}
-      </main>
-      {!isChromeHiddenPage && <BottomNav />}
-    </div>
+    <CookTimerProvider>
+      <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column" }}>
+        {!isChromeHiddenPage && <DesktopNav />}
+        <main
+          className="app-main-shell"
+          style={{
+            flex: 1,
+            paddingBottom: isChromeHiddenPage ? 0 : isStandalone ? "92px" : "72px",
+          }}
+        >
+          {children}
+        </main>
+        {!isChromeHiddenPage && <BottomNav />}
+      </div>
+    </CookTimerProvider>
   );
 }

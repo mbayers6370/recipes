@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Check, Pause, Play, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import type { Recipe, Step } from "@/types";
 import { getStepTimerSuggestion } from "@/lib/step-timers";
+import { useCookTimers } from "@/context/cook-timer-context";
 
 export default function CookModePage() {
   const params = useParams();
@@ -14,14 +15,19 @@ export default function CookModePage() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [timers, setTimers] = useState<Record<number, number>>({}); // stepIndex → seconds remaining
-  const [timerRunning, setTimerRunning] = useState<Record<number, boolean>>({});
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
-  const [timerSoundEnabled, setTimerSoundEnabled] = useState(true);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const announcedTimersRef = useRef<Set<number>>(new Set());
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const {
+    soundEnabled,
+    setSoundEnabled,
+    getTimer,
+    getTimerSeconds,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    resetTimer,
+    clearRecipeTimers,
+    prepareAlarm,
+  } = useCookTimers();
 
   // Keep screen awake while cooking
   useEffect(() => {
@@ -38,11 +44,6 @@ export default function CookModePage() {
       .then((json) => {
         setRecipe(json.data);
         setLoading(false);
-        // Init timers from recipe steps
-        const steps = (json.data?.steps || []) as Step[];
-        const initial: Record<number, number> = {};
-        steps.forEach((s, i) => { if (s.timerSeconds) initial[i] = s.timerSeconds; });
-        setTimers(initial);
       });
 
     // Resume session
@@ -50,50 +51,6 @@ export default function CookModePage() {
       .then((r) => r.json())
       .then((json) => { if (json.data?.currentStep) setCurrentStep(json.data.currentStep); });
   }, [id]);
-
-  useEffect(() => {
-    const primeAlarm = () => {
-      void prepareTimerAlarm(audioContextRef, audioElementRef);
-    };
-
-    window.addEventListener("pointerdown", primeAlarm, { passive: true });
-    window.addEventListener("keydown", primeAlarm);
-
-    return () => {
-      window.removeEventListener("pointerdown", primeAlarm);
-      window.removeEventListener("keydown", primeAlarm);
-    };
-  }, []);
-
-  // Timer tick
-  useEffect(() => {
-    const running = Object.entries(timerRunning).filter(([, v]) => v).map(([k]) => Number(k));
-    if (running.length === 0) { if (intervalRef.current) clearInterval(intervalRef.current); return; }
-
-    intervalRef.current = setInterval(() => {
-      setTimers((prev) => {
-        const next = { ...prev };
-        running.forEach((idx) => {
-          if (next[idx] > 0) next[idx]--;
-          else { setTimerRunning((r) => ({ ...r, [idx]: false })); }
-        });
-        return next;
-      });
-    }, 1000);
-
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [timerRunning]);
-
-  useEffect(() => {
-    Object.entries(timers).forEach(([key, seconds]) => {
-      const stepIndex = Number(key);
-      if (seconds !== 0 || announcedTimersRef.current.has(stepIndex)) return;
-      announcedTimersRef.current.add(stepIndex);
-      if (timerSoundEnabled) {
-        void playTimerDoneSound(audioContextRef, audioElementRef);
-      }
-    });
-  }, [timerSoundEnabled, timers]);
 
   const saveProgress = useCallback(async (step: number, completed = false) => {
     await fetch(`/api/recipes/${id}/cook`, {
@@ -112,6 +69,7 @@ export default function CookModePage() {
   };
 
   const finish = () => {
+    clearRecipeTimers(id);
     saveProgress(0, true);
     router.push(`/recipes/${id}`);
   };
@@ -122,6 +80,7 @@ export default function CookModePage() {
   const steps = recipe.steps as Step[];
   const step = steps[currentStep];
   const stepTimer = step ? getStepTimerSuggestion(step) : null;
+  const activeTimer = getTimer(id, currentStep);
   const isLast = currentStep === steps.length - 1;
   const progress = ((currentStep + 1) / steps.length) * 100;
   const nextStep = !isLast ? steps[currentStep + 1] : null;
@@ -168,51 +127,65 @@ export default function CookModePage() {
 
           <p style={S.stepText}>{step?.instruction}</p>
 
-          {stepTimer && timers[currentStep] === undefined && (
+          {stepTimer && !activeTimer && (
             <TimerBlock
               seconds={initialTimerSeconds}
               running={false}
               label={stepTimer.label}
               idleLabel={`Ready for ${stepTimer.label}`}
-              soundEnabled={timerSoundEnabled}
+              soundEnabled={soundEnabled}
               onToggleSound={() => {
-                void prepareTimerAlarm(audioContextRef, audioElementRef);
-                setTimerSoundEnabled((prev) => !prev);
+                void prepareAlarm();
+                setSoundEnabled(!soundEnabled);
               }}
               onToggle={() => {
-                void prepareTimerAlarm(audioContextRef, audioElementRef);
-                announcedTimersRef.current.delete(currentStep);
-                setTimers((prev) => ({ ...prev, [currentStep]: stepTimer.seconds }));
-                setTimerRunning((prev) => ({ ...prev, [currentStep]: true }));
+                void prepareAlarm();
+                startTimer({
+                  recipeId: id,
+                  stepIndex: currentStep,
+                  label: stepTimer.label,
+                  durationSeconds: stepTimer.seconds,
+                  recipeTitle: recipe.title,
+                });
               }}
               onReset={() => {
-                void prepareTimerAlarm(audioContextRef, audioElementRef);
-                announcedTimersRef.current.delete(currentStep);
-                setTimers((prev) => ({ ...prev, [currentStep]: stepTimer.seconds }));
-                setTimerRunning((prev) => ({ ...prev, [currentStep]: false }));
+                resetTimer({
+                  recipeId: id,
+                  stepIndex: currentStep,
+                  label: stepTimer.label,
+                  durationSeconds: stepTimer.seconds,
+                  recipeTitle: recipe.title,
+                });
               }}
             />
           )}
 
-          {timers[currentStep] !== undefined && stepTimer && (
+          {activeTimer && stepTimer && (
             <TimerBlock
-              seconds={timers[currentStep]}
-              running={timerRunning[currentStep] || false}
+              seconds={getTimerSeconds(id, currentStep) ?? 0}
+              running={activeTimer.running}
               label={stepTimer.label}
-              soundEnabled={timerSoundEnabled}
+              soundEnabled={soundEnabled}
               onToggleSound={() => {
-                void prepareTimerAlarm(audioContextRef, audioElementRef);
-                setTimerSoundEnabled((prev) => !prev);
+                void prepareAlarm();
+                setSoundEnabled(!soundEnabled);
               }}
               onToggle={() => {
-                void prepareTimerAlarm(audioContextRef, audioElementRef);
-                setTimerRunning((r) => ({ ...r, [currentStep]: !r[currentStep] }));
+                void prepareAlarm();
+                if (activeTimer.running) {
+                  pauseTimer(id, currentStep);
+                  return;
+                }
+                resumeTimer(id, currentStep);
               }}
               onReset={() => {
-                void prepareTimerAlarm(audioContextRef, audioElementRef);
-                announcedTimersRef.current.delete(currentStep);
-                setTimers((t) => ({ ...t, [currentStep]: stepTimer.seconds }));
-                setTimerRunning((r) => ({ ...r, [currentStep]: false }));
+                resetTimer({
+                  recipeId: id,
+                  stepIndex: currentStep,
+                  label: stepTimer.label,
+                  durationSeconds: stepTimer.seconds,
+                  recipeTitle: recipe.title,
+                });
               }}
             />
           )}
@@ -342,6 +315,7 @@ function TimerBlock({
           <RotateCcw size={14} strokeWidth={2.2} />
         </button>
       </div>
+      <p style={T.note}>Timer alerts continue while you move through the app, as long as abovo stays open.</p>
     </div>
   );
 }
@@ -351,6 +325,7 @@ const T: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
+    flexWrap: "wrap",
     gap: 12,
     width: "100%",
     maxWidth: "100%",
@@ -366,174 +341,11 @@ const T: Record<string, React.CSSProperties> = {
   label: { fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgb(var(--terra-600))" },
   time: { fontSize: 28, fontWeight: 700, fontVariantNumeric: "tabular-nums", color: "rgb(var(--warm-900))", fontFamily: "var(--font-body)" },
   actions: { display: "flex", gap: 8 },
+  note: { width: "100%", marginTop: 2, fontSize: 12, lineHeight: 1.45, color: "rgb(var(--warm-600))" },
   btn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: "var(--radius-control)", padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6, fontFamily: "var(--font-body)" },
   btnMute: { background: "white", color: "rgb(var(--warm-700))", border: "1px solid rgb(var(--warm-200))", padding: "8px 10px" },
   btnReset: { background: "rgb(var(--warm-200))", color: "rgb(var(--warm-700))" },
 };
-
-async function unlockAudioContext(audioContextRef: React.MutableRefObject<AudioContext | null>) {
-  if (typeof window === "undefined") return null;
-
-  const AudioCtx =
-    window.AudioContext ||
-    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-
-  if (!AudioCtx) return null;
-
-  if (!audioContextRef.current) {
-    audioContextRef.current = new AudioCtx();
-  }
-
-  if (audioContextRef.current.state === "suspended") {
-    await audioContextRef.current.resume();
-  }
-
-  return audioContextRef.current;
-}
-
-function createTimerAlarmDataUrl() {
-  const sampleRate = 44100;
-  const durationSeconds = 1.8;
-  const frameCount = Math.floor(sampleRate * durationSeconds);
-  const samples = new Int16Array(frameCount);
-
-  for (let i = 0; i < frameCount; i++) {
-    const t = i / sampleRate;
-    const envelope =
-      t < 0.04
-        ? t / 0.04
-        : t > durationSeconds - 0.25
-          ? Math.max(0, (durationSeconds - t) / 0.25)
-          : 1;
-
-    const toneA = Math.sin(2 * Math.PI * 1046.5 * t);
-    const toneB = t > 0.18 ? Math.sin(2 * Math.PI * 1318.5 * (t - 0.18)) : 0;
-    const toneC = t > 0.4 ? Math.sin(2 * Math.PI * 1567.98 * (t - 0.4)) : 0;
-    const signal = (toneA * 0.45 + toneB * 0.3 + toneC * 0.22) * envelope;
-    samples[i] = Math.max(-1, Math.min(1, signal)) * 32767;
-  }
-
-  const wavBuffer = new ArrayBuffer(44 + samples.length * 2);
-  const view = new DataView(wavBuffer);
-
-  writeAscii(view, 0, "RIFF");
-  view.setUint32(4, 36 + samples.length * 2, true);
-  writeAscii(view, 8, "WAVE");
-  writeAscii(view, 12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true);
-  view.setUint16(32, 2, true);
-  view.setUint16(34, 16, true);
-  writeAscii(view, 36, "data");
-  view.setUint32(40, samples.length * 2, true);
-
-  samples.forEach((sample, index) => {
-    view.setInt16(44 + index * 2, sample, true);
-  });
-
-  let binary = "";
-  const bytes = new Uint8Array(wavBuffer);
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-
-  return `data:audio/wav;base64,${btoa(binary)}`;
-}
-
-function writeAscii(view: DataView, offset: number, value: string) {
-  for (let i = 0; i < value.length; i++) {
-    view.setUint8(offset + i, value.charCodeAt(i));
-  }
-}
-
-async function prepareTimerAlarm(
-  audioContextRef: React.MutableRefObject<AudioContext | null>,
-  audioElementRef: React.MutableRefObject<HTMLAudioElement | null>
-) {
-  await unlockAudioContext(audioContextRef);
-
-  if (typeof window === "undefined") return;
-
-  if (!audioElementRef.current) {
-    const audio = new Audio(createTimerAlarmDataUrl());
-    audio.preload = "auto";
-    audio.playsInline = true;
-    audioElementRef.current = audio;
-  }
-
-  const audio = audioElementRef.current;
-  if (!audio) return;
-
-  try {
-    audio.currentTime = 0;
-    audio.muted = true;
-    await audio.play();
-    audio.pause();
-    audio.currentTime = 0;
-    audio.muted = false;
-  } catch {
-    audio.muted = false;
-  }
-}
-
-async function playTimerDoneSound(
-  audioContextRef: React.MutableRefObject<AudioContext | null>,
-  audioElementRef: React.MutableRefObject<HTMLAudioElement | null>
-) {
-  if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-    navigator.vibrate?.([180, 120, 220]);
-  }
-
-  const audio = audioElementRef.current;
-  if (audio) {
-    try {
-      audio.pause();
-      audio.currentTime = 0;
-      audio.muted = false;
-      await audio.play();
-      return;
-    } catch {
-      // Fall back to oscillator alarm below.
-    }
-  }
-
-  const context = await unlockAudioContext(audioContextRef);
-  if (!context) return;
-
-  const now = context.currentTime;
-  const master = context.createGain();
-  master.gain.setValueAtTime(0.0001, now);
-  master.gain.exponentialRampToValueAtTime(0.12, now + 0.02);
-  master.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
-  master.connect(context.destination);
-
-  const notes = [
-    { frequency: 1046.5, start: 0, duration: 0.42 },
-    { frequency: 1318.5, start: 0.18, duration: 0.48 },
-    { frequency: 1567.98, start: 0.4, duration: 0.62 },
-  ];
-
-  notes.forEach((note) => {
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(note.frequency, now + note.start);
-
-    gain.gain.setValueAtTime(0.0001, now + note.start);
-    gain.gain.exponentialRampToValueAtTime(0.16, now + note.start + 0.03);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + note.start + note.duration);
-
-    oscillator.connect(gain);
-    gain.connect(master);
-    oscillator.start(now + note.start);
-    oscillator.stop(now + note.start + note.duration + 0.02);
-  });
-}
 
 const S: Record<string, React.CSSProperties> = {
   loading: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100dvh", fontSize: 16, color: "rgb(var(--warm-500))" },
