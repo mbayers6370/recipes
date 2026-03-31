@@ -514,7 +514,7 @@ const S: Record<string, React.CSSProperties> = {
   planCard: {
     background: "white",
     borderRadius: "var(--radius-card)",
-    border: "2px dashed rgba(181, 88, 47, 0.42)",
+    border: "1px dashed rgba(181, 88, 47, 0.42)",
     overflow: "hidden",
     padding: 14,
     boxShadow: "0 12px 26px rgba(112, 48, 26, 0.08)",
@@ -716,7 +716,7 @@ const S: Record<string, React.CSSProperties> = {
   recipeGrid: { display: "grid", gap: 12 },
   loadingGrid: { display: "grid", gap: 12 },
   savedPanel: {
-    background: "rgb(var(--warm-50))",
+    background: "white",
     borderRadius: "var(--radius-card-inner)",
     border: "1px solid rgb(var(--warm-200))",
     padding: "16px",
@@ -726,7 +726,7 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: "var(--radius-card-inner)",
     overflow: "hidden",
     textDecoration: "none",
-    border: "1px solid rgb(var(--warm-100))",
+    border: "1px solid rgba(181, 88, 47, 0.32)",
     transition: "transform 0.15s",
     display: "flex",
     flexDirection: "column",

@@ -4,14 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BookOpenText, CalendarDays, CircleUser, Home, LogOut, ShoppingBag, Users } from "lucide-react";
+import { BookOpenText, CalendarDays, CircleUser, Home, LogOut, ShoppingCart, Users } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 
 const MOBILE_NAV_ITEMS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/recipes", label: "Recipes", icon: BookOpenText },
   { href: "/plan", label: "Plan", icon: CalendarDays },
-  { href: "/grocery", label: "Grocery", icon: ShoppingBag },
+  { href: "/grocery", label: "Groceries", icon: ShoppingCart },
   { href: "/profile", label: "Profile", icon: CircleUser },
 ];
 
@@ -20,7 +20,7 @@ const DESKTOP_NAV_ITEMS = [
   { href: "/recipes", label: "Recipes", icon: BookOpenText },
   { href: "/plan", label: "Plan", icon: CalendarDays },
   { href: "/kitchen", label: "Kitchen", icon: Users },
-  { href: "/grocery", label: "Grocery", icon: ShoppingBag },
+  { href: "/grocery", label: "Groceries", icon: ShoppingCart },
   { href: "/profile", label: "Profile", icon: CircleUser },
 ];
 

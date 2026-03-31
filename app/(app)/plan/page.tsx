@@ -19,6 +19,23 @@ const MEAL_TYPE_LABELS: Record<string, string> = {
   dessert: "Dessert",
   side: "Side",
 };
+const FEATURED_MEAL_ORDER: Record<string, number> = {
+  breakfast: 0,
+  brunch: 1,
+  lunch: 2,
+  snack: 3,
+  side: 4,
+  dinner: 5,
+  dessert: 6,
+};
+
+function getCurrentFeaturedMealType(now: Date) {
+  const minutes = now.getHours() * 60 + now.getMinutes();
+
+  if (minutes <= 600) return "breakfast";
+  if (minutes <= 840) return "lunch";
+  return "dinner";
+}
 
 export default function PlanPage() {
   const [weekStart, setWeekStart] = useState<Date>(startOfWeek(new Date()));
@@ -114,29 +131,31 @@ export default function PlanPage() {
   const startOfToday = new Date(today);
   startOfToday.setHours(0, 0, 0, 0);
   const todayIndex = today.getDay();
+  const currentFeaturedMealType = getCurrentFeaturedMealType(today);
   const planItems = plan?.items || [];
   const upcomingItems = [...planItems]
     .filter((item) => item.recipe || item.note?.trim())
     .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+  const isCurrentWeek = weekStart <= startOfToday && startOfToday <= addDays(weekStart, 6);
+  const todayItems = upcomingItems
+    .filter((item) => item.dayOfWeek === todayIndex)
+    .sort((a, b) => (FEATURED_MEAL_ORDER[a.mealType] ?? 99) - (FEATURED_MEAL_ORDER[b.mealType] ?? 99));
+  const todayFeaturedItem =
+    todayItems.find((item) => item.mealType === currentFeaturedMealType) ||
+    todayItems.find((item) => (FEATURED_MEAL_ORDER[item.mealType] ?? 99) > (FEATURED_MEAL_ORDER[currentFeaturedMealType] ?? 99)) ||
+    todayItems[0] ||
+    null;
   const featuredItem =
-    upcomingItems.find((item) => item.dayOfWeek >= todayIndex) || upcomingItems[0] || null;
+    (isCurrentWeek ? todayFeaturedItem : null) ||
+    (isCurrentWeek ? upcomingItems.find((item) => item.dayOfWeek >= todayIndex) : upcomingItems[0]) ||
+    upcomingItems[0] ||
+    null;
+  const featuredEyebrow = featuredItem?.dayOfWeek === todayIndex && isCurrentWeek ? "Today" : "Coming up";
 
   return (
     <div style={S.page}>
       <div className="page-banner">
         <h1 className="page-banner-title">Meal Plan</h1>
-      </div>
-
-      <div style={S.header} className="page-header">
-        <div style={S.weekNav} className="page-header-actions">
-          <button style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, -7))}>
-            <ArrowLeft size={18} strokeWidth={2.2} />
-          </button>
-          <span style={S.weekLabel}>{weekLabel}</span>
-          <button style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, 7))}>
-            <ArrowRight size={18} strokeWidth={2.2} />
-          </button>
-        </div>
       </div>
 
       {/* Plan grid */}
@@ -150,9 +169,7 @@ export default function PlanPage() {
             {featuredItem && (
               <div style={S.featuredCard}>
                 <div style={S.featuredCopy}>
-                  <span style={S.featuredEyebrow}>
-                    {featuredItem.dayOfWeek === todayIndex ? "Tonight" : "Coming up"}
-                  </span>
+                  <span style={S.featuredEyebrow}>{featuredEyebrow}</span>
                   <h2 style={S.featuredTitle}>
                     {featuredItem.recipe?.title || featuredItem.note}
                   </h2>
@@ -165,11 +182,20 @@ export default function PlanPage() {
                   <Link href={`/recipes/${featuredItem.recipe.id}`} style={S.featuredLink}>
                     View recipe
                   </Link>
-                ) : (
-                  <span style={S.featuredTag}>Quick plan</span>
-                )}
+                ) : null}
               </div>
             )}
+            <div style={S.weekNavWrap}>
+              <div style={S.weekNav} className="page-header-actions">
+                <button style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, -7))}>
+                  <ArrowLeft size={18} strokeWidth={2.2} />
+                </button>
+                <span style={S.weekLabel}>{weekLabel}</span>
+                <button style={S.weekBtn} onClick={() => setWeekStart(addDays(weekStart, 7))}>
+                  <ArrowRight size={18} strokeWidth={2.2} />
+                </button>
+              </div>
+            </div>
           </div>
 
           <div style={S.planGrid}>
@@ -481,6 +507,10 @@ const S: Record<string, React.CSSProperties> = {
     whiteSpace: "nowrap",
   },
   weekNav: { display: "flex", alignItems: "center", justifyContent: "center", gap: 12, width: "100%" },
+  weekNavWrap: {
+    display: "flex",
+    justifyContent: "center",
+  },
   weekBtn: { background: "none", border: "none", cursor: "pointer", color: "rgb(var(--warm-600))", padding: "4px 8px", display: "flex", alignItems: "center", justifyContent: "center" },
   weekLabel: { fontSize: 13, fontWeight: 600, color: "rgb(var(--warm-700))" },
   editorialIntro: { display: "grid", gap: 12, marginBottom: 16 },

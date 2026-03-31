@@ -64,7 +64,8 @@ export default function GroceryPage() {
   const [lists, setLists] = useState<GroceryList[]>([]);
   const [activeList, setActiveList] = useState<GroceryList | null>(null);
   const [loading, setLoading] = useState(true);
-  const [newItem, setNewItem] = useState("");
+  const [newItemName, setNewItemName] = useState("");
+  const [newItemAmount, setNewItemAmount] = useState("");
   const [addingItem, setAddingItem] = useState(false);
   const [sortMode, setSortMode] = useState<GrocerySortMode>("aisle");
 
@@ -118,14 +119,19 @@ export default function GroceryPage() {
 
   const addItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeList || !newItem.trim()) return;
+    if (!activeList || !newItemName.trim()) return;
     setAddingItem(true);
     await fetch("/api/grocery", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ listId: activeList.id, name: newItem.trim() }),
+      body: JSON.stringify({
+        listId: activeList.id,
+        name: newItemName.trim(),
+        amount: newItemAmount.trim() || undefined,
+      }),
     });
-    setNewItem("");
+    setNewItemName("");
+    setNewItemAmount("");
     setAddingItem(false);
     fetchLists();
   };
@@ -200,7 +206,7 @@ export default function GroceryPage() {
   return (
     <div style={S.page}>
       <div className="page-banner">
-        <h1 className="page-banner-title">Grocery</h1>
+        <h1 className="page-banner-title">Groceries</h1>
       </div>
 
       <div style={S.header} className="page-header">
@@ -236,14 +242,27 @@ export default function GroceryPage() {
         <>
           {/* Add item */}
           <form onSubmit={addItem} style={S.addForm}>
-            <input
-              style={S.addInput}
-              type="text"
-              placeholder="Add an item…"
-              value={newItem}
-              onChange={(e) => setNewItem(e.target.value)}
-            />
-            <button type="submit" disabled={addingItem || !newItem.trim()} style={S.addBtn}>
+            <div style={S.addField}>
+              <label style={S.addLabel}>Item name</label>
+              <input
+                style={S.addInput}
+                type="text"
+                placeholder="Bananas"
+                value={newItemName}
+                onChange={(e) => setNewItemName(e.target.value)}
+              />
+            </div>
+            <div style={S.addFieldAmount}>
+              <label style={S.addLabel}>Amount</label>
+              <input
+                style={S.addInput}
+                type="text"
+                placeholder="12 oz"
+                value={newItemAmount}
+                onChange={(e) => setNewItemAmount(e.target.value)}
+              />
+            </div>
+            <button type="submit" disabled={addingItem || !newItemName.trim()} style={S.addBtn}>
               Add
             </button>
           </form>
@@ -429,7 +448,7 @@ const IS: Record<string, React.CSSProperties> = {
   rowChecked: {},
   check: { width: 22, height: 22, borderRadius: "50%", border: "2px solid rgb(var(--warm-300))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0, color: "white", background: "white", cursor: "pointer", padding: 0 },
   checkDone: { background: "rgb(var(--terra-500))", border: "2px solid rgb(var(--terra-500))" },
-  info: { flex: 1, display: "flex", flexDirection: "column", gap: 2 },
+  info: { flex: 1, display: "flex", flexDirection: "column", gap: 2, paddingLeft: 4 },
   name: { fontSize: 15, color: "rgb(var(--warm-800))", fontWeight: 500 },
   nameChecked: { textDecoration: "line-through", color: "rgb(var(--warm-400))" },
   amount: { fontSize: 12, color: "rgb(var(--warm-400))" },
@@ -454,8 +473,11 @@ const S: Record<string, React.CSSProperties> = {
   listTab: { border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-card-inner)", padding: "10px 12px", fontSize: 13, fontWeight: 600, background: "white", cursor: "pointer", color: "rgb(var(--warm-700))", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 8 },
   listTabActive: { background: "linear-gradient(180deg, rgba(243, 232, 224, 0.9) 0%, rgba(255,255,255,0.98) 100%)", borderColor: "rgb(var(--terra-200))", color: "rgb(var(--warm-900))" },
   listCount: { fontSize: 11, fontWeight: 700, padding: "3px 7px", borderRadius: "var(--radius-pill)", background: "rgba(53,49,46,0.08)", color: "inherit" },
-  addForm: { display: "flex", gap: 8, marginBottom: 16, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-card)", padding: 10 },
-  addInput: { flex: 1, border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-input)", padding: "11px 14px", fontSize: 14, background: "white", outline: "none", color: "rgb(var(--warm-900))" },
+  addForm: { display: "grid", gridTemplateColumns: "minmax(0, 1.5fr) minmax(112px, 0.8fr) auto", gap: 8, alignItems: "end", marginBottom: 16, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-card)", padding: 10 },
+  addField: { display: "flex", flexDirection: "column", gap: 6, minWidth: 0 },
+  addFieldAmount: { display: "flex", flexDirection: "column", gap: 6, minWidth: 0 },
+  addLabel: { fontSize: 12, fontWeight: 600, color: "rgb(var(--warm-600))" },
+  addInput: { width: "100%", border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-input)", padding: "11px 14px", fontSize: 14, background: "white", outline: "none", color: "rgb(var(--warm-900))" },
   addBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: "var(--radius-control)", padding: "11px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
   sortRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 16, flexWrap: "wrap" },
   sortLabel: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase", letterSpacing: "0.06em" },
