@@ -5,9 +5,11 @@ const PUBLIC_PATHS = [
   "/login",
   "/signup",
   "/offline",
+  "/shared",
   "/api/auth/login",
   "/api/auth/signup",
   "/api/auth/refresh",
+  "/api/shared-recipes",
 ];
 
 export async function proxy(req: NextRequest) {

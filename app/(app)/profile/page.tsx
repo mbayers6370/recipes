@@ -157,6 +157,21 @@ export default function ProfilePage() {
     const ua = window.navigator.userAgent.toLowerCase();
     const isIos = /iphone|ipad|ipod/.test(ua);
 
+    if (isIos && typeof window.navigator.share === "function") {
+      try {
+        await window.navigator.share({
+          title: "abovo",
+          text: "Add abovo to your home screen.",
+          url: window.location.origin,
+        });
+        setInstallMessage("In the share sheet, choose Add to Home Screen.");
+        return;
+      } catch {
+        setInstallMessage("In Safari, tap Share and then Add to Home Screen.");
+        return;
+      }
+    }
+
     setInstallMessage(
       isIos
         ? "In Safari, tap Share and then Add to Home Screen."
@@ -219,12 +234,12 @@ export default function ProfilePage() {
                 {isStandalone
                   ? "Already installed on this device"
                   : installPromptEvent
-                    ? "Install as an app from this browser"
-                    : "Save it to your home screen"}
+                    ? "Add it as an app from this browser"
+                    : "Add it to your home screen"}
               </span>
             </div>
             <button onClick={() => void handleInstall()} style={S.installBtn}>
-              {isStandalone ? "Installed" : "Install"}
+              {isStandalone ? "Installed" : "Add app"}
             </button>
           </div>
         </div>

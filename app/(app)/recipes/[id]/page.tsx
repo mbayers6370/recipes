@@ -104,24 +104,39 @@ export default function RecipeDetailPage() {
     if (!recipe) return;
     setSharing(true);
     try {
-      const res = await fetch(`/api/recipes/${id}/export`);
-      if (!res.ok) throw new Error("Failed to prepare recipe share");
+      let nextRecipe = recipe;
 
-      const markdown = await res.text();
-      const url = window.location.href;
+      if (!recipe.isPublic) {
+        if (!isOwner) {
+          throw new Error("Only the recipe owner can create a public share link.");
+        }
+
+        const publishRes = await fetch(`/api/recipes/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ isPublic: true }),
+        });
+
+        if (!publishRes.ok) throw new Error("Failed to publish recipe for sharing");
+        const publishJson = await publishRes.json();
+        nextRecipe = publishJson.data;
+        setRecipe(publishJson.data);
+      }
+
+      const url = `${window.location.origin}/shared/${id}`;
 
       if (navigator.share) {
         await navigator.share({
-          title: recipe.title,
-          text: markdown,
+          title: nextRecipe.title,
+          text: "Save this recipe from abovo",
           url,
         });
         return;
       }
 
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(`${markdown}\n\n${url}`.trim());
-        alert("Recipe copied so you can paste it into Messages, Notes, or email.");
+        await navigator.clipboard.writeText(url);
+        alert("Recipe link copied so you can paste it into Messages, Notes, or email.");
         return;
       }
 
