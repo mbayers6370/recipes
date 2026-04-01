@@ -553,7 +553,6 @@ const S: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     gap: 8,
     flex: "0 0 auto",
-    minWidth: 130,
   },
   listTabMeta: { display: "inline-flex", alignItems: "center", gap: 8 },
   listChevronOpen: { transform: "rotate(180deg)" },
