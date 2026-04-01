@@ -1,6 +1,6 @@
-const STATIC_CACHE = "ab-ovo-static-v2";
-const PAGE_CACHE = "ab-ovo-pages-v2";
-const RUNTIME_CACHE = "ab-ovo-runtime-v2";
+const STATIC_CACHE = "ab-ovo-static-v3";
+const PAGE_CACHE = "ab-ovo-pages-v3";
+const RUNTIME_CACHE = "ab-ovo-runtime-v3";
 const OFFLINE_URL = "/offline";
 const PRECACHE_URLS = [
   OFFLINE_URL,

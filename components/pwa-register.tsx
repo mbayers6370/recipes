@@ -24,6 +24,26 @@ export function PwaRegister() {
 
     void navigator.serviceWorker.register("/sw.js", {
       scope: "/",
+    }).then((registration) => {
+      const activateWaitingWorker = () => {
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+        }
+      };
+
+      void registration.update();
+      activateWaitingWorker();
+
+      registration.addEventListener("updatefound", () => {
+        const installingWorker = registration.installing;
+        if (!installingWorker) return;
+
+        installingWorker.addEventListener("statechange", () => {
+          if (installingWorker.state === "installed") {
+            activateWaitingWorker();
+          }
+        });
+      });
     });
   }, []);
 
