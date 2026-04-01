@@ -353,21 +353,6 @@ export default function GroceryPage() {
             </div>
           </div>
 
-          <div style={S.shopSummary}>
-            <div style={S.shopCard}>
-              <span style={S.shopValue}>{unchecked.length}</span>
-              <span style={S.shopCopy}>left to grab</span>
-            </div>
-            <div style={S.shopCard}>
-              <span style={S.shopValue}>{sortMode === "aisle" ? visibleSections.length : 1}</span>
-              <span style={S.shopCopy}>{sortMode === "aisle" ? "aisles in play" : "sorted view"}</span>
-            </div>
-            <div style={S.shopCard}>
-              <span style={S.shopValue}>{checked.length}</span>
-              <span style={S.shopCopy}>checked off</span>
-            </div>
-          </div>
-
           {/* Items */}
           {unchecked.length === 0 && checked.length === 0 ? (
             <div style={S.emptyList}>
@@ -377,6 +362,21 @@ export default function GroceryPage() {
             </div>
           ) : (
             <div style={S.itemsWrap}>
+              <div style={S.shopSummaryInline}>
+                <div style={S.shopCardCompact}>
+                  <span style={S.shopValueCompact}>{unchecked.length}</span>
+                  <span style={S.shopCopyCompact}>Left to grab</span>
+                </div>
+                <div style={S.shopCardCompact}>
+                  <span style={S.shopValueCompact}>{sortMode === "aisle" ? visibleSections.length : 1}</span>
+                  <span style={S.shopCopyCompact}>{sortMode === "aisle" ? "Aisles in play" : "Sorted view"}</span>
+                </div>
+                <div style={S.shopCardCompact}>
+                  <span style={S.shopValueCompact}>{checked.length}</span>
+                  <span style={S.shopCopyCompact}>Checked off</span>
+                </div>
+              </div>
+
               {unchecked.length > 0 && (
                 <div style={S.itemGroup}>
                   {sortMode === "aisle"
@@ -615,19 +615,26 @@ const S: Record<string, React.CSSProperties> = {
   sortToggle: { display: "inline-flex", alignItems: "center", gap: 6, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-pill)", padding: 4 },
   sortBtn: { border: "none", background: "transparent", color: "rgb(var(--warm-500))", borderRadius: "var(--radius-pill)", padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   sortBtnActive: { background: "rgb(var(--terra-50))", color: "rgb(var(--terra-700))" },
-  shopSummary: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10, marginBottom: 14 },
-  shopCard: {
-    background: "rgba(255,255,255,0.82)",
+  shopSummaryInline: {
+    display: "grid",
+    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+    gap: 8,
+    padding: "10px 10px 2px",
+    background: "rgba(248, 243, 238, 0.72)",
+    borderBottom: "1px solid rgb(var(--warm-100))",
+  },
+  shopCardCompact: {
+    background: "rgba(255,255,255,0.92)",
     border: "1px solid rgb(var(--warm-200))",
-    borderRadius: "var(--radius-card)",
-    padding: "13px 10px",
+    borderRadius: 10,
+    padding: "8px 6px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    gap: 4,
+    gap: 2,
   },
-  shopValue: { fontSize: 20, lineHeight: 1, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
-  shopCopy: { fontSize: 11, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase", letterSpacing: "0.05em", textAlign: "center" },
+  shopValueCompact: { fontSize: 15, lineHeight: 1, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)" },
+  shopCopyCompact: { fontSize: 9, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center" },
   itemsWrap: { background: "linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(255,255,255,0.88) 100%)", borderRadius: "var(--radius-card)", border: "1px solid rgb(var(--warm-200))", overflow: "hidden", boxShadow: "0 16px 34px rgba(71, 55, 46, 0.04)" },
   itemGroup: {},
   sectionHeader: { fontSize: 11, fontWeight: 700, color: "rgb(var(--terra-700))", textTransform: "uppercase", padding: "15px 14px 8px", letterSpacing: "0.08em", background: "rgba(243, 232, 224, 0.48)" },

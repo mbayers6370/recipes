@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChefHat, Heart, Plus, Search } from "lucide-react";
+import { ChefHat, ChevronDown, Heart, Plus, Search } from "lucide-react";
 import type { RecipeSummary } from "@/types";
 import { RECIPE_TYPE_OPTIONS, formatRecipeType, isImportedRecipe } from "@/lib/recipe-taxonomy";
 import { RecipeImage } from "@/components/recipe-image";
@@ -102,20 +102,25 @@ export default function RecipesPage() {
         ))}
       </div>
 
-      <div style={S.sortRow}>
+      <div style={S.sortCard}>
         <label style={S.sortLabel} htmlFor="recipes-sort">Sort</label>
-        <select
-          id="recipes-sort"
-          style={S.sortSelect}
-          value={sort}
-          onChange={(e) => { setSort(e.target.value as (typeof SORT_OPTIONS)[number]["value"]); setPage(1); }}
-        >
-          {SORT_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div style={S.sortSelectWrap}>
+          <select
+            id="recipes-sort"
+            style={S.sortSelect}
+            value={sort}
+            onChange={(e) => { setSort(e.target.value as (typeof SORT_OPTIONS)[number]["value"]); setPage(1); }}
+          >
+            {SORT_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <span style={S.sortSelectIcon}>
+            <ChevronDown size={15} strokeWidth={2.2} />
+          </span>
+        </div>
       </div>
 
       {/* Results */}
@@ -275,12 +280,35 @@ const S: Record<string, React.CSSProperties> = {
     borderColor: "rgb(var(--terra-600))",
     color: "white",
   },
-  sortRow: { display: "flex", alignItems: "center", gap: 10, marginBottom: 16 },
+  sortCard: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+    marginBottom: 16,
+    padding: "12px 14px",
+    background: "white",
+    border: "1px solid rgb(var(--warm-200))",
+    borderRadius: 14,
+  },
   sortLabel: { fontSize: 12, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase" as const, letterSpacing: "0.04em" },
+  sortSelectWrap: { position: "relative" },
   sortSelect: {
+    width: "100%",
+    height: 46,
     borderWidth: "1.5px", borderStyle: "solid", borderColor: "rgb(var(--warm-200))",
-    borderRadius: "var(--radius-control)", padding: "9px 12px", fontSize: 13, color: "rgb(var(--warm-800))",
-    background: "white", outline: "none", minWidth: 180,
+    borderRadius: 10, padding: "11px 40px 11px 14px", fontSize: 14, color: "rgb(var(--warm-900))",
+    background: "white", outline: "none", appearance: "none" as const,
+  },
+  sortSelectIcon: {
+    position: "absolute",
+    top: "50%",
+    right: 14,
+    transform: "translateY(-50%)",
+    color: "rgb(var(--terra-600))",
+    pointerEvents: "none" as const,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   count: { fontSize: 12, color: "rgb(var(--warm-500))", marginBottom: 12 },
   grid: { display: "grid", gap: 12 },

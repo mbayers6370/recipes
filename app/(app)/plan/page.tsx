@@ -133,11 +133,14 @@ export default function PlanPage() {
   const todayIndex = today.getDay();
   const currentFeaturedMealType = getCurrentFeaturedMealType(today);
   const planItems = plan?.items || [];
-  const upcomingItems = [...planItems]
-    .filter((item) => item.recipe || item.note?.trim())
+  const recipeItems = [...planItems]
+    .filter((item) => Boolean(item.recipe?.id))
     .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
   const isCurrentWeek = weekStart <= startOfToday && startOfToday <= addDays(weekStart, 6);
-  const todayItems = upcomingItems
+  const currentAndFutureRecipeItems = isCurrentWeek
+    ? recipeItems.filter((item) => item.dayOfWeek >= todayIndex)
+    : recipeItems;
+  const todayItems = currentAndFutureRecipeItems
     .filter((item) => item.dayOfWeek === todayIndex)
     .sort((a, b) => (FEATURED_MEAL_ORDER[a.mealType] ?? 99) - (FEATURED_MEAL_ORDER[b.mealType] ?? 99));
   const todayFeaturedItem =
@@ -147,8 +150,7 @@ export default function PlanPage() {
     null;
   const featuredItem =
     (isCurrentWeek ? todayFeaturedItem : null) ||
-    (isCurrentWeek ? upcomingItems.find((item) => item.dayOfWeek >= todayIndex) : upcomingItems[0]) ||
-    upcomingItems[0] ||
+    currentAndFutureRecipeItems[0] ||
     null;
   const featuredEyebrow = featuredItem?.dayOfWeek === todayIndex && isCurrentWeek ? "Today" : "Coming up";
 
@@ -166,7 +168,7 @@ export default function PlanPage() {
       ) : (
         <>
           <div style={S.editorialIntro}>
-            {featuredItem && (
+            {featuredItem ? (
               <div style={S.featuredCard}>
                 <div style={S.featuredCopy}>
                   <span style={S.featuredEyebrow}>{featuredEyebrow}</span>
@@ -183,6 +185,17 @@ export default function PlanPage() {
                     View recipe
                   </Link>
                 ) : null}
+              </div>
+            ) : (
+              <div style={S.featuredCard}>
+                <div style={S.featuredCopy}>
+                  <span style={S.featuredEyebrow}>Coming up</span>
+                  <h2 style={S.featuredTitle}>Add a recipe</h2>
+                  <p style={S.featuredMeta}>No upcoming recipes are scheduled right now.</p>
+                </div>
+                <Link href="/recipes" style={S.featuredLink}>
+                  Browse recipes
+                </Link>
               </div>
             )}
             <div style={S.weekNavWrap}>
