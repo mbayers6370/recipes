@@ -9,6 +9,7 @@ import { getRecipeType } from "@/lib/recipe-taxonomy";
 import { buildRecipeAccessWhere, getUserHouseholdId } from "@/lib/households";
 import { Prisma } from "@/app/generated/prisma/client";
 import { normalizeRecipeIngredients } from "@/lib/ingredient-normalization";
+import { isLikelyDirectImageUrl, resolveRecipeImageUrl } from "@/lib/recipe-image-url";
 
 export async function GET(req: NextRequest) {
   try {
@@ -177,6 +178,15 @@ export async function POST(req: NextRequest) {
       id: nanoid(),
       ...ing,
     }));
+    const imageUrl = data.imageUrl
+      ? isLikelyDirectImageUrl(data.imageUrl)
+        ? data.imageUrl
+        : await resolveRecipeImageUrl(data.imageUrl)
+      : null;
+
+    if (data.imageUrl && !imageUrl) {
+      return err("We couldn't resolve an image from that URL.", 422);
+    }
 
     const totalTime =
       data.totalTime ??
@@ -189,6 +199,7 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.sub,
         ...data,
+        imageUrl,
         householdId,
         steps,
         ingredients,

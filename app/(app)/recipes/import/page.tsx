@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FileText, ImageUp, Link2, PencilLine } from "lucide-react";
+import { ArrowLeft, FileText, Link2, PencilLine } from "lucide-react";
 import type { ParsedRecipe } from "@/lib/recipe-parser";
+import { RecipeManualForm } from "@/components/recipe-manual-form";
 
 type ImportStep = "input" | "preview" | "saving";
-type ImportMode = "url" | "text" | "image";
+type ImportMode = "url" | "document" | "manual";
 
 const IMPORT_MODE_COPY: Record<
   ImportMode,
@@ -20,19 +21,19 @@ const IMPORT_MODE_COPY: Record<
       "Use a recipe website link from places like NYT Cooking, AllRecipes, or Serious Eats.",
     buttonLabel: "Import Recipe",
   },
-  text: {
-    tabLabel: "Paste Text",
-    title: "Paste recipe text",
+  document: {
+    tabLabel: "PDF / DOCX",
+    title: "Upload a recipe document",
     description:
-      "Paste a recipe from notes, chat, email, or anywhere else and we’ll try to organize it for you.",
-    buttonLabel: "Parse Recipe",
+      "Upload a PDF or DOCX file and we’ll extract the recipe text before organizing it for you.",
+    buttonLabel: "Import Document",
   },
-  image: {
-    tabLabel: "Photo / Screenshot",
-    title: "Upload a recipe photo",
+  manual: {
+    tabLabel: "Start From Scratch",
+    title: "Create a recipe manually",
     description:
-      "We’ll read the text from your photo or screenshot, then you can fix any mistakes before parsing it.",
-    buttonLabel: "Read Text From Image",
+      "Jump straight into the recipe editor and add everything yourself.",
+    buttonLabel: "Start From Scratch",
   },
 };
 
@@ -41,95 +42,53 @@ export default function ImportRecipePage() {
   const [step, setStep] = useState<ImportStep>("input");
   const [mode, setMode] = useState<ImportMode>("url");
   const [url, setUrl] = useState("");
-  const [rawText, setRawText] = useState("");
   const [fallbackTitle, setFallbackTitle] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState("");
-  const [imageOcrText, setImageOcrText] = useState("");
-  const [ocrProgress, setOcrProgress] = useState<number | null>(null);
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedRecipe | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!imageFile) {
-      setImagePreviewUrl("");
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(imageFile);
-    setImagePreviewUrl(objectUrl);
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [imageFile]);
-
-  useEffect(() => {
-    setError("");
-  }, [mode]);
-
-  useEffect(() => {
-    if (mode !== "image") return;
-    setImageOcrText("");
-    setOcrProgress(null);
-  }, [imageFile, mode]);
+  const clearError = () => setError("");
 
   const handleImport = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
     try {
-      let payload: { mode: "url"; url: string } | { mode: "text"; text: string; title?: string };
+      if (mode === "manual") return;
 
-      if (mode === "image") {
-        if (!imageFile) throw new Error("Please choose an image first.");
-        if (!imageOcrText.trim()) {
-          const { createWorker } = await import("tesseract.js");
-          const worker = await createWorker("eng", 1, {
-            logger: (message) => {
-              if (message.status === "recognizing text" && typeof message.progress === "number") {
-                setOcrProgress(message.progress);
+      const res =
+        mode === "url"
+          ? await fetch("/api/recipes/import", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ mode, url }),
+            })
+          : await (() => {
+              if (!documentFile) {
+                throw new Error("Please choose a PDF or DOCX file first.");
               }
-            },
-          });
 
-          const result = await worker.recognize(imageFile);
-          await worker.terminate();
+              const formData = new FormData();
+              formData.set("mode", "document");
+              formData.set("file", documentFile);
 
-          const extractedText = result.data.text.trim();
-          setOcrProgress(null);
+              if (fallbackTitle.trim()) {
+                formData.set("title", fallbackTitle.trim());
+              }
 
-          if (!extractedText) {
-            throw new Error("No readable text was found in that image.");
-          }
+              return fetch("/api/recipes/import", {
+                method: "POST",
+                body: formData,
+              });
+            })();
 
-          setImageOcrText(extractedText);
-          setLoading(false);
-          return;
-        }
-
-        payload = {
-          mode: "text",
-          text: imageOcrText,
-          title: fallbackTitle.trim() || undefined,
-        };
-      } else {
-        payload =
-          mode === "url"
-            ? { mode, url }
-            : { mode, text: rawText, title: fallbackTitle.trim() || undefined };
-      }
-
-      const res = await fetch("/api/recipes/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Import failed");
       setParsed(json.data);
       setStep("preview");
     } catch (err) {
       setError((err as Error).message);
-      setOcrProgress(null);
     } finally {
       setLoading(false);
     }
@@ -162,7 +121,7 @@ export default function ImportRecipePage() {
   return (
     <div style={S.page}>
       <div style={S.header} className="page-header">
-        <h1 style={S.title} className="page-header-title">Import Recipe</h1>
+        <h1 style={S.title} className="page-header-title">Add a New Recipe</h1>
         <div style={S.headerActions} className="page-header-actions">
           <button onClick={() => router.back()} style={S.backBtn}>
             <ArrowLeft size={16} strokeWidth={2.2} />
@@ -176,7 +135,10 @@ export default function ImportRecipePage() {
           <div style={S.modeTabs}>
             <button
               type="button"
-              onClick={() => setMode("url")}
+              onClick={() => {
+                setMode("url");
+                clearError();
+              }}
               style={{ ...S.modeTab, ...(mode === "url" ? S.modeTabActive : {}) }}
             >
               <Link2 size={16} strokeWidth={2.2} />
@@ -184,24 +146,36 @@ export default function ImportRecipePage() {
             </button>
             <button
               type="button"
-              onClick={() => setMode("text")}
-              style={{ ...S.modeTab, ...(mode === "text" ? S.modeTabActive : {}) }}
+              onClick={() => {
+                setMode("document");
+                clearError();
+              }}
+              style={{ ...S.modeTab, ...(mode === "document" ? S.modeTabActive : {}) }}
             >
               <FileText size={16} strokeWidth={2.2} />
-              <span>{IMPORT_MODE_COPY.text.tabLabel}</span>
+              <span>{IMPORT_MODE_COPY.document.tabLabel}</span>
             </button>
             <button
               type="button"
-              onClick={() => setMode("image")}
-              style={{ ...S.modeTab, ...(mode === "image" ? S.modeTabActive : {}) }}
+              onClick={() => {
+                setMode("manual");
+                clearError();
+              }}
+              style={{ ...S.modeTab, ...(mode === "manual" ? S.modeTabActive : {}) }}
             >
-              <ImageUp size={16} strokeWidth={2.2} />
-              <span>{IMPORT_MODE_COPY.image.tabLabel}</span>
+              <PencilLine size={16} strokeWidth={2.2} />
+              <span>{IMPORT_MODE_COPY.manual.tabLabel}</span>
             </button>
           </div>
 
           <div style={S.iconWrap}>
-            {mode === "url" ? <Link2 size={32} strokeWidth={2.2} /> : <ImageUp size={32} strokeWidth={2.2} />}
+            {mode === "url" ? (
+              <Link2 size={32} strokeWidth={2.2} />
+            ) : mode === "document" ? (
+              <FileText size={32} strokeWidth={2.2} />
+            ) : (
+              <PencilLine size={32} strokeWidth={2.2} />
+            )}
           </div>
           <h2 style={S.cardTitle}>{IMPORT_MODE_COPY[mode].title}</h2>
           <p style={S.cardSub}>{IMPORT_MODE_COPY[mode].description}</p>
@@ -216,7 +190,7 @@ export default function ImportRecipePage() {
                 required
                 autoFocus
               />
-            ) : mode === "text" ? (
+            ) : mode === "document" ? (
               <>
                 <input
                   style={S.input}
@@ -225,94 +199,36 @@ export default function ImportRecipePage() {
                   value={fallbackTitle}
                   onChange={(e) => setFallbackTitle(e.target.value)}
                 />
-                <textarea
-                  style={{ ...S.input, ...S.textarea }}
-                  placeholder={"Title\n\nIngredients\n- 2 eggs\n- 1 tbsp butter\n\nInstructions\n1. Whisk eggs\n2. Cook in butter"}
-                  value={rawText}
-                  onChange={(e) => setRawText(e.target.value)}
-                  required
-                  rows={10}
-                  autoFocus
-                />
-              </>
-            ) : (
-              <>
-                <input
-                  style={S.input}
-                  type="text"
-                  placeholder="Optional fallback title"
-                  value={fallbackTitle}
-                  onChange={(e) => setFallbackTitle(e.target.value)}
-                />
-                <label style={S.uploadBox}>
+                <label style={S.filePicker}>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                     style={S.hiddenInput}
-                    onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                    onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                    required
                   />
-                  <ImageUp size={22} strokeWidth={2.2} />
-                  <span>{imageFile ? imageFile.name : "Choose image"}</span>
+                  <span style={S.filePickerLabel}>
+                    {documentFile ? documentFile.name : "Choose PDF or DOCX"}
+                  </span>
                 </label>
-                {imagePreviewUrl && (
-                  <div style={S.uploadPreviewWrap}>
-                    <Image
-                      src={imagePreviewUrl}
-                      alt="Recipe upload preview"
-                      fill
-                      unoptimized
-                      sizes="(max-width: 768px) 100vw, 720px"
-                      style={S.uploadPreview}
-                    />
-                  </div>
-                )}
-                {ocrProgress !== null && (
-                  <p style={S.helperText}>Reading text from image… {Math.round(ocrProgress * 100)}%</p>
-                )}
-                {imageOcrText && (
-                  <>
-                    <p style={S.helperText}>
-                      Review and fix the extracted text before parsing the recipe.
-                    </p>
-                    <textarea
-                      style={{ ...S.input, ...S.textarea, minHeight: 220 }}
-                      placeholder="OCR text will appear here..."
-                      value={imageOcrText}
-                      onChange={(e) => setImageOcrText(e.target.value)}
-                      required
-                      rows={12}
-                    />
-                  </>
-                )}
+                <p style={S.helperText}>
+                  Best results come from exported recipes, typed documents, and clean scans saved as PDF.
+                </p>
               </>
+            ) : (
+              <RecipeManualForm />
             )}
             {error && <p style={S.error}>{error}</p>}
-            <button type="submit" disabled={loading} style={S.btn}>
-              {loading
-                ? mode === "image"
-                  ? "Scanning image…"
-                  : "Importing…"
-                : mode === "url"
-                ? IMPORT_MODE_COPY.url.buttonLabel
-                : mode === "text"
-                ? IMPORT_MODE_COPY.text.buttonLabel
-                : imageOcrText
-                ? "Parse Corrected Text"
-                : IMPORT_MODE_COPY.image.buttonLabel}
-            </button>
+            {mode !== "manual" ? (
+              <button type="submit" disabled={loading} style={S.btn}>
+                {loading
+                  ? "Importing…"
+                  : mode === "url"
+                  ? IMPORT_MODE_COPY.url.buttonLabel
+                  : IMPORT_MODE_COPY.document.buttonLabel}
+              </button>
+            ) : null}
           </form>
-
-          <div style={S.divider}>
-            <span style={S.dividerText}>or</span>
-          </div>
-
-          <button
-            style={S.altBtn}
-            onClick={() => router.push("/recipes/new")}
-          >
-            <PencilLine size={16} strokeWidth={2.2} />
-            <span>Enter recipe manually</span>
-          </button>
         </div>
       )}
 
@@ -320,7 +236,8 @@ export default function ImportRecipePage() {
         <div style={S.preview}>
           <div style={S.previewCard}>
             {parsed.imageUrl && (
-              <div style={S.previewImgWrap}>
+              <div style={S.previewImgShell}>
+                <div style={S.previewImgWrap}>
                 <Image
                   src={parsed.imageUrl}
                   alt={parsed.title || "Imported recipe preview"}
@@ -329,6 +246,7 @@ export default function ImportRecipePage() {
                   sizes="(max-width: 768px) 100vw, 720px"
                   style={S.previewImg}
                 />
+                </div>
               </div>
             )}
             <div style={S.previewBody}>
@@ -417,13 +335,13 @@ function MetaChip({ label, value }: { label: string; value: string }) {
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: { padding: "16px", minHeight: "100dvh", background: "rgb(var(--warm-50))" },
+  page: { padding: "16px", minHeight: "100dvh", background: "rgb(var(--warm-50))", width: "100%", maxWidth: 960, margin: "0 auto" },
   header: {},
   headerActions: { display: "flex", gap: 8 },
   backBtn: { background: "none", border: "none", fontSize: 14, color: "rgb(var(--terra-600))", cursor: "pointer", fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 6 },
   title: { fontSize: 22, fontWeight: 700, fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)", color: "rgb(var(--warm-900))" },
   card: { background: "white", borderRadius: 20, padding: "32px 20px", textAlign: "center", border: "1px solid rgb(var(--warm-200))" },
-  modeTabs: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, background: "rgb(var(--warm-100))", borderRadius: 12, padding: 4, marginBottom: 20 },
+  modeTabs: { display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8, background: "rgb(var(--warm-100))", borderRadius: 12, padding: 4, marginBottom: 20 },
   modeTab: { background: "transparent", border: "none", borderRadius: 10, padding: "10px 12px", color: "rgb(var(--warm-600))", fontSize: 13, fontWeight: 600, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, cursor: "pointer" },
   modeTabActive: { background: "white", color: "rgb(var(--warm-900))" },
   iconWrap: { color: "rgb(var(--terra-600))", marginBottom: 12, display: "flex", alignItems: "center", justifyContent: "center" },
@@ -432,19 +350,16 @@ const S: Record<string, React.CSSProperties> = {
   form: { display: "flex", flexDirection: "column", gap: 12 },
   input: { width: "100%", border: "1.5px solid rgb(var(--warm-200))", borderRadius: 12, padding: "13px 14px", fontSize: 14, color: "rgb(var(--warm-900))", background: "white", outline: "none", boxSizing: "border-box" },
   textarea: { minHeight: 220, resize: "vertical", lineHeight: 1.6, fontFamily: "inherit" },
-  uploadBox: { border: "1.5px dashed rgb(var(--warm-300))", borderRadius: 14, padding: "18px 14px", color: "rgb(var(--warm-700))", background: "rgb(var(--warm-50))", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, cursor: "pointer" },
+  filePicker: { width: "100%" },
   hiddenInput: { display: "none" },
-  uploadPreviewWrap: { width: "100%", maxHeight: 280, aspectRatio: "16/10", position: "relative", overflow: "hidden", borderRadius: 12, border: "1px solid rgb(var(--warm-200))", background: "white" },
-  uploadPreview: { objectFit: "contain" },
+  filePickerLabel: { display: "block", width: "100%", border: "1.5px dashed rgb(var(--warm-300))", borderRadius: 12, padding: "16px 14px", fontSize: 14, color: "rgb(var(--warm-700))", background: "rgb(var(--warm-50))", textAlign: "center", cursor: "pointer", boxSizing: "border-box" },
   helperText: { fontSize: 12, color: "rgb(var(--warm-500))", textAlign: "left" },
   error: { fontSize: 13, color: "rgb(var(--terra-700))", background: "rgb(var(--terra-50))", border: "1px solid rgb(var(--terra-200))", borderRadius: 8, padding: "8px 12px", textAlign: "left" },
   btn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: 10, padding: "13px", fontSize: 15, fontWeight: 600, cursor: "pointer" },
-  divider: { display: "flex", alignItems: "center", gap: 12, margin: "20px 0" },
-  dividerText: { fontSize: 13, color: "rgb(var(--warm-400))" },
-  altBtn: { width: "100%", background: "rgb(var(--warm-50))", border: "1.5px solid rgb(var(--warm-200))", borderRadius: 10, padding: "13px", fontSize: 14, fontWeight: 500, cursor: "pointer", color: "rgb(var(--warm-700))", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 },
   preview: { display: "flex", flexDirection: "column", gap: 16 },
   previewCard: { background: "white", borderRadius: 16, overflow: "hidden", border: "1px solid rgb(var(--warm-200))" },
-  previewImgWrap: { width: "100%", aspectRatio: "16/9", position: "relative" },
+  previewImgShell: { display: "flex", justifyContent: "center", padding: "20px 20px 0" },
+  previewImgWrap: { width: "min(30%, 240px)", minWidth: 180, aspectRatio: "1 / 1", position: "relative", borderRadius: 16, overflow: "hidden" },
   previewImg: { objectFit: "cover" },
   previewBody: { padding: "20px" },
   previewTitleInput: { width: "100%", border: "1.5px solid rgb(var(--warm-200))", borderRadius: 10, padding: "11px 14px", fontSize: 22, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)", marginBottom: 8, background: "white", outline: "none" },

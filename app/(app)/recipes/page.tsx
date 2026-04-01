@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChefHat, Download, Heart, Search } from "lucide-react";
+import { ChefHat, Heart, Plus, Search } from "lucide-react";
 import type { RecipeSummary } from "@/types";
 import { RECIPE_TYPE_OPTIONS, formatRecipeType, isImportedRecipe } from "@/lib/recipe-taxonomy";
 import { RecipeImage } from "@/components/recipe-image";
@@ -55,16 +55,6 @@ export default function RecipesPage() {
     <div style={S.page}>
       <div className="page-banner">
         <h1 className="page-banner-title">Recipes</h1>
-      </div>
-
-      <div style={S.header} className="page-header">
-        <div style={S.headerActions} className="page-header-actions">
-          <Link href="/recipes/import" style={S.importBtn}>
-            <Download size={14} strokeWidth={2.2} />
-            <span>Import</span>
-          </Link>
-          <Link href="/recipes/new" style={S.newBtn}>+ New</Link>
-        </div>
       </div>
 
       {/* Search */}
@@ -131,31 +121,28 @@ export default function RecipesPage() {
       {/* Results */}
       {loading ? (
         <div style={S.grid} className="recipes-grid">
+          <AddRecipeTile />
           {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
         </div>
-      ) : recipes.length > 0 ? (
+      ) : (
         <>
           <p style={S.count}>{total} recipe{total !== 1 ? "s" : ""}</p>
           <div style={S.grid} className="recipes-grid">
+            <AddRecipeTile />
             {recipes.map((r) => <RecipeCard key={r.id} recipe={r} />)}
           </div>
-        </>
-      ) : (
-        <div style={S.empty}>
-          <div style={S.emptyIcon}><ChefHat size={42} strokeWidth={2} /></div>
-          <p style={S.emptyTitle}>
-            {search ? `No results for "${search}"` : "No recipes yet"}
-          </p>
-          <p style={S.emptySub}>
-            {search ? "Try a different search" : "Import a recipe to get started"}
-          </p>
-          {!search && (
-            <Link href="/recipes/import" style={S.emptyBtn}>
-              <Download size={14} strokeWidth={2.2} />
-              <span>Import Recipe</span>
-            </Link>
+          {recipes.length === 0 && (
+            <div style={S.empty}>
+              <div style={S.emptyIcon}><ChefHat size={42} strokeWidth={2} /></div>
+              <p style={S.emptyTitle}>
+                {search ? `No results for "${search}"` : "No recipes yet"}
+              </p>
+              <p style={S.emptySub}>
+                {search ? "Try a different search" : "Add your first recipe to get started"}
+              </p>
+            </div>
           )}
-        </div>
+        </>
       )}
     </div>
   );
@@ -179,7 +166,6 @@ function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
           iconSize={28}
           imageStyle={S.cardImg}
         />
-        <div style={S.cardShade} />
         <div style={S.cardBadges}>
           {isImportedRecipe(recipe.tags) ? <span style={S.importedBadge}>Imported</span> : null}
         </div>
@@ -214,6 +200,27 @@ function SkeletonCard() {
   );
 }
 
+function AddRecipeTile() {
+  return (
+    <Link
+      href="/recipes/import"
+      style={S.addTile}
+    >
+      <div style={S.addTileInner}>
+        <div style={S.addTileIconWrap}>
+          <Plus size={36} strokeWidth={2.3} />
+        </div>
+        <div style={S.addTileBody}>
+          <p style={S.addTileTitle}>Add a New Recipe</p>
+          <p style={S.addTileSub}>
+            Paste a link, upload a PDF or DOCX, or start from scratch.
+          </p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 const S: Record<string, React.CSSProperties> = {
   page: {
     padding: "16px",
@@ -222,19 +229,6 @@ const S: Record<string, React.CSSProperties> = {
     width: "100%",
     maxWidth: 960,
     margin: "0 auto",
-  },
-  header: {},
-  title: { fontSize: 26, fontWeight: 700, fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)", color: "rgb(var(--warm-900))" },
-  headerActions: { display: "flex", gap: 8 },
-  importBtn: {
-    background: "rgb(var(--terra-600))", color: "white", borderRadius: "var(--radius-control)",
-    padding: "8px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none",
-    display: "inline-flex", alignItems: "center", gap: 8,
-  },
-  newBtn: {
-    background: "white", color: "rgb(var(--warm-700))",
-    border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)",
-    padding: "8px 14px", fontSize: 13, fontWeight: 600, textDecoration: "none",
   },
   searchBar: { position: "relative", marginBottom: 12 },
   searchIcon: { position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgb(var(--warm-400))" },
@@ -298,8 +292,7 @@ const S: Record<string, React.CSSProperties> = {
     transition: "transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease",
   },
   cardThumb: { aspectRatio: "4/3", overflow: "hidden", background: "rgb(var(--warm-100))", position: "relative" },
-  cardImg: { width: "100%", height: "100%", objectFit: "cover" },
-  cardShade: { position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0) 48%, rgba(36,24,18,0.12) 100%)" },
+  cardImg: { width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center" },
   cardBadges: { position: "absolute", top: 10, left: 10, display: "flex", gap: 6, flexWrap: "wrap" },
   importedBadge: { display: "inline-flex", alignItems: "center", padding: "5px 8px", borderRadius: "var(--radius-pill)", background: "rgba(181, 88, 47, 0.92)", color: "white", fontSize: 11, fontWeight: 700 },
   favBadge: { position: "absolute", top: 8, right: 8, background: "rgba(255,255,255,0.9)", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, color: "rgb(var(--terra-600))" },
@@ -315,9 +308,57 @@ const S: Record<string, React.CSSProperties> = {
   },
   cardMeta: { fontSize: 11, color: "rgb(var(--warm-500))", display: "flex", gap: 4, flexWrap: "wrap" as const, alignItems: "center", marginTop: "auto", borderTop: "1px solid rgb(var(--warm-100))", paddingTop: 9 },
   dot: { color: "rgb(var(--warm-300))" },
+  addTile: {
+    background: "rgb(210, 146, 112)",
+    borderRadius: "var(--radius-card-inner)",
+    border: "1px solid rgb(196, 132, 98)",
+    textDecoration: "none",
+    minHeight: 246,
+    display: "flex",
+    alignItems: "stretch",
+    justifyContent: "center",
+    padding: "16px",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)",
+    transition: "transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease",
+    color: "white",
+  },
+  addTileInner: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center" as const,
+    gap: 18,
+    minHeight: "100%",
+  },
+  addTileIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "rgba(255,255,255,0.18)",
+    color: "white",
+  },
+  addTileBody: { display: "flex", flexDirection: "column", gap: 8, alignItems: "center" },
+  addTileTitle: {
+    fontSize: 20,
+    fontWeight: 700,
+    color: "white",
+    fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-display)",
+    margin: 0,
+  },
+  addTileSub: {
+    fontSize: 13,
+    lineHeight: 1.55,
+    color: "rgba(255,255,255,0.9)",
+    margin: 0,
+    maxWidth: 220,
+  },
   empty: { textAlign: "center", padding: "60px 20px" },
   emptyIcon: { marginBottom: 16, color: "rgb(var(--terra-600))", display: "flex", alignItems: "center", justifyContent: "center" },
   emptyTitle: { fontSize: 17, fontWeight: 600, color: "rgb(var(--warm-800))", marginBottom: 8 },
   emptySub: { fontSize: 14, color: "rgb(var(--warm-500))", marginBottom: 20 },
-  emptyBtn: { background: "rgb(var(--terra-600))", color: "white", borderRadius: "var(--radius-control)", padding: "12px 24px", fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8 },
 };

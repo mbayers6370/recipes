@@ -263,7 +263,7 @@ const S: Record<string, React.CSSProperties> = {
     background: "rgb(var(--warm-100))",
     marginBottom: 18,
   },
-  heroImage: { objectFit: "cover" },
+  heroImage: { objectFit: "cover", objectPosition: "center center" },
   card: {
     background: "white",
     borderRadius: 20,

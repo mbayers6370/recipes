@@ -219,7 +219,6 @@ export default function RecipeDetailPage() {
           showLabel
           imageStyle={S.heroImg}
         />
-          <div style={S.heroOverlay} />
           <button onClick={() => router.back()} style={S.backBtn}>
             <ArrowLeft size={18} strokeWidth={2.2} />
           </button>
@@ -447,7 +446,6 @@ const S: Record<string, React.CSSProperties> = {
   page: { background: "rgb(var(--warm-50))", minHeight: "100dvh" },
   heroWrap: { position: "relative", aspectRatio: "4/3", maxHeight: 320, overflow: "hidden" },
   heroImg: { width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center" },
-  heroOverlay: { position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 50%)" },
   backBtn: { position: "absolute", top: 16, left: 16, background: "rgba(255,255,255,0.9)", border: "none", borderRadius: "50%", width: 36, height: 36, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
   favBtn: { position: "absolute", top: 16, right: 16, background: "rgba(255,255,255,0.9)", border: "none", borderRadius: "50%", width: 36, height: 36, fontSize: 18, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "rgb(var(--terra-600))" },
   content: { padding: "20px 16px 32px" },

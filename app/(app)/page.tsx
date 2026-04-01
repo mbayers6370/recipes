@@ -195,12 +195,8 @@ export default function HomePage() {
         <div style={S.actionRowWrap}>
           <div style={S.actionRow}>
             <Link href="/recipes/import" style={S.floatingPrimary}>
-              <Download size={16} strokeWidth={2.2} style={{ marginRight: 8 }} />
-              <span>Import recipe</span>
-            </Link>
-            <Link href="/recipes/new" style={S.floatingSecondary}>
-              <Plus size={16} strokeWidth={2.2} />
-              <span>Add manually</span>
+              <Plus size={16} strokeWidth={2.2} style={{ marginRight: 8 }} />
+              <span>Add a new recipe</span>
             </Link>
           </div>
         </div>
@@ -667,7 +663,7 @@ const S: Record<string, React.CSSProperties> = {
     background: "rgb(var(--warm-100))",
     flexShrink: 0,
   },
-  kitchenRecipeImage: { objectFit: "cover" },
+  kitchenRecipeImage: { objectFit: "cover", objectPosition: "center center" },
   kitchenRecipeLabel: { fontSize: 13, lineHeight: 1.4, color: "rgb(var(--warm-800))", fontWeight: 600 },
   kitchenFooterLink: {
     display: "inline-flex",
@@ -733,7 +729,7 @@ const S: Record<string, React.CSSProperties> = {
     height: "100%",
   },
   recipeThumb: { aspectRatio: "4/3", overflow: "hidden", background: "rgb(var(--warm-100))", position: "relative" },
-  recipeImg: { width: "100%", height: "100%", objectFit: "cover" },
+  recipeImg: { width: "100%", height: "100%", objectFit: "cover", objectPosition: "center center" },
   recipeInfo: { padding: "12px 12px 14px", display: "flex", flexDirection: "column", minHeight: 76, flex: 1 },
   recipeTitle: {
     fontSize: 13,

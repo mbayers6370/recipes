@@ -672,7 +672,7 @@ const S: Record<string, React.CSSProperties> = {
   recipeList: { display: "flex", flexDirection: "column", gap: 8 },
   recipeOption: { display: "flex", alignItems: "center", gap: 12, background: "rgb(var(--warm-50))", border: "1px solid rgb(var(--warm-100))", borderRadius: "var(--radius-control)", padding: "10px 12px", cursor: "pointer", textAlign: "left" as const },
   recipeOptImgWrap: { width: 44, height: 44, position: "relative", overflow: "hidden", borderRadius: "var(--radius-control)", flexShrink: 0, background: "rgb(var(--warm-100))" },
-  recipeOptImg: { objectFit: "cover" as const },
+  recipeOptImg: { objectFit: "cover" as const, objectPosition: "center center" as const },
   recipeOptTitle: { fontSize: 14, fontWeight: 600, color: "rgb(var(--warm-800))" },
   recipeOptMeta: { fontSize: 12, color: "rgb(var(--warm-400))" },
 };

@@ -7,6 +7,7 @@ import { ZodError } from "zod";
 import { nanoid } from "nanoid";
 import { getAccessibleRecipe, getUserHouseholdId } from "@/lib/households";
 import { normalizeRecipeIngredients } from "@/lib/ingredient-normalization";
+import { isLikelyDirectImageUrl, resolveRecipeImageUrl } from "@/lib/recipe-image-url";
 
 async function getOwnedRecipe(id: string, userId: string) {
   const recipe = await prisma.recipe.findUnique({ where: { id } });
@@ -73,9 +74,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const updateData: Record<string, unknown> = {};
 
+    if (hasImageUrlUpdate && data.imageUrl) {
+      const resolvedImageUrl = isLikelyDirectImageUrl(data.imageUrl)
+        ? data.imageUrl
+        : await resolveRecipeImageUrl(data.imageUrl);
+
+      if (!resolvedImageUrl) {
+        return err("We couldn't resolve an image from that URL.", 422);
+      }
+
+      updateData.imageUrl = resolvedImageUrl;
+    }
+
     if (hasTitleUpdate) updateData.title = data.title;
     if (hasDescriptionUpdate) updateData.description = data.description;
-    if (hasImageUrlUpdate) updateData.imageUrl = data.imageUrl;
+    if (hasImageUrlUpdate && !data.imageUrl) updateData.imageUrl = null;
     if (hasSourceUrlUpdate) updateData.sourceUrl = data.sourceUrl;
     if (hasPrepTimeUpdate) updateData.prepTime = data.prepTime;
     if (hasCookTimeUpdate) updateData.cookTime = data.cookTime;

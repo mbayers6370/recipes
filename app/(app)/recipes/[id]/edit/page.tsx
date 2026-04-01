@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2, UtensilsCrossed } from "lucide-react";
 import type { Recipe } from "@/types";
@@ -33,7 +32,10 @@ export default function EditRecipePage() {
   const [ingredients, setIngredients] = useState<IngredientForm[]>([]);
   const [steps, setSteps] = useState<StepForm[]>([]);
   const [extraTags, setExtraTags] = useState<string[]>([]);
-  const hasPreviewImage = isValidImageUrl(form.imageUrl);
+  const [resolvedImageUrl, setResolvedImageUrl] = useState("");
+  const [resolvingImage, setResolvingImage] = useState(false);
+  const previewImageUrl = resolvedImageUrl || (isLikelyDirectImageUrl(form.imageUrl) ? form.imageUrl : "");
+  const hasPreviewImage = isValidImageUrl(previewImageUrl);
 
   useEffect(() => {
     fetch(`/api/recipes/${id}`)
@@ -54,6 +56,7 @@ export default function EditRecipePage() {
           cuisine: recipe.cuisine || "",
           notes: recipe.notes || "",
         });
+        setResolvedImageUrl(recipe.imageUrl || "");
         setExtraTags(stripRecipeTypeTags(recipe.tags));
         setIngredients(
           (recipe.ingredients || []).map((ingredient) => ({
@@ -80,6 +83,42 @@ export default function EditRecipePage() {
     (key: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const handleImageUrlBlur = async () => {
+    const value = form.imageUrl.trim();
+    if (!value) {
+      setResolvedImageUrl("");
+      return;
+    }
+
+    if (isLikelyDirectImageUrl(value)) {
+      setResolvedImageUrl(value);
+      return;
+    }
+
+    setResolvingImage(true);
+
+    try {
+      const res = await fetch("/api/recipes/resolve-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: value }),
+      });
+      const json = await res.json();
+
+      if (res.ok && json.data?.imageUrl) {
+        setResolvedImageUrl(json.data.imageUrl);
+      } else {
+        setResolvedImageUrl("");
+        setError(json.error || "We couldn't resolve an image from that URL.");
+      }
+    } catch {
+      setResolvedImageUrl("");
+      setError("We couldn't resolve an image from that URL.");
+    } finally {
+      setResolvingImage(false);
+    }
+  };
 
   const updateIngredient = (index: number, key: keyof IngredientForm, value: string) => {
     setIngredients((prev) => prev.map((item, i) => (i === index ? { ...item, [key]: value } : item)));
@@ -187,19 +226,27 @@ export default function EditRecipePage() {
         </Field>
 
         <Field label="Recipe image URL">
-          <input style={S.input} type="url" value={form.imageUrl} onChange={setField("imageUrl")} placeholder="https://example.com/recipe.jpg" />
+          <input
+            style={S.input}
+            type="url"
+            value={form.imageUrl}
+            onChange={(e) => {
+              setResolvedImageUrl("");
+              setField("imageUrl")(e);
+            }}
+            onBlur={() => void handleImageUrlBlur()}
+            placeholder="https://example.com/recipe.jpg"
+          />
         </Field>
 
         <div style={S.imagePreviewCard}>
           {hasPreviewImage ? (
             <div style={S.imagePreviewWrap}>
-              <Image
-                src={form.imageUrl}
+              <img
+                src={previewImageUrl}
                 alt={form.title || "Recipe preview"}
-                fill
-                unoptimized
-                sizes="(max-width: 768px) 100vw, 720px"
                 style={S.imagePreview}
+                referrerPolicy="no-referrer"
               />
             </div>
           ) : (
@@ -209,6 +256,7 @@ export default function EditRecipePage() {
             </div>
           )}
         </div>
+        {resolvingImage ? <p style={S.helperText}>Resolving recipe image…</p> : null}
 
         <div style={S.row} className="recipe-form-row">
           <Field label="Folder">
@@ -332,6 +380,15 @@ function isValidImageUrl(value: string) {
   }
 }
 
+function isLikelyDirectImageUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return /\.(avif|gif|jpe?g|png|svg|webp)(?:$|[?#])/i.test(url.pathname) || /\.(avif|gif|jpe?g|png|svg|webp)(?:$|[?#])/i.test(url.toString());
+  } catch {
+    return false;
+  }
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -368,8 +425,9 @@ const S: Record<string, React.CSSProperties> = {
   textarea: { resize: "vertical" as const, lineHeight: 1.6 },
   imagePreviewCard: { background: "white", borderRadius: 14, border: "1px solid rgb(var(--warm-200))", overflow: "hidden" },
   imagePreviewWrap: { position: "relative", width: "100%", aspectRatio: "16/9", background: "rgb(var(--warm-100))" },
-  imagePreview: { objectFit: "cover" },
+  imagePreview: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
   imagePlaceholder: { aspectRatio: "16/9", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8, color: "rgb(var(--warm-500))", background: "linear-gradient(135deg, rgb(var(--warm-100)), rgb(var(--terra-50)))" },
+  helperText: { fontSize: 12, color: "rgb(var(--warm-500))", textAlign: "center" as const },
   sectionHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
   sectionTitle: { fontSize: 16, fontWeight: 700, color: "rgb(var(--warm-900))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)" },
   sectionFooter: { display: "flex", justifyContent: "flex-start", marginTop: 4 },

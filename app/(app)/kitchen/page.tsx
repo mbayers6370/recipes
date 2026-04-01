@@ -841,7 +841,7 @@ const S: Record<string, React.CSSProperties> = {
   ideaStack: { display: "flex", flexDirection: "column", gap: 12 },
   ideaCard: { display: "flex", gap: 14, padding: "12px", border: "1px solid rgb(var(--warm-100))", borderRadius: "var(--radius-card-inner)", background: "rgb(var(--warm-50))", alignItems: "stretch" },
   ideaMedia: { width: 88, minWidth: 88, borderRadius: "var(--radius-control)", overflow: "hidden", background: "rgb(var(--warm-100))", position: "relative" },
-  ideaImage: { objectFit: "cover" },
+  ideaImage: { objectFit: "cover", objectPosition: "center center" },
   ideaBody: { flex: 1, display: "flex", flexDirection: "column", gap: 10, minWidth: 0 },
   ideaHeader: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 },
   ideaTitle: {
@@ -860,7 +860,7 @@ const S: Record<string, React.CSSProperties> = {
   recipeGrid: { display: "grid", gap: 14, alignItems: "start" },
   recipeCard: { display: "flex", flexDirection: "column", textDecoration: "none", background: "white", border: "1px solid rgb(var(--warm-100))", borderRadius: "var(--radius-card-inner)", overflow: "hidden" },
   recipeThumb: { aspectRatio: "16 / 10", position: "relative", background: "rgb(var(--warm-100))" },
-  recipeImage: { objectFit: "cover" },
+  recipeImage: { objectFit: "cover", objectPosition: "center center" },
   recipeBody: { padding: "10px 12px 12px", display: "flex", flexDirection: "column", minHeight: 56, gap: 6 },
   recipeTitle: {
     fontSize: 14,
@@ -890,7 +890,7 @@ const S: Record<string, React.CSSProperties> = {
   noteBtn: { width: "100%", textAlign: "left", background: "white", border: "1px solid rgb(var(--warm-100))", borderRadius: "var(--radius-control)", padding: "12px 14px", fontSize: 14, fontWeight: 600, color: "rgb(var(--warm-800))", cursor: "pointer" },
   modalRecipeBtn: { width: "100%", display: "flex", alignItems: "center", gap: 12, textAlign: "left", background: "white", border: "1px solid rgb(var(--warm-100))", borderRadius: "var(--radius-control)", padding: "10px", cursor: "pointer" },
   modalRecipeThumb: { width: 48, height: 48, minWidth: 48, borderRadius: "var(--radius-control)", overflow: "hidden", position: "relative", background: "rgb(var(--warm-100))" },
-  modalRecipeImage: { objectFit: "cover" },
+  modalRecipeImage: { objectFit: "cover", objectPosition: "center center" },
   modalRecipeInfo: { display: "flex", flexDirection: "column", gap: 3, minWidth: 0 },
   modalRecipeTitle: { fontSize: 14, fontWeight: 700, color: "rgb(var(--warm-900))", lineHeight: 1.35 },
   modalRecipeMeta: { fontSize: 12, color: "rgb(var(--warm-500))" },
