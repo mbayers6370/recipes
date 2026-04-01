@@ -5,8 +5,6 @@ import { importTextSchema, importUrlSchema } from "@/lib/validators";
 import { ok, err, unauthorized, serverError } from "@/lib/api-response";
 import { ZodError } from "zod";
 import { normalizeRecipeIngredients } from "@/lib/ingredient-normalization";
-import mammoth from "mammoth";
-import { PDFParse } from "pdf-parse";
 
 const MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024;
 const PAGE_MARKER_PATTERN = /^--\s*\d+\s+of\s+\d+\s*--$/i;
@@ -119,11 +117,13 @@ async function extractRecipeTextFromDocument(file: File) {
     extension === "docx" ||
     mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ) {
+    const mammoth = await import("mammoth");
     const result = await mammoth.extractRawText({ buffer });
     return result.value.trim();
   }
 
   if (extension === "pdf" || mimeType === "application/pdf") {
+    const { PDFParse } = await import("pdf-parse");
     const parser = new PDFParse({ data: buffer });
 
     try {
