@@ -477,7 +477,7 @@ const S: Record<string, React.CSSProperties> = {
   },
 
   actionRowWrap: { marginBottom: 28 },
-  actionRow: { width: "100%", maxWidth: 960, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
+  actionRow: { width: "100%", maxWidth: 960, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr", gap: 10 },
   content: { padding: "24px 16px 24px", width: "100%", maxWidth: 960, margin: "0 auto" },
 
   // Active session

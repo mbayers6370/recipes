@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, ShoppingCart, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Check, ChevronDown, ShoppingCart, Trash2 } from "lucide-react";
 import type { GroceryList, GroceryItem } from "@/types";
 import {
   GROCERY_SECTION_LABELS,
@@ -41,6 +41,16 @@ function sortVisibleItems(items: GroceryItem[], sortMode: GrocerySortMode) {
   return sortGroceryItems(items);
 }
 
+function orderListsForDisplay(lists: GroceryList[]) {
+  if (lists.length <= 1) return lists;
+
+  const sorted = [...lists].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+
+  return [sorted[0], ...sorted.slice(1)];
+}
+
 function groupItemsBySection(items: GroceryItem[]) {
   const buckets = new Map<GrocerySectionId, GroceryItem[]>();
 
@@ -68,6 +78,9 @@ export default function GroceryPage() {
   const [newItemAmount, setNewItemAmount] = useState("");
   const [addingItem, setAddingItem] = useState(false);
   const [sortMode, setSortMode] = useState<GrocerySortMode>("aisle");
+  const [isListMenuOpen, setIsListMenuOpen] = useState(false);
+  const listMenuRef = useRef<HTMLDivElement | null>(null);
+  const orderedLists = orderListsForDisplay(lists);
 
   const fetchLists = async () => {
     const res = await fetch("/api/grocery");
@@ -76,11 +89,12 @@ export default function GroceryPage() {
     setLists(data);
     setActiveList((current) => {
       if (!data.length) return null;
+      const ordered = orderListsForDisplay(data);
       if (current) {
-        const matching = data.find((list) => list.id === current.id);
+        const matching = ordered.find((list) => list.id === current.id);
         if (matching) return matching;
       }
-      return data[0];
+      return ordered[0];
     });
     setLoading(false);
   };
@@ -94,7 +108,7 @@ export default function GroceryPage() {
       const data: GroceryList[] = json.data || [];
       if (cancelled) return;
       setLists(data);
-      setActiveList(data[0] || null);
+      setActiveList(orderListsForDisplay(data)[0] || null);
       setLoading(false);
     }
 
@@ -104,7 +118,27 @@ export default function GroceryPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!isListMenuOpen) return;
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!listMenuRef.current?.contains(event.target as Node)) {
+        setIsListMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isListMenuOpen]);
+
   const createList = async () => {
+    if (lists.length >= 2) {
+      alert("Please delete one of your current grocery lists before creating another.");
+      return;
+    }
+
     const name = prompt("List name:", "This Week");
     if (!name) return;
     const res = await fetch("/api/grocery", {
@@ -210,29 +244,59 @@ export default function GroceryPage() {
       </div>
 
       <div style={S.header} className="page-header">
-        <div className="page-header-actions">
-          <button onClick={createList} style={S.newListBtn}>+ New List</button>
+        <div style={S.listBar}>
           {activeList && (
-            <button onClick={deleteList} style={S.deleteListBtn}>Delete List</button>
+            <div style={S.listSelectorWrap} ref={listMenuRef}>
+              <button
+                type="button"
+                style={S.listTab}
+                onClick={() => orderedLists.length > 1 && setIsListMenuOpen((open) => !open)}
+                aria-expanded={orderedLists.length > 1 ? isListMenuOpen : undefined}
+                aria-haspopup={orderedLists.length > 1 ? "menu" : undefined}
+              >
+                <span>{activeList.name}</span>
+                <span style={S.listTabMeta}>
+                  <span style={S.listCount}>{activeList._count?.items ?? activeList.items.length}</span>
+                  {orderedLists.length > 1 && <ChevronDown size={14} strokeWidth={2.4} style={isListMenuOpen ? S.listChevronOpen : undefined} />}
+                </span>
+              </button>
+
+              {orderedLists.length > 1 && isListMenuOpen && (
+                <div style={S.listMenu} role="menu">
+                  {orderedLists.map((list) => (
+                    <button
+                      key={list.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={activeList.id === list.id}
+                      style={{ ...S.listMenuItem, ...(activeList.id === list.id ? S.listMenuItemActive : {}) }}
+                      onClick={() => {
+                        setActiveList(list);
+                        setIsListMenuOpen(false);
+                      }}
+                    >
+                      <span>{list.name}</span>
+                      <span style={S.listCount}>{list._count?.items ?? list.items.length}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
+          <div style={S.listActions}>
+            <button
+              onClick={createList}
+              style={S.newListBtn}
+              disabled={lists.length >= 2}
+            >
+              + New List
+            </button>
+            {activeList && (
+              <button onClick={deleteList} style={S.deleteListBtn}>Delete List</button>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* List tabs */}
-      {lists.length > 0 && (
-        <div style={S.listTabs}>
-          {lists.map((list) => (
-            <button
-              key={list.id}
-              style={{ ...S.listTab, ...(activeList?.id === list.id ? S.listTabActive : {}) }}
-              onClick={() => setActiveList(list)}
-            >
-              <span>{list.name}</span>
-              <span style={S.listCount}>{list._count?.items ?? list.items.length}</span>
-            </button>
-          ))}
-        </div>
-      )}
 
       {loading ? (
         <LoadingState />
@@ -465,14 +529,80 @@ const S: Record<string, React.CSSProperties> = {
     maxWidth: 960,
     margin: "0 auto",
   },
-  header: {},
   title: { fontSize: 26, fontWeight: 700, fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-display)", color: "rgb(var(--warm-900))" },
+  header: { width: "100%", marginBottom: 8 },
+  listBar: { display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const, marginBottom: 0, width: "100%" },
+  listSelectorWrap: { position: "relative", flex: "0 1 auto" },
+  listActions: { display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" },
   newListBtn: { background: "rgb(var(--terra-600))", color: "white", border: "none", borderRadius: "var(--radius-control)", padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  deleteListBtn: { background: "rgb(var(--warm-50))", color: "rgb(var(--terra-700))", border: "1px solid rgb(var(--terra-200))", borderRadius: "var(--radius-control)", padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  listTabs: { display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", paddingBottom: 2 },
-  listTab: { border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-card-inner)", padding: "10px 12px", fontSize: 13, fontWeight: 600, background: "white", cursor: "pointer", color: "rgb(var(--warm-700))", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 8 },
-  listTabActive: { background: "linear-gradient(180deg, rgba(243, 232, 224, 0.9) 0%, rgba(255,255,255,0.98) 100%)", borderColor: "rgb(var(--terra-200))", color: "rgb(var(--warm-900))" },
-  listCount: { fontSize: 11, fontWeight: 700, padding: "3px 7px", borderRadius: "var(--radius-pill)", background: "rgba(53,49,46,0.08)", color: "inherit" },
+  deleteListBtn: { background: "white", color: "rgb(var(--terra-700))", border: "1px solid rgb(var(--terra-600))", borderRadius: "var(--radius-control)", padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  listTab: {
+    border: "1px solid rgb(var(--terra-600))",
+    borderRadius: "var(--radius-control)",
+    padding: "8px 14px",
+    minWidth: 0,
+    minHeight: 34,
+    fontSize: 13,
+    fontWeight: 600,
+    background: "white",
+    cursor: "pointer",
+    color: "rgb(var(--terra-700))",
+    whiteSpace: "nowrap" as const,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    flex: "0 0 auto",
+    minWidth: 130,
+  },
+  listTabMeta: { display: "inline-flex", alignItems: "center", gap: 8 },
+  listChevronOpen: { transform: "rotate(180deg)" },
+  listMenu: {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    left: 0,
+    minWidth: "100%",
+    background: "white",
+    border: "1px solid rgb(var(--warm-200))",
+    borderRadius: "var(--radius-card-inner)",
+    boxShadow: "0 14px 26px rgba(71, 55, 46, 0.08)",
+    padding: 6,
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
+    zIndex: 10,
+  },
+  listMenuItem: {
+    border: "none",
+    background: "transparent",
+    borderRadius: "var(--radius-control)",
+    padding: "8px 10px",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "rgb(var(--terra-700))",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    whiteSpace: "nowrap" as const,
+  },
+  listMenuItemActive: {
+    background: "rgb(var(--terra-50))",
+  },
+  listCount: {
+    fontSize: 11,
+    fontWeight: 700,
+    width: 22,
+    height: 22,
+    borderRadius: "50%",
+    background: "rgb(var(--terra-600))",
+    color: "white",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
   addForm: { display: "grid", gridTemplateColumns: "minmax(0, 1.5fr) minmax(112px, 0.8fr) auto", gap: 8, alignItems: "end", marginBottom: 16, background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: "var(--radius-card)", padding: 10 },
   addField: { display: "flex", flexDirection: "column", gap: 6, minWidth: 0 },
   addFieldAmount: { display: "flex", flexDirection: "column", gap: 6, minWidth: 0 },
