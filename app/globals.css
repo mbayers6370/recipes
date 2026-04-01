@@ -131,6 +131,17 @@
     gap: 10px;
   }
 
+  .recipe-meta-number {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  .recipe-meta-number::-webkit-outer-spin-button,
+  .recipe-meta-number::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
   .home-action-tray {
     position: fixed;
     left: 16px;

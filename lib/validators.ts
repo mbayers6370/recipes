@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeIngredientUnit } from "@/lib/ingredient-units";
 import { normalizeExternalUrl } from "@/lib/url";
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -30,7 +31,10 @@ export const loginSchema = z.object({
 export const ingredientSchema = z.object({
   id: z.string().optional(),
   amount: z.string().optional(),
-  unit: z.string().optional(),
+  unit: z.preprocess(
+    (value) => typeof value === "string" ? normalizeIngredientUnit(value) || value.trim() : value,
+    z.string().optional()
+  ),
   name: z.string().min(1),
   notes: z.string().optional(),
 });

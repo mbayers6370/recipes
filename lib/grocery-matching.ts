@@ -1,4 +1,5 @@
 import { normalizeGroceryName } from "@/lib/grocery-normalization";
+import { normalizeIngredientUnit } from "@/lib/ingredient-units";
 
 type GroceryLike = {
   name?: string | null;
@@ -8,54 +9,7 @@ type GroceryLike = {
 };
 
 export function normalizeGroceryUnit(unit?: string | null) {
-  const cleaned = (unit || "").trim().toLowerCase().replace(/\./g, "");
-  if (!cleaned) return "";
-
-  const aliases: Record<string, string> = {
-    tablespoon: "tbsp",
-    tablespoons: "tbsp",
-    tbsps: "tbsp",
-    tbsp: "tbsp",
-    teaspoon: "tsp",
-    teaspoons: "tsp",
-    tsps: "tsp",
-    tsp: "tsp",
-    ounce: "oz",
-    ounces: "oz",
-    oz: "oz",
-    pound: "lb",
-    pounds: "lb",
-    lb: "lb",
-    lbs: "lb",
-    gram: "g",
-    grams: "g",
-    g: "g",
-    kilogram: "kg",
-    kilograms: "kg",
-    kg: "kg",
-    liter: "l",
-    liters: "l",
-    litre: "l",
-    litres: "l",
-    l: "l",
-    milliliter: "ml",
-    milliliters: "ml",
-    millilitre: "ml",
-    millilitres: "ml",
-    ml: "ml",
-    clove: "clove",
-    cloves: "clove",
-    can: "can",
-    cans: "can",
-    package: "package",
-    packages: "package",
-    pkg: "package",
-    pkgs: "package",
-    stick: "stick",
-    sticks: "stick",
-  };
-
-  return aliases[cleaned] || cleaned;
+  return normalizeIngredientUnit(unit);
 }
 
 function buildSignature(item: GroceryLike) {

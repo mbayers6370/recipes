@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Trash2, UtensilsCrossed } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, ChevronDown, ChevronUp, Plus, Trash2, UtensilsCrossed } from "lucide-react";
 import type { Recipe } from "@/types";
 import { RECIPE_TYPE_OPTIONS, getRecipeType, setRecipeTypeTag, stripRecipeTypeTags, type RecipeType } from "@/lib/recipe-taxonomy";
 import { normalizeExternalUrl } from "@/lib/url";
+import { normalizeIngredientUnit } from "@/lib/ingredient-units";
+import { UnitCombobox } from "@/components/unit-combobox";
 
-type IngredientForm = { id?: string; name: string; amount: string; unit: string; notes: string };
-type StepForm = { id?: string; instruction: string; timerSeconds: string };
+type IngredientForm = { id?: string; name: string; amount: string; unit: string };
+type StepForm = { id?: string; instruction: string };
 
 export default function EditRecipePage() {
   const params = useParams();
@@ -65,14 +67,12 @@ export default function EditRecipePage() {
             name: ingredient.name || "",
             amount: ingredient.amount || "",
             unit: ingredient.unit || "",
-            notes: ingredient.notes || "",
           }))
         );
         setSteps(
           (recipe.steps || []).map((step) => ({
             id: step.id,
             instruction: step.instruction || "",
-            timerSeconds: step.timerSeconds ? String(step.timerSeconds) : "",
           }))
         );
       })
@@ -84,6 +84,14 @@ export default function EditRecipePage() {
     (key: keyof typeof form) =>
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const adjustNumericField = (key: "servings" | "prepTime" | "cookTime", min = 0, delta: 1 | -1) => {
+    setForm((prev) => {
+      const current = parseInt(prev[key] || "0", 10);
+      const next = Math.max(min, (Number.isFinite(current) ? current : 0) + delta);
+      return { ...prev, [key]: String(next) };
+    });
+  };
 
   const handleImageUrlBlur = async () => {
     const value = normalizeExternalUrl(form.imageUrl);
@@ -130,15 +138,27 @@ export default function EditRecipePage() {
   };
 
   const addIngredient = () => {
-    setIngredients((prev) => [...prev, { name: "", amount: "", unit: "", notes: "" }]);
+      setIngredients((prev) => [...prev, { name: "", amount: "", unit: "" }]);
   };
 
   const removeIngredient = (index: number) => {
     setIngredients((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const moveIngredient = (index: number, direction: "up" | "down") => {
+    setIngredients((prev) => {
+      const nextIndex = direction === "up" ? index - 1 : index + 1;
+      if (nextIndex < 0 || nextIndex >= prev.length) return prev;
+
+      const next = [...prev];
+      const [ingredient] = next.splice(index, 1);
+      next.splice(nextIndex, 0, ingredient);
+      return next;
+    });
+  };
+
   const addStep = () => {
-    setSteps((prev) => [...prev, { instruction: "", timerSeconds: "" }]);
+    setSteps((prev) => [...prev, { instruction: "" }]);
   };
 
   const removeStep = (index: number) => {
@@ -177,8 +197,7 @@ export default function EditRecipePage() {
           ...(ingredient.id ? { id: ingredient.id } : {}),
           name: ingredient.name.trim(),
           amount: ingredient.amount.trim() || undefined,
-          unit: ingredient.unit.trim() || undefined,
-          notes: ingredient.notes.trim() || undefined,
+          unit: normalizeIngredientUnit(ingredient.unit) || undefined,
         })),
       steps: steps
         .filter((step) => step.instruction.trim())
@@ -186,7 +205,6 @@ export default function EditRecipePage() {
           ...(step.id ? { id: step.id } : {}),
           order: index,
           instruction: step.instruction.trim(),
-          timerSeconds: step.timerSeconds ? parseInt(step.timerSeconds, 10) : undefined,
         })),
     };
 
@@ -270,38 +288,58 @@ export default function EditRecipePage() {
         {resolvingImage ? <p style={S.helperText}>Resolving recipe image…</p> : null}
 
         <div style={S.row} className="recipe-form-row">
-          <Field label="Folder">
-            <select style={S.input} value={form.recipeType} onChange={setField("recipeType")}>
-              <option value="">Unsorted</option>
-              {RECIPE_TYPE_OPTIONS.map((type) => (
-                <option key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
-            </select>
+          <Field label="Folder" style={S.metaField}>
+            <SelectControl>
+              <select style={{ ...S.input, ...S.metaControl, ...S.metaSelect }} value={form.recipeType} onChange={setField("recipeType")}>
+                <option value="">Unsorted</option>
+                {RECIPE_TYPE_OPTIONS.map((type) => (
+                  <option key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </SelectControl>
           </Field>
-          <Field label="Prep (min)">
-            <input style={S.input} type="number" value={form.prepTime} onChange={setField("prepTime")} min={0} />
+          <Field label="Prep (min)" style={S.metaField}>
+            <NumberControl
+              value={form.prepTime}
+              onChange={(value) => setForm((prev) => ({ ...prev, prepTime: value }))}
+              onIncrement={() => adjustNumericField("prepTime", 0, 1)}
+              onDecrement={() => adjustNumericField("prepTime", 0, -1)}
+            />
           </Field>
-          <Field label="Cook (min)">
-            <input style={S.input} type="number" value={form.cookTime} onChange={setField("cookTime")} min={0} />
+          <Field label="Cook (min)" style={S.metaField}>
+            <NumberControl
+              value={form.cookTime}
+              onChange={(value) => setForm((prev) => ({ ...prev, cookTime: value }))}
+              onIncrement={() => adjustNumericField("cookTime", 0, 1)}
+              onDecrement={() => adjustNumericField("cookTime", 0, -1)}
+            />
           </Field>
         </div>
 
         <div style={S.row} className="recipe-form-row">
-          <Field label="Serves">
-            <input style={S.input} type="number" value={form.servings} onChange={setField("servings")} min={1} />
+          <Field label="Serves" style={S.metaField}>
+            <NumberControl
+              value={form.servings}
+              onChange={(value) => setForm((prev) => ({ ...prev, servings: value }))}
+              onIncrement={() => adjustNumericField("servings", 1, 1)}
+              onDecrement={() => adjustNumericField("servings", 1, -1)}
+              min={1}
+            />
           </Field>
-          <Field label="Difficulty">
-            <select style={S.input} value={form.difficulty} onChange={setField("difficulty")}>
-              <option value="">—</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
+          <Field label="Difficulty" style={S.metaField}>
+            <SelectControl>
+              <select style={{ ...S.input, ...S.metaControl, ...S.metaSelect }} value={form.difficulty} onChange={setField("difficulty")}>
+                <option value="">—</option>
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </SelectControl>
           </Field>
-          <Field label="Cuisine">
-            <input style={S.input} value={form.cuisine} onChange={setField("cuisine")} />
+          <Field label="Cuisine" style={S.metaField}>
+            <input style={{ ...S.input, ...S.metaControl }} value={form.cuisine} onChange={setField("cuisine")} />
           </Field>
         </div>
 
@@ -311,16 +349,35 @@ export default function EditRecipePage() {
             <div key={`${ingredient.id || "ingredient"}-${index}`} style={S.card}>
               <div style={S.cardHeader}>
                 <strong style={S.cardTitle}>Ingredient {index + 1}</strong>
-                <button type="button" style={S.iconBtn} onClick={() => removeIngredient(index)}>
-                  <Trash2 size={14} strokeWidth={2.1} />
-                </button>
+                <div style={S.cardHeaderActions}>
+                  <button
+                    type="button"
+                    style={{ ...S.iconBtn, ...(index === 0 ? S.iconBtnDisabled : {}) }}
+                    onClick={() => moveIngredient(index, "up")}
+                    disabled={index === 0}
+                    aria-label={`Move ingredient ${index + 1} up`}
+                  >
+                    <ArrowUp size={14} strokeWidth={2.1} />
+                  </button>
+                  <button
+                    type="button"
+                    style={{ ...S.iconBtn, ...(index === ingredients.length - 1 ? S.iconBtnDisabled : {}) }}
+                    onClick={() => moveIngredient(index, "down")}
+                    disabled={index === ingredients.length - 1}
+                    aria-label={`Move ingredient ${index + 1} down`}
+                  >
+                    <ArrowDown size={14} strokeWidth={2.1} />
+                  </button>
+                  <button type="button" style={S.iconBtn} onClick={() => removeIngredient(index)} aria-label={`Delete ingredient ${index + 1}`}>
+                    <Trash2 size={14} strokeWidth={2.1} />
+                  </button>
+                </div>
               </div>
               <div style={S.cardGrid}>
                 <input style={S.input} placeholder="Amount" value={ingredient.amount} onChange={(e) => updateIngredient(index, "amount", e.target.value)} />
-                <input style={S.input} placeholder="Unit" value={ingredient.unit} onChange={(e) => updateIngredient(index, "unit", e.target.value)} />
+                <UnitCombobox value={ingredient.unit} onChange={(value) => updateIngredient(index, "unit", value)} />
               </div>
               <input style={S.input} placeholder="Ingredient name" value={ingredient.name} onChange={(e) => updateIngredient(index, "name", e.target.value)} />
-              <input style={S.input} placeholder="Notes" value={ingredient.notes} onChange={(e) => updateIngredient(index, "notes", e.target.value)} />
             </div>
           ))}
         </div>
@@ -347,14 +404,6 @@ export default function EditRecipePage() {
                 value={step.instruction}
                 onChange={(e) => updateStep(index, "instruction", e.target.value)}
                 rows={3}
-              />
-              <input
-                style={S.input}
-                type="number"
-                min={0}
-                placeholder="Timer seconds (optional)"
-                value={step.timerSeconds}
-                onChange={(e) => updateStep(index, "timerSeconds", e.target.value)}
               />
             </div>
           ))}
@@ -400,11 +449,61 @@ function isLikelyDirectImageUrl(value: string) {
   }
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, style }: { label: string; children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 6, ...style }}>
       <label style={{ fontSize: 12, fontWeight: 700, color: "rgb(var(--warm-500))", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</label>
       {children}
+    </div>
+  );
+}
+
+function SelectControl({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={S.selectWrap}>
+      {children}
+      <span style={S.selectIcon}>
+        <ChevronDown size={15} strokeWidth={2.2} />
+      </span>
+    </div>
+  );
+}
+
+function NumberControl({
+  value,
+  onChange,
+  onIncrement,
+  onDecrement,
+  min = 0,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  onIncrement: () => void;
+  onDecrement: () => void;
+  min?: number;
+}) {
+  return (
+    <div style={S.numberWrap}>
+      <input
+        style={{ ...S.input, ...S.metaControl, ...S.metaNumber }}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        value={value}
+        onChange={(event) => {
+          const nextValue = event.target.value.replace(/[^\d]/g, "");
+          onChange(nextValue);
+        }}
+        placeholder={String(min)}
+      />
+      <div style={S.numberActions}>
+        <button type="button" style={S.numberBtn} onClick={onIncrement} aria-label="Increase value">
+          <ChevronUp size={14} strokeWidth={2.2} />
+        </button>
+        <button type="button" style={S.numberBtn} onClick={onDecrement} aria-label="Decrease value">
+          <ChevronDown size={14} strokeWidth={2.2} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -433,6 +532,15 @@ const S: Record<string, React.CSSProperties> = {
   form: { display: "flex", flexDirection: "column", gap: 16 },
   row: { gap: 10 },
   input: { border: "1.5px solid rgb(var(--warm-200))", borderRadius: 10, padding: "11px 14px", fontSize: 14, color: "rgb(var(--warm-900))", background: "white", outline: "none", width: "100%", boxSizing: "border-box" as const },
+  metaField: { minHeight: 74 },
+  metaControl: { height: 46 },
+  metaNumber: { paddingRight: 42 },
+  metaSelect: { appearance: "none" as const, paddingRight: 40 },
+  selectWrap: { position: "relative" },
+  selectIcon: { position: "absolute", top: "50%", right: 14, transform: "translateY(-50%)", color: "rgb(var(--terra-600))", pointerEvents: "none" as const, display: "flex", alignItems: "center", justifyContent: "center" },
+  numberWrap: { position: "relative" },
+  numberActions: { position: "absolute", top: 7, right: 8, bottom: 7, display: "flex", flexDirection: "column", gap: 4 },
+  numberBtn: { width: 22, flex: 1, border: "none", borderRadius: 7, background: "rgb(var(--terra-50))", color: "rgb(var(--terra-600))", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 },
   textarea: { resize: "vertical" as const, lineHeight: 1.6 },
   imagePreviewCard: { background: "white", borderRadius: 14, border: "1px solid rgb(var(--warm-200))", overflow: "hidden" },
   imagePreviewWrap: { position: "relative", width: "100%", aspectRatio: "16/9", background: "rgb(var(--warm-100))" },
@@ -446,8 +554,10 @@ const S: Record<string, React.CSSProperties> = {
   stack: { display: "flex", flexDirection: "column", gap: 12 },
   card: { background: "white", border: "1px solid rgb(var(--warm-200))", borderRadius: 14, padding: 14, display: "flex", flexDirection: "column", gap: 10 },
   cardHeader: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  cardHeaderActions: { display: "flex", alignItems: "center", gap: 4 },
   cardTitle: { fontSize: 13, color: "rgb(var(--warm-700))", fontFamily: "var(--font-serif)", letterSpacing: "var(--tracking-brand)" },
   cardGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 },
   iconBtn: { background: "transparent", border: "none", color: "rgb(var(--warm-400))", cursor: "pointer", width: 28, height: 24, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center" },
+  iconBtnDisabled: { opacity: 0.35, cursor: "not-allowed" },
   error: { fontSize: 13, color: "rgb(var(--terra-700))", background: "rgb(var(--terra-50))", border: "1px solid rgb(var(--terra-200))", borderRadius: 8, padding: "10px 12px" },
 };

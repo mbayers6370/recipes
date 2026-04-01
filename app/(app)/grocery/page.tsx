@@ -12,6 +12,8 @@ import {
 import { normalizeGroceryName } from "@/lib/grocery-normalization";
 import { isMeaningfulIngredientName } from "@/lib/ingredient-normalization";
 
+const MAX_GROCERY_LISTS = 4;
+
 function getDisplayName(name?: string | null) {
   return normalizeGroceryName(name) || (name || "").trim();
 }
@@ -134,8 +136,8 @@ export default function GroceryPage() {
   }, [isListMenuOpen]);
 
   const createList = async () => {
-    if (lists.length >= 2) {
-      alert("Please delete one of your current grocery lists before creating another.");
+    if (lists.length >= MAX_GROCERY_LISTS) {
+      alert(`Please delete one of your current grocery lists before creating another. You can have up to ${MAX_GROCERY_LISTS} lists.`);
       return;
     }
 
@@ -287,7 +289,7 @@ export default function GroceryPage() {
             <button
               onClick={createList}
               style={S.newListBtn}
-              disabled={lists.length >= 2}
+              disabled={lists.length >= MAX_GROCERY_LISTS}
             >
               + New List
             </button>

@@ -238,6 +238,14 @@ export default function RecipeDetailPage() {
             <p style={S.sharedBy}>Shared by {ownerLabel}</p>
           )}
           {recipe.description && <p style={S.desc}>{recipe.description}</p>}
+          {recipe.sourceUrl && (
+            <p style={S.source}>
+              Source:{" "}
+              <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer" style={S.sourceLink}>
+                {new URL(recipe.sourceUrl).hostname}
+              </a>
+            </p>
+          )}
         </div>
 
         {/* Quick stats */}
@@ -375,23 +383,16 @@ export default function RecipeDetailPage() {
           </div>
         )}
 
-        {/* Source */}
-        {recipe.sourceUrl && (
-          <p style={S.source}>
-            Source:{" "}
-            <a href={recipe.sourceUrl} target="_blank" rel="noopener noreferrer" style={S.sourceLink}>
-              {new URL(recipe.sourceUrl).hostname}
-            </a>
-          </p>
-        )}
-
         {/* Actions */}
-        <div style={S.actions}>
+        <div style={S.primaryActionRow}>
           <Link href={`/recipes/${id}/cook`} style={S.cookBtn}>
             <ChefHat size={16} strokeWidth={2.2} />
             <span>Start Cooking</span>
           </Link>
-          <button onClick={addToGrocery} style={S.groceryBtn}>
+        </div>
+
+        <div style={S.secondaryActions}>
+          <button onClick={addToGrocery} style={{ ...S.groceryBtn, ...S.fullWidthAction }}>
             {addedToGrocery ? (
               <>
                 <Check size={16} strokeWidth={2.6} />
@@ -406,18 +407,27 @@ export default function RecipeDetailPage() {
           </button>
         </div>
 
-        <div style={S.secondaryActions}>
-          <button onClick={() => void shareRecipe()} style={S.secondaryBtn} disabled={sharing}>
+        <div style={S.actionGrid}>
+          <button onClick={() => void shareRecipe()} style={S.secondaryActionBtn} disabled={sharing}>
             <Share2 size={15} strokeWidth={2.1} />
             <span>{sharing ? "Sharing…" : "Share"}</span>
           </button>
-          <button onClick={() => void exportRecipe()} style={S.secondaryBtn} disabled={exporting}>
+          <button onClick={() => void exportRecipe()} style={S.secondaryActionBtn} disabled={exporting}>
             <Download size={15} strokeWidth={2.1} />
-            <span>{exporting ? "Exporting…" : "Export"}</span>
+            <span>{exporting ? "Downloading…" : "Download"}</span>
           </button>
-          {isOwner && <Link href={`/recipes/${id}/edit`} style={S.editBtn}>Edit</Link>}
-          {isOwner && <button onClick={deleteRecipe} style={S.deleteBtn}>Delete</button>}
         </div>
+
+        {isOwner && (
+          <div style={S.actionGrid}>
+            <Link href={`/recipes/${id}/edit`} style={S.secondaryActionBtn}>
+              Edit
+            </Link>
+            <button onClick={() => void deleteRecipe()} style={S.destructiveActionBtn}>
+              Delete
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -542,13 +552,14 @@ const S: Record<string, React.CSSProperties> = {
   notesBox: { marginTop: 20, background: "rgb(var(--terra-50))", borderRadius: "var(--radius-card-inner)", padding: "14px 16px", border: "1px solid rgb(var(--terra-200))" },
   notesTitle: { fontSize: 12, fontWeight: 700, color: "rgb(var(--terra-700))", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" },
   notesText: { fontSize: 14, color: "rgb(var(--warm-700))", lineHeight: 1.6 },
-  source: { marginTop: 12, fontSize: 12, color: "rgb(var(--warm-400))" },
+  source: { marginTop: 10, fontSize: 12, color: "rgb(var(--warm-400))" },
   sourceLink: { color: "rgb(var(--terra-600))", textDecoration: "none" },
-  actions: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 24 },
-  cookBtn: { background: "rgb(var(--terra-600))", color: "white", borderRadius: "var(--radius-control)", padding: "14px", fontSize: 14, fontWeight: 700, textDecoration: "none", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 },
-  groceryBtn: { background: "white", color: "rgb(var(--warm-700))", border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)", padding: "14px", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 },
-  secondaryActions: { display: "flex", gap: 12, marginTop: 12, justifyContent: "center", flexWrap: "wrap" },
-  secondaryBtn: { background: "white", color: "rgb(var(--warm-700))", border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)", padding: "10px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 },
-  editBtn: { fontSize: 13, color: "rgb(var(--warm-500))", textDecoration: "none", padding: "10px 14px", border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)", background: "white" },
-  deleteBtn: { background: "white", border: "1.5px solid rgb(var(--terra-200))", borderRadius: "var(--radius-control)", fontSize: 13, color: "rgb(var(--terra-600))", cursor: "pointer", padding: "10px 14px" },
+  primaryActionRow: { display: "flex", marginTop: 24 },
+  cookBtn: { width: "100%", background: "rgb(var(--terra-600))", color: "white", borderRadius: "var(--radius-control)", padding: "15px 16px", fontSize: 15, fontWeight: 700, textDecoration: "none", textAlign: "center", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, boxShadow: "0 12px 28px rgba(181, 88, 47, 0.18)" },
+  groceryBtn: { width: "100%", background: "white", color: "rgb(var(--warm-700))", border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)", padding: "12px 14px", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8 },
+  secondaryActions: { display: "flex", flexDirection: "column", gap: 18, marginTop: 12 },
+  fullWidthAction: { minHeight: 48 },
+  actionGrid: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", columnGap: 6, rowGap: 12, marginTop: 10 },
+  secondaryActionBtn: { width: "100%", minHeight: 48, background: "white", color: "rgb(var(--warm-700))", border: "1.5px solid rgb(var(--warm-200))", borderRadius: "var(--radius-control)", padding: "12px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center" as const, textDecoration: "none" },
+  destructiveActionBtn: { width: "100%", minHeight: 48, background: "white", color: "rgb(var(--terra-600))", border: "1.5px solid rgb(var(--terra-200))", borderRadius: "var(--radius-control)", padding: "12px 12px", fontSize: 13, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 8, textAlign: "center" as const },
 };
