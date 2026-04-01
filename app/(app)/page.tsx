@@ -105,7 +105,7 @@ export default function HomePage() {
       );
 
   return (
-    <div style={S.page}>
+    <div style={S.page} className="home-page-root">
       {/* Hero */}
       <div style={S.hero}>
         <div style={S.heroContent} className="home-hero-copy">
@@ -121,11 +121,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div style={S.content}>
+      <div style={S.content} className="home-content">
         {/* Active cooking session */}
         {activeSession && (
-          <Section title="Continue Cooking">
-            <div style={S.sessionCard}>
+          <Section title="Continue Cooking" bottomMargin={0}>
+            <div style={S.sessionCard} className="home-section-surface">
               <div style={{ flex: 1 }}>
                 <p style={S.sessionTitle}>{activeSession.recipe?.title}</p>
                 <p style={S.sessionSub}>
@@ -144,67 +144,72 @@ export default function HomePage() {
           </Section>
         )}
 
-        {/* Today's plan */}
-        <Section>
-          {todayItems.length > 0 ? (
-            <div style={S.planCard}>
-              <div style={S.cardSectionHeader} className="home-plan-header">
-                <h2 style={S.sectionTitle} className="home-plan-title">Today</h2>
-                <Link href="/plan" style={S.seeAll} className="home-plan-link">
-                  <span>Planner</span>
-                  <ArrowRight size={14} strokeWidth={2.2} />
-                </Link>
-              </div>
-              <div style={S.planHeader}>
-                <div style={S.planHeaderLabel}>
-                  <span style={S.planToday}>
-                    {todayIndex !== null && todayIndex !== undefined ? DAY_NAMES[todayIndex] : "Today"}
-                  </span>
-                  <span style={S.planDate}>
-                    {timeContext?.todayDateLabel ?? ""}
-                  </span>
+        <div className="home-today-band" style={{ marginTop: 0, paddingTop: 0, borderTop: "none" }}>
+          <div className="home-today-band-inner">
+            {/* Today's plan */}
+            <Section bottomMargin={0}>
+              {todayItems.length > 0 ? (
+                <div style={S.planCard} className="home-section-surface home-plan-surface">
+                  <div style={{ ...S.cardSectionHeader, borderBottom: "none" }} className="home-plan-header home-today-header">
+                    <h2 style={S.sectionTitle} className="home-plan-title">Today</h2>
+                    <Link href="/plan" style={S.seeAll} className="home-plan-link">
+                      <span>Planner</span>
+                      <ArrowRight size={14} strokeWidth={2.2} />
+                    </Link>
+                  </div>
+                  <div style={S.planHeader}>
+                    <div style={S.planHeaderLabel}>
+                      <span style={S.planToday}>
+                        {todayIndex !== null && todayIndex !== undefined ? DAY_NAMES[todayIndex] : "Today"}
+                      </span>
+                      <span style={S.planDate}>
+                        {timeContext?.todayDateLabel ?? ""}
+                      </span>
+                    </div>
+                  </div>
+                  {todayItems.map((item, index) => (
+                    <TodayMealRow
+                      key={item.id}
+                      label={HOME_MEAL_TYPE_LABELS[item.mealType] || item.mealType}
+                      item={item}
+                      showDivider={index > 0}
+                    />
+                  ))}
                 </div>
-              </div>
-              {todayItems.map((item, index) => (
-                <TodayMealRow
-                  key={item.id}
-                  label={HOME_MEAL_TYPE_LABELS[item.mealType] || item.mealType}
-                  item={item}
-                  showDivider={index > 0}
-                />
-              ))}
-            </div>
-          ) : (
-            <div style={S.emptyCard}>
-              <div style={S.cardSectionHeader} className="home-plan-header">
-                <h2 style={S.sectionTitle} className="home-plan-title">Today</h2>
-                <Link href="/plan" style={S.seeAll} className="home-plan-link">
-                  <span>Planner</span>
-                  <ArrowRight size={14} strokeWidth={2.2} />
+              ) : (
+                <div style={S.emptyCard} className="home-section-surface home-empty-surface">
+                  <div style={{ ...S.cardSectionHeader, borderBottom: "none" }} className="home-plan-header home-today-header">
+                    <h2 style={S.sectionTitle} className="home-plan-title">Today</h2>
+                    <Link href="/plan" style={S.seeAll} className="home-plan-link">
+                      <span>Planner</span>
+                      <ArrowRight size={14} strokeWidth={2.2} />
+                    </Link>
+                  </div>
+                  <p style={S.emptyText}>Nothing planned for today yet.</p>
+                  <Link href="/plan" style={S.emptyLink}>
+                    <span>Plan your week</span>
+                    <ArrowRight size={14} strokeWidth={2.2} />
+                  </Link>
+                </div>
+              )}
+            </Section>
+
+            <div style={{ ...S.actionRowWrap, marginTop: 12 }} className="home-today-action-wrap">
+              <div style={S.actionRow}>
+                <Link href="/recipes/import" style={S.floatingPrimary}>
+                  <Plus size={16} strokeWidth={2.2} style={{ marginRight: 8 }} />
+                  <span>Add a new recipe</span>
                 </Link>
               </div>
-              <p style={S.emptyText}>Nothing planned for today yet.</p>
-              <Link href="/plan" style={S.emptyLink}>
-                <span>Plan your week</span>
-                <ArrowRight size={14} strokeWidth={2.2} />
-              </Link>
             </div>
-          )}
-        </Section>
-
-        <div style={S.actionRowWrap}>
-          <div style={S.actionRow}>
-            <Link href="/recipes/import" style={S.floatingPrimary}>
-              <Plus size={16} strokeWidth={2.2} style={{ marginRight: 8 }} />
-              <span>Add a new recipe</span>
-            </Link>
           </div>
         </div>
+        <div className="home-explicit-full-divider" />
 
         {/* Recently saved */}
         <Section>
-          <div style={S.savedPanel}>
-            <div style={S.cardSectionHeaderTerracottaBand}>
+          <div style={S.savedPanel} className="home-section-surface home-band-surface">
+            <div style={S.cardSectionHeaderTerracottaBand} className="home-band-header">
               <h2 style={S.sectionTitleOnTerracotta}>Recently Saved</h2>
               <Link href="/recipes" style={S.seeAllOnTerracotta}><span>See all</span><ArrowRight size={14} strokeWidth={2.2} /></Link>
             </div>
@@ -234,10 +239,11 @@ export default function HomePage() {
           )}
           </div>
         </Section>
+        <div className="home-explicit-full-divider" />
 
-        <Section bottomMargin={0}>
-          <div style={S.kitchenPanel}>
-            <div style={S.cardSectionHeaderTerracottaBand}>
+        <Section bottomMargin={0} className="home-shared-kitchen-band">
+          <div style={S.kitchenPanel} className="home-section-surface home-band-surface">
+            <div style={S.cardSectionHeaderTerracottaBand} className="home-band-header">
               <h2 style={S.sectionTitleOnTerracotta}>Shared Kitchen</h2>
               <Link href="/kitchen" style={S.seeAllOnTerracotta}><span>{household ? "Open kitchen" : "Set up kitchen"}</span><ArrowRight size={14} strokeWidth={2.2} /></Link>
             </div>
@@ -326,18 +332,20 @@ function Section({
   children,
   titleClassName,
   bottomMargin = 32,
+  className,
 }: {
   title?: string;
   right?: React.ReactNode;
   children: React.ReactNode;
   titleClassName?: string;
   bottomMargin?: number;
+  className?: string;
 }) {
   return (
-    <section style={{ marginBottom: bottomMargin }}>
+    <section style={{ marginBottom: bottomMargin }} className={className}>
       {(title || right) && (
-        <div style={S.sectionHeader}>
-          {title ? <h2 style={S.sectionTitle} className={titleClassName}>{title}</h2> : <div />}
+        <div style={S.sectionHeader} className="home-section-header">
+          {title ? <h2 style={S.sectionTitle} className={`home-section-title ${titleClassName || ""}`.trim()}>{title}</h2> : <div />}
           {right}
         </div>
       )}
@@ -451,7 +459,7 @@ const S: Record<string, React.CSSProperties> = {
     padding: "34px 20px 36px",
     position: "relative",
     overflow: "hidden",
-    borderBottom: "1px solid rgba(97, 45, 24, 0.2)",
+    borderBottom: "none",
   },
   heroContent: {
     position: "relative",
