@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2, UtensilsCrossed } from "lucide-react";
 import type { Recipe } from "@/types";
 import { RECIPE_TYPE_OPTIONS, getRecipeType, setRecipeTypeTag, stripRecipeTypeTags, type RecipeType } from "@/lib/recipe-taxonomy";
+import { normalizeExternalUrl } from "@/lib/url";
 
 type IngredientForm = { id?: string; name: string; amount: string; unit: string; notes: string };
 type StepForm = { id?: string; instruction: string; timerSeconds: string };
@@ -85,7 +86,7 @@ export default function EditRecipePage() {
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
   const handleImageUrlBlur = async () => {
-    const value = form.imageUrl.trim();
+    const value = normalizeExternalUrl(form.imageUrl);
     if (!value) {
       setResolvedImageUrl("");
       return;
@@ -153,7 +154,7 @@ export default function EditRecipePage() {
     setSaving(true);
     setError("");
 
-    const imageInput = form.imageUrl.trim();
+    const imageInput = normalizeExternalUrl(form.imageUrl);
     const directImageUrl = imageInput && isLikelyDirectImageUrl(imageInput) ? imageInput : undefined;
     const sourceUrl = imageInput && !isLikelyDirectImageUrl(imageInput) ? imageInput : undefined;
     const imageUrl = directImageUrl || resolvedImageUrl || undefined;
@@ -234,7 +235,8 @@ export default function EditRecipePage() {
         <Field label="Recipe image URL">
           <input
             style={S.input}
-            type="url"
+            type="text"
+            inputMode="url"
             value={form.imageUrl}
             onChange={(e) => {
               setResolvedImageUrl("");
@@ -242,6 +244,9 @@ export default function EditRecipePage() {
             }}
             onBlur={() => void handleImageUrlBlur()}
             placeholder="https://example.com/recipe.jpg"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
         </Field>
 

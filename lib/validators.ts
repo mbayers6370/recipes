@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeExternalUrl } from "@/lib/url";
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -45,8 +46,14 @@ export const stepSchema = z.object({
 export const recipeSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
   description: z.string().max(1000).optional(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
-  sourceUrl: z.string().url().optional().or(z.literal("")),
+  imageUrl: z.preprocess(
+    (value) => value === "" ? "" : normalizeExternalUrl(typeof value === "string" ? value : undefined),
+    z.string().url().optional().or(z.literal(""))
+  ),
+  sourceUrl: z.preprocess(
+    (value) => value === "" ? "" : normalizeExternalUrl(typeof value === "string" ? value : undefined),
+    z.string().url().optional().or(z.literal(""))
+  ),
   prepTime: z.number().int().min(0).optional(),
   cookTime: z.number().int().min(0).optional(),
   totalTime: z.number().int().min(0).optional(),
@@ -72,7 +79,10 @@ export const recipeSchema = z.object({
 });
 
 export const importUrlSchema = z.object({
-  url: z.string().url("Please enter a valid URL"),
+  url: z.preprocess(
+    (value) => normalizeExternalUrl(typeof value === "string" ? value : undefined),
+    z.string().url("Please enter a valid URL")
+  ),
 });
 
 export const importTextSchema = z.object({

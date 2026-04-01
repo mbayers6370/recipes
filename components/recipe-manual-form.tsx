@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UtensilsCrossed } from "lucide-react";
 import { RECIPE_TYPE_OPTIONS, setRecipeTypeTag, type RecipeType } from "@/lib/recipe-taxonomy";
+import { normalizeExternalUrl } from "@/lib/url";
 
 export function RecipeManualForm() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export function RecipeManualForm() {
       setForm((current) => ({ ...current, [key]: e.target.value }));
 
   const handleImageUrlBlur = async () => {
-    const value = form.imageUrl.trim();
+    const value = normalizeExternalUrl(form.imageUrl);
     if (!value) {
       setResolvedImageUrl("");
       return;
@@ -97,7 +98,7 @@ export function RecipeManualForm() {
     const body = {
       title: form.title.trim(),
       description: form.description.trim() || undefined,
-      imageUrl: form.imageUrl.trim() || undefined,
+      imageUrl: normalizeExternalUrl(form.imageUrl),
       difficulty: form.difficulty || undefined,
       cuisine: form.cuisine.trim() || undefined,
       notes: form.notes.trim() || undefined,
@@ -138,7 +139,8 @@ export function RecipeManualForm() {
       <Field label="Recipe image URL">
         <input
           style={S.input}
-          type="url"
+          type="text"
+          inputMode="url"
           placeholder="https://example.com/recipe.jpg"
           value={form.imageUrl}
           onChange={(e) => {
@@ -146,6 +148,9 @@ export function RecipeManualForm() {
             set("imageUrl")(e);
           }}
           onBlur={() => void handleImageUrlBlur()}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
         />
       </Field>
 

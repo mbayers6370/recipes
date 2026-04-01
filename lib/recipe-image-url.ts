@@ -1,4 +1,5 @@
 import "server-only";
+import { normalizeExternalUrl } from "@/lib/url";
 
 const REQUEST_HEADERS: HeadersInit = {
   "User-Agent":
@@ -83,8 +84,13 @@ export function isLikelyDirectImageUrl(value?: string | null) {
 }
 
 export async function resolveRecipeImageUrl(url: string) {
-  if (isLikelyDirectImageUrl(url)) {
-    return url;
+  const normalizedUrl = normalizeExternalUrl(url);
+  if (!normalizedUrl) {
+    throw new Error("Could not fetch that URL");
+  }
+
+  if (isLikelyDirectImageUrl(normalizedUrl)) {
+    return normalizedUrl;
   }
 
   let blocked = false;
@@ -92,7 +98,7 @@ export async function resolveRecipeImageUrl(url: string) {
 
   for (let attempt = 0; attempt < FALLBACK_FETCH_ATTEMPTS; attempt += 1) {
     for (const headers of PRIMARY_HEADERS) {
-      const response = await fetch(url, {
+      const response = await fetch(normalizedUrl, {
         headers,
         redirect: "follow",
         cache: "no-store",
@@ -102,7 +108,7 @@ export async function resolveRecipeImageUrl(url: string) {
       if (response.ok) {
         const contentType = response.headers.get("content-type") || "";
         if (contentType.startsWith("image/")) {
-          return response.url || url;
+          return response.url || normalizedUrl;
         }
 
         const html = await response.text();
@@ -116,7 +122,7 @@ export async function resolveRecipeImageUrl(url: string) {
           continue;
         }
 
-        const resolvedMetaImage = resolveUrl(metaImage, response.url || url);
+        const resolvedMetaImage = resolveUrl(metaImage, response.url || normalizedUrl);
         if (resolvedMetaImage) {
           return resolvedMetaImage;
         }
@@ -137,7 +143,7 @@ export async function resolveRecipeImageUrl(url: string) {
 
   if (blocked || shouldTryMirror) {
     for (let attempt = 0; attempt < FALLBACK_FETCH_ATTEMPTS; attempt += 1) {
-      for (const mirrorUrl of buildMirrorUrls(url)) {
+      for (const mirrorUrl of buildMirrorUrls(normalizedUrl)) {
         const mirrorResponse = await fetch(mirrorUrl, {
           headers: { Accept: "text/plain, text/markdown, text/html;q=0.9, */*;q=0.8" },
           cache: "no-store",
@@ -147,7 +153,7 @@ export async function resolveRecipeImageUrl(url: string) {
         if (!mirrorResponse.ok) continue;
 
         const text = await mirrorResponse.text();
-        const image = extractImageFromMirrorText(text, url);
+        const image = extractImageFromMirrorText(text, normalizedUrl);
         if (image) return image;
       }
     }

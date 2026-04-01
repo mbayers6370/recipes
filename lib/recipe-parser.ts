@@ -3,6 +3,8 @@
  * Supports JSON-LD (schema.org/Recipe), microdata, and open-graph fallbacks.
  */
 
+import { normalizeExternalUrl } from "@/lib/url";
+
 export interface ParsedRecipe {
   title?: string;
   description?: string;
@@ -1005,7 +1007,12 @@ function parseRecipeFromMirrorMarkdown(text: string, sourceUrl: string): ParsedR
 }
 
 export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
-  const { body, sourceUrl: resolvedSourceUrl, isMirror } = await fetchRecipePage(url);
+  const normalizedUrl = normalizeExternalUrl(url);
+  if (!normalizedUrl) {
+    throw new RecipeImportError("Please enter a valid URL");
+  }
+
+  const { body, sourceUrl: resolvedSourceUrl, isMirror } = await fetchRecipePage(normalizedUrl);
 
   if (isMirror) {
     const mirrorParsed = parseRecipeFromMirrorMarkdown(body, resolvedSourceUrl) || parseRecipeFromText(body);

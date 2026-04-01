@@ -6,6 +6,7 @@ import { ArrowLeft, FileText, Link2, PencilLine } from "lucide-react";
 import type { ParsedRecipe } from "@/lib/recipe-parser";
 import { RecipeManualForm } from "@/components/recipe-manual-form";
 import { RecipeImage } from "@/components/recipe-image";
+import { normalizeExternalUrl } from "@/lib/url";
 
 type ImportStep = "input" | "preview" | "saving";
 type ImportMode = "url" | "document" | "manual";
@@ -117,7 +118,7 @@ export default function ImportRecipePage() {
           ? await fetch("/api/recipes/import", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ mode, url }),
+              body: JSON.stringify({ mode, url: normalizeExternalUrl(url) ?? url.trim() }),
             })
           : await (() => {
               if (!documentFile) {
@@ -243,12 +244,16 @@ export default function ImportRecipePage() {
             {mode === "url" ? (
               <input
                 style={S.input}
-                type="url"
+                type="text"
+                inputMode="url"
                 placeholder="https://www.example.com/recipes/…"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 required
                 autoFocus
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
               />
             ) : mode === "document" ? (
               <>
