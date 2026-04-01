@@ -52,8 +52,8 @@ const INLINE_NOISE_PATTERNS = [
 ];
 
 const LEADING_MEASUREMENT_PHRASES = [
-  /^(?:up\s+)?to\s+\d+(?:\s+\d+\/\d+|\/\d+|(?:\.\d+)?)?\s*(?:cups?|tbsp|tablespoons?|tsp|teaspoons?|oz|ounces?|lb|lbs|pounds?|g|grams?|kg|ml|l)\b\s+/i,
-  /^\d+(?:\s+\d+\/\d+|\/\d+|(?:\.\d+)?)?\s*(?:cups?|tbsp|tablespoons?|tsp|teaspoons?|oz|ounces?|lb|lbs|pounds?|g|grams?|kg|ml|l)\b\s+/i,
+  /^(?:up\s+)?to\s+\d+(?:\s+\d+\/\d+|\/\d+|(?:\.\d+)?)?\s*(?:cups?|tbsp|tablespoons?|tsp|teaspoons?|oz|ounces?|lb|lbs|pounds?|g|grams?|kg|ml|l|pints?)\b\s+/i,
+  /^\d+(?:\s+\d+\/\d+|\/\d+|(?:\.\d+)?)?\s*(?:cups?|tbsp|tablespoons?|tsp|teaspoons?|oz|ounces?|lb|lbs|pounds?|g|grams?|kg|ml|l|pints?)\b\s+/i,
 ];
 
 function stripPrepDescriptors(value: string) {

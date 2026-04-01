@@ -15,6 +15,8 @@ const PRIMARY_HEADERS: HeadersInit[] = [
   REQUEST_HEADERS,
   { Accept: "text/html,application/xhtml+xml" },
 ];
+const FETCH_TIMEOUT_MS = 12000;
+const FALLBACK_FETCH_ATTEMPTS = 2;
 
 function extractMetaContent(html: string, key: "og:image" | "twitter:image" | "twitter:image:src") {
   const metaTags = html.match(/<meta\b[^>]*>/gi) || [];
@@ -86,55 +88,68 @@ export async function resolveRecipeImageUrl(url: string) {
   }
 
   let blocked = false;
+  let shouldTryMirror = false;
 
-  for (const headers of PRIMARY_HEADERS) {
-    const response = await fetch(url, {
-      headers,
-      redirect: "follow",
-      cache: "no-store",
-      signal: AbortSignal.timeout(12000),
-    });
-
-    if (response.ok) {
-      const contentType = response.headers.get("content-type") || "";
-      if (contentType.startsWith("image/")) {
-        return response.url || url;
-      }
-
-      const html = await response.text();
-      const metaImage =
-        extractMetaContent(html, "og:image") ||
-        extractMetaContent(html, "twitter:image") ||
-        extractMetaContent(html, "twitter:image:src");
-
-      if (!metaImage) {
-        return undefined;
-      }
-
-      return resolveUrl(metaImage, response.url || url);
-    }
-
-    if (response.status === 401 || response.status === 403) {
-      blocked = true;
-      continue;
-    }
-
-    throw new Error("Could not fetch that URL");
-  }
-
-  if (blocked) {
-    for (const mirrorUrl of buildMirrorUrls(url)) {
-      const mirrorResponse = await fetch(mirrorUrl, {
-        headers: { Accept: "text/plain, text/markdown, text/html;q=0.9, */*;q=0.8" },
+  for (let attempt = 0; attempt < FALLBACK_FETCH_ATTEMPTS; attempt += 1) {
+    for (const headers of PRIMARY_HEADERS) {
+      const response = await fetch(url, {
+        headers,
+        redirect: "follow",
         cache: "no-store",
-        signal: AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
 
-      if (!mirrorResponse.ok) continue;
+      if (response.ok) {
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.startsWith("image/")) {
+          return response.url || url;
+        }
 
-      const text = await mirrorResponse.text();
-      const image = extractImageFromMirrorText(text, url);
-      if (image) return image;
+        const html = await response.text();
+        const metaImage =
+          extractMetaContent(html, "og:image") ||
+          extractMetaContent(html, "twitter:image") ||
+          extractMetaContent(html, "twitter:image:src");
+
+        if (!metaImage) {
+          shouldTryMirror = true;
+          continue;
+        }
+
+        const resolvedMetaImage = resolveUrl(metaImage, response.url || url);
+        if (resolvedMetaImage) {
+          return resolvedMetaImage;
+        }
+
+        shouldTryMirror = true;
+        continue;
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        blocked = true;
+        shouldTryMirror = true;
+        continue;
+      }
+
+      throw new Error("Could not fetch that URL");
+    }
+  }
+
+  if (blocked || shouldTryMirror) {
+    for (let attempt = 0; attempt < FALLBACK_FETCH_ATTEMPTS; attempt += 1) {
+      for (const mirrorUrl of buildMirrorUrls(url)) {
+        const mirrorResponse = await fetch(mirrorUrl, {
+          headers: { Accept: "text/plain, text/markdown, text/html;q=0.9, */*;q=0.8" },
+          cache: "no-store",
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
+
+        if (!mirrorResponse.ok) continue;
+
+        const text = await mirrorResponse.text();
+        const image = extractImageFromMirrorText(text, url);
+        if (image) return image;
+      }
     }
 
     throw new Error("Could not fetch that URL");

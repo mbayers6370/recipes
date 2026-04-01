@@ -11,7 +11,7 @@ import { PDFParse } from "pdf-parse";
 const MAX_IMPORT_FILE_BYTES = 10 * 1024 * 1024;
 const PAGE_MARKER_PATTERN = /^--\s*\d+\s+of\s+\d+\s*--$/i;
 const INGREDIENT_LINE_START =
-  /^((\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+)?(cup|cups|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lb|lbs|pounds?|g|grams?|kg|ml|l|liters?|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)\b/i;
+  /^((\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+)?(cup|cups|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lb|lbs|pounds?|g|grams?|kg|ml|l|liters?|pint|pints|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)\b/i;
 const STEP_PARAGRAPH_START =
   /^(if\b|mix\b|stir\b|whisk\b|bake\b|cook\b|add\b|combine\b|heat\b|preheat\b|place\b|pour\b|serve\b|season\b|chop\b|slice\b|saute\b|sauté\b|boil\b|simmer\b|roast\b|refrigerate\b|freeze\b|blend\b|shake\b|marinate\b|toast\b|broil\b|roughly\b)/i;
 

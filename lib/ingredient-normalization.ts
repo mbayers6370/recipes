@@ -10,9 +10,9 @@ function isMeasurementOnlyText(value?: string | null) {
   const text = cleanText(value).toLowerCase();
   if (!text) return true;
 
-  return /^(?:up\s+to\s+|to\s+)?[\d\s./¼½¾⅓⅔⅛⅜⅝⅞-]+\s*(cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|oz|ounce|ounces|lb|lbs|pound|pounds|g|gram|grams|kg|ml|l|liter|liters|can|cans|package|packages|bunch|bunches|head|heads|sprig|sprigs|clove|cloves|stick|sticks)$/i.test(
+  return /^(?:up\s+to\s+|to\s+)?[\d\s./¼½¾⅓⅔⅛⅜⅝⅞-]+\s*(cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|oz|ounce|ounces|lb|lbs|pound|pounds|g|gram|grams|kg|ml|l|liter|liters|pint|pints|can|cans|package|packages|bunch|bunches|head|heads|sprig|sprigs|clove|cloves|stick|sticks)$/i.test(
     text
-  ) || /^(cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|oz|ounce|ounces|lb|lbs|pound|pounds|g|gram|grams|kg|ml|l|liter|liters|can|cans|package|packages|bunch|bunches|head|heads|sprig|sprigs|clove|cloves|stick|sticks)$/i.test(text);
+  ) || /^(cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|oz|ounce|ounces|lb|lbs|pound|pounds|g|gram|grams|kg|ml|l|liter|liters|pint|pints|can|cans|package|packages|bunch|bunches|head|heads|sprig|sprigs|clove|cloves|stick|sticks)$/i.test(text);
 }
 
 function combineIngredientText(ingredient: Pick<Ingredient, "amount" | "unit" | "name">) {

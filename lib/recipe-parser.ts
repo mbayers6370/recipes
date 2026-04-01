@@ -25,6 +25,9 @@ export interface ParsedRecipe {
   };
 }
 
+type ParsedIngredient = ParsedRecipe["ingredients"][number];
+type ParsedStep = ParsedRecipe["steps"][number];
+
 class RecipeImportError extends Error {
   status: number;
 
@@ -102,6 +105,18 @@ function sanitizeUrl(value?: string | null, baseUrl?: string): string | undefine
   }
 }
 
+function getRecipeSite(url: string) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    if (hostname.includes("allrecipes.com")) return "allrecipes";
+    if (hostname.includes("loveandlemons.com")) return "loveandlemons";
+  } catch {
+    return "generic";
+  }
+
+  return "generic";
+}
+
 function extractImageUrl(value: unknown, baseUrl?: string): string | undefined {
   if (!value) return undefined;
 
@@ -145,7 +160,7 @@ function splitSharedIngredientNames(raw: string) {
 }
 
 const INGREDIENT_UNIT_PATTERN =
-  "(cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|oz|ounce|ounces|lb|pound|pounds|g|gram|grams|kg|ml|l|liter|liters|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)";
+  "(cup|cups|tbsp|tsp|tablespoon|tablespoons|teaspoon|teaspoons|oz|ounce|ounces|lb|pound|pounds|g|gram|grams|kg|ml|l|liter|liters|pint|pints|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)";
 
 function cleanIngredientName(name: string) {
   return name
@@ -186,19 +201,25 @@ export function splitIngredient(raw: string): Array<{
     .trim()
     .match(
       new RegExp(
-        `^(?:up\\s+to\\s+|to\\s+)?([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/]+)\\s+([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/.-]+\\s*(?:oz|ounce|ounces|lb|lbs|pound|pounds|g|gram|grams|kg|ml|l|liter|liters))?\\s*(can|cans|package|packages|bunch|bunches|head|heads|sprig|sprigs|clove|cloves|stick|sticks)\\s+(.+)$`,
+        `^(?:up\\s+to\\s+|to\\s+)?([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/]+)\\s*(?:\\(([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/.-]+\\s*(?:oz|ounce|ounces|lb|lbs|pound|pounds|g|gram|grams|kg|ml|l|liter|liters))\\)|([\\d\\s\\u00BC-\\u00BE\\u2150-\\u215E\\/.-]+\\s*(?:oz|ounce|ounces|lb|lbs|pound|pounds|g|gram|grams|kg|ml|l|liter|liters)))?\\s*(can|cans|package|packages|bunch|bunches|head|heads|sprig|sprigs|clove|cloves|stick|sticks|container|containers|jar|jars)\\s+(.+)$`,
         "i"
       )
     );
 
   if (packagedMatch) {
-    const packageSize = packagedMatch[2]?.trim();
-    const packageType = packagedMatch[3]?.trim();
+    const packageSize = packagedMatch[2]?.trim() || packagedMatch[3]?.trim();
+    const packageType = packagedMatch[4]?.trim();
+    const measurement = [
+      packagedMatch[1]?.trim(),
+      packageSize ? `(${packageSize})` : undefined,
+      packageType,
+    ].filter(Boolean).join(" ").trim();
+
     return [
       {
-        amount: packagedMatch[1]?.trim(),
-        unit: [packageSize, packageType].filter(Boolean).join(" ").trim() || packageType,
-        name: cleanIngredientName(packagedMatch[4]?.trim() || raw.trim()),
+        amount: measurement || packagedMatch[1]?.trim(),
+        unit: undefined,
+        name: cleanIngredientName(packagedMatch[5]?.trim() || raw.trim()),
       },
     ];
   }
@@ -333,7 +354,7 @@ function isSectionHeader(line: string, kind: keyof typeof SECTION_HEADER_PATTERN
 function looksLikeIngredient(line: string) {
   const cleaned = line.replace(/^[-*•]\s*/, "").trim();
 
-  return /^((\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+)?(cup|cups|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lb|pounds?|g|grams?|kg|ml|l|liters?|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)\b/i.test(cleaned)
+  return /^((\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+)?(cup|cups|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lb|pounds?|g|grams?|kg|ml|l|liters?|pint|pints|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)\b/i.test(cleaned)
     || /^[-*•]\s+/.test(line)
     || /^(\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+\([^)]{1,40}\)\s+\w+/i.test(cleaned)
     || /^(\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+\w+/.test(cleaned);
@@ -558,7 +579,10 @@ function extractFromJsonLd(html: string, baseUrl?: string): Partial<ParsedRecipe
   return null;
 }
 
-function extractMetaContent(html: string, key: "og:image" | "twitter:image" | "twitter:image:src") {
+function extractMetaContent(
+  html: string,
+  key: "og:image" | "twitter:image" | "twitter:image:src" | "og:description" | "twitter:description"
+) {
   const metaTags = html.match(/<meta\b[^>]*>/gi) || [];
 
   for (const tag of metaTags) {
@@ -577,6 +601,14 @@ function extractOgImage(html: string): string | undefined {
     extractMetaContent(html, "og:image")
     || extractMetaContent(html, "twitter:image")
     || extractMetaContent(html, "twitter:image:src")
+  );
+}
+
+function extractMetaDescription(html: string): string | undefined {
+  return normalizeImportedText(
+    extractMetaContent(html, "og:description")
+    || extractMetaContent(html, "twitter:description")
+    || html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)?.[1]
   );
 }
 
@@ -624,6 +656,9 @@ const PRIMARY_FETCH_HEADERS: HeadersInit[] = [
   },
 ];
 
+const FETCH_TIMEOUT_MS = 12000;
+const FALLBACK_FETCH_ATTEMPTS = 2;
+
 function buildMirrorUrls(url: string) {
   const stripped = url.replace(/^https?:\/\//i, "");
   return Array.from(
@@ -640,56 +675,60 @@ async function fetchRecipePage(url: string) {
   let lastError: unknown;
   let blockedResponse: Response | null = null;
 
-  for (const headers of PRIMARY_FETCH_HEADERS) {
-    try {
-      const response = await fetch(url, {
-        headers,
-        redirect: "follow",
-        cache: "no-store",
-        signal: AbortSignal.timeout(12000),
-      });
+  for (let attempt = 0; attempt < FALLBACK_FETCH_ATTEMPTS; attempt += 1) {
+    for (const headers of PRIMARY_FETCH_HEADERS) {
+      try {
+        const response = await fetch(url, {
+          headers,
+          redirect: "follow",
+          cache: "no-store",
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
 
-      if (response.ok) {
-        return {
-          response,
-          body: await response.text(),
-          sourceUrl: sanitizeUrl(response.url || url) || url,
-          isMirror: false,
-        };
+        if (response.ok) {
+          return {
+            response,
+            body: await response.text(),
+            sourceUrl: sanitizeUrl(response.url || url) || url,
+            isMirror: false,
+          };
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          blockedResponse = response;
+          continue;
+        }
+
+        if (response.status >= 500) {
+          throw new RecipeImportError(
+            "That site is having trouble right now. Please try again in a moment."
+          );
+        }
+
+        throw new RecipeImportError("Could not read that recipe URL. Please double-check the link.");
+      } catch (error) {
+        lastError = error;
       }
-
-      if (response.status === 401 || response.status === 403) {
-        blockedResponse = response;
-        continue;
-      }
-
-      if (response.status >= 500) {
-        throw new RecipeImportError(
-          "That site is having trouble right now. Please try again in a moment."
-        );
-      }
-
-      throw new RecipeImportError("Could not read that recipe URL. Please double-check the link.");
-    } catch (error) {
-      lastError = error;
     }
   }
 
   try {
-    for (const mirrorUrl of buildMirrorUrls(url)) {
-      const mirrorResponse = await fetch(mirrorUrl, {
-        headers: { Accept: "text/plain, text/markdown, text/html;q=0.9, */*;q=0.8" },
-        cache: "no-store",
-        signal: AbortSignal.timeout(12000),
-      });
+    for (let attempt = 0; attempt < FALLBACK_FETCH_ATTEMPTS; attempt += 1) {
+      for (const mirrorUrl of buildMirrorUrls(url)) {
+        const mirrorResponse = await fetch(mirrorUrl, {
+          headers: { Accept: "text/plain, text/markdown, text/html;q=0.9, */*;q=0.8" },
+          cache: "no-store",
+          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
 
-      if (mirrorResponse.ok) {
-        return {
-          response: mirrorResponse,
-          body: await mirrorResponse.text(),
-          sourceUrl: url,
-          isMirror: true,
-        };
+        if (mirrorResponse.ok) {
+          return {
+            response: mirrorResponse,
+            body: await mirrorResponse.text(),
+            sourceUrl: url,
+            isMirror: true,
+          };
+        }
       }
     }
   } catch (error) {
@@ -789,6 +828,45 @@ function isImageCaptionNoise(line: string) {
     || /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}\s*\/\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}$/.test(cleaned);
 }
 
+function isTimeOnlyIngredient(ingredient: ParsedIngredient) {
+  const name = (ingredient.name || "").trim().toLowerCase();
+  const amount = (ingredient.amount || "").trim().toLowerCase();
+  const unit = (ingredient.unit || "").trim().toLowerCase();
+  const combined = [amount, unit, name].filter(Boolean).join(" ").trim();
+
+  return /\bhrs?\b|\bhours?\b|\bmins?\b|\bminutes?\b/.test(combined)
+    && !/(milk|yogurt|yoghurt|syrup|vanilla|salt|chia|strawberries|almonds|cheese|ham|biscuit|spaghetti|olive|butter|garlic)/i.test(combined);
+}
+
+function isLikelyInstructionSentence(line: string) {
+  const cleaned = line.trim();
+  if (!cleaned) return false;
+  if (isRecipeMetadataLine(cleaned) || isImageCaptionNoise(cleaned) || isCategoryCrumbLine(cleaned)) return false;
+  if (looksLikeStep(cleaned)) return true;
+
+  return /(?:stir|whisk|mix|combine|add|cook|bake|boil|simmer|drizzle|fold|pour|place|heat|preheat|serve|season|top|cover|refrigerate|chill|toast|brush)\b/i.test(cleaned)
+    || /(?:until|for \d+|overnight|golden|tender|smooth|coated|combined|fragrant)\b/i.test(cleaned);
+}
+
+function applySiteSpecificCleanup(parsed: ParsedRecipe, sourceUrl: string): ParsedRecipe {
+  const site = getRecipeSite(sourceUrl);
+
+  if (site === "allrecipes") {
+    return {
+      ...parsed,
+      ingredients: parsed.ingredients.filter((ingredient) => !isTimeOnlyIngredient(ingredient)),
+      steps: parsed.steps.filter((step) => {
+        const instruction = step.instruction.trim();
+        return !/^gather the ingredients\.?$/i.test(instruction)
+          && !isImageCaptionNoise(instruction)
+          && Boolean(instruction);
+      }),
+    };
+  }
+
+  return parsed;
+}
+
 function parseRecipeFromMirrorMarkdown(text: string, sourceUrl: string): ParsedRecipe | null {
   const markdown = normalizeMirrorMarkdown(text);
   const lines = markdown
@@ -837,7 +915,7 @@ function parseRecipeFromMirrorMarkdown(text: string, sourceUrl: string): ParsedR
     .filter((line) => !isMirrorBoilerplateLine(line))
     .filter((line) => !isRecipeMetadataLine(line))
     .filter((line) => !isImageCaptionNoise(line))
-    .filter((line) => looksLikeStep(line) || line.length > 20);
+    .filter((line) => isLikelyInstructionSentence(line));
 
   const ingredients = ingredientLines.flatMap((line) => splitIngredient(line));
   const steps = stepLines.map((instruction, index) => ({ order: index, instruction }));
@@ -862,11 +940,11 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
     const mirrorParsed = parseRecipeFromMirrorMarkdown(body, resolvedSourceUrl) || parseRecipeFromText(body);
 
     if (mirrorParsed.ingredients.length > 0 && mirrorParsed.steps.length > 0) {
-      return {
+      return applySiteSpecificCleanup({
         ...mirrorParsed,
         sourceUrl: resolvedSourceUrl,
         imageUrl: extractImageFromMirrorText(body, resolvedSourceUrl),
-      };
+      }, resolvedSourceUrl);
     }
 
     throw new RecipeImportError(
@@ -879,14 +957,15 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
   // Try JSON-LD first (most reliable)
   const jsonLd = extractFromJsonLd(html, resolvedSourceUrl);
   if (jsonLd && jsonLd.ingredients && jsonLd.ingredients.length > 0) {
-    return {
+    return applySiteSpecificCleanup({
       ...jsonLd,
       sourceUrl: resolvedSourceUrl,
       ingredients: jsonLd.ingredients || [],
       steps: jsonLd.steps || [],
       imageUrl: jsonLd.imageUrl || sanitizeUrl(extractOgImage(html), resolvedSourceUrl),
+      description: jsonLd.description || extractMetaDescription(html),
       title: jsonLd.title || extractTitle(html) || "Imported Recipe",
-    };
+    }, resolvedSourceUrl);
   }
 
   const textParsed = parseRecipeFromText(
@@ -895,11 +974,12 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
   );
 
   if (textParsed.ingredients.length > 0 && textParsed.steps.length > 0) {
-    return {
+    return applySiteSpecificCleanup({
       ...textParsed,
       sourceUrl: resolvedSourceUrl,
+      description: extractMetaDescription(html) || textParsed.description,
       imageUrl: sanitizeUrl(extractOgImage(html), resolvedSourceUrl),
-    };
+    }, resolvedSourceUrl);
   }
 
   throw new RecipeImportError(
@@ -955,6 +1035,7 @@ export function parseRecipeFromText(text: string, titleOverride?: string): Parse
     .filter(Boolean)
     .filter((line) => !isRecipeMetadataLine(line))
     .filter((line) => !isImageCaptionNoise(line))
+    .filter((line) => isLikelyInstructionSentence(line))
     .map((instruction, index) => ({
       order: index,
       instruction,
@@ -966,6 +1047,7 @@ export function parseRecipeFromText(text: string, titleOverride?: string): Parse
     .filter(Boolean)
     .filter((line) => !isRecipeMetadataLine(line))
     .filter((line) => !isImageCaptionNoise(line))
+    .filter((line) => isLikelyInstructionSentence(line))
     .map((instruction, index) => ({
       order: index,
       instruction,
