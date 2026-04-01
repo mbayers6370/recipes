@@ -75,15 +75,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const updateData: Record<string, unknown> = {};
 
     if (hasImageUrlUpdate && data.imageUrl) {
-      const resolvedImageUrl = isLikelyDirectImageUrl(data.imageUrl)
-        ? data.imageUrl
-        : await resolveRecipeImageUrl(data.imageUrl);
+      try {
+        const resolvedImageUrl = isLikelyDirectImageUrl(data.imageUrl)
+          ? data.imageUrl
+          : await resolveRecipeImageUrl(data.imageUrl);
 
-      if (!resolvedImageUrl) {
-        return err("We couldn't resolve an image from that URL.", 422);
+        if (resolvedImageUrl) {
+          updateData.imageUrl = resolvedImageUrl;
+        }
+      } catch (imageError) {
+        console.error("[recipes PUT image]", imageError);
       }
-
-      updateData.imageUrl = resolvedImageUrl;
     }
 
     if (hasTitleUpdate) updateData.title = data.title;

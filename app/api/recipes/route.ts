@@ -178,14 +178,17 @@ export async function POST(req: NextRequest) {
       id: nanoid(),
       ...ing,
     }));
-    const imageUrl = data.imageUrl
-      ? isLikelyDirectImageUrl(data.imageUrl)
-        ? data.imageUrl
-        : await resolveRecipeImageUrl(data.imageUrl)
-      : null;
+    const imageSource = data.imageUrl || data.sourceUrl;
+    let imageUrl: string | null = null;
 
-    if (data.imageUrl && !imageUrl) {
-      return err("We couldn't resolve an image from that URL.", 422);
+    if (imageSource) {
+      try {
+        imageUrl = (isLikelyDirectImageUrl(imageSource)
+          ? imageSource
+          : await resolveRecipeImageUrl(imageSource)) ?? null;
+      } catch (imageError) {
+        console.error("[recipes POST image]", imageError);
+      }
     }
 
     const totalTime =

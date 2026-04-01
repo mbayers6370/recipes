@@ -11,13 +11,23 @@ const REQUEST_HEADERS: HeadersInit = {
 };
 
 const IMAGE_PATH_PATTERN = /\.(avif|gif|jpe?g|png|svg|webp)(?:$|[?#])/i;
+const PRIMARY_HEADERS: HeadersInit[] = [
+  REQUEST_HEADERS,
+  { Accept: "text/html,application/xhtml+xml" },
+];
 
 function extractMetaContent(html: string, key: "og:image" | "twitter:image" | "twitter:image:src") {
-  const propertyMatch = html.match(
-    new RegExp(`<meta[^>]*(?:property|name)=["']${key}["'][^>]*content=["']([^"']+)["']`, "i")
-  );
+  const metaTags = html.match(/<meta\b[^>]*>/gi) || [];
 
-  return propertyMatch?.[1];
+  for (const tag of metaTags) {
+    const nameOrProperty = tag.match(/\b(?:property|name)=["']([^"']+)["']/i)?.[1]?.trim().toLowerCase();
+    if (nameOrProperty !== key) continue;
+
+    const content = tag.match(/\bcontent=["']([^"']+)["']/i)?.[1]?.trim();
+    if (content) return content;
+  }
+
+  return undefined;
 }
 
 function resolveUrl(candidate: string, baseUrl: string) {
@@ -26,6 +36,37 @@ function resolveUrl(candidate: string, baseUrl: string) {
   } catch {
     return undefined;
   }
+}
+
+function buildMirrorUrls(url: string) {
+  const stripped = url.replace(/^https?:\/\//i, "");
+  return Array.from(
+    new Set([
+      `https://r.jina.ai/http://${stripped}`,
+      `https://r.jina.ai/http://${url}`,
+      `https://r.jina.ai/http://https://${stripped}`,
+      `https://r.jina.ai/http://http://${stripped}`,
+    ])
+  );
+}
+
+function extractImageFromMirrorText(text: string, baseUrl: string) {
+  const linkedImageMatch = text.match(/\[[^\]]*]\((https?:\/\/[^)\s]+\.(?:avif|gif|jpe?g|png|svg|webp)(?:\?[^)\s]*)?)\)/i);
+  if (linkedImageMatch) {
+    return resolveUrl(linkedImageMatch[1], baseUrl);
+  }
+
+  const markdownMatch = text.match(/!\[[^\]]*]\((https?:\/\/[^)\s]+)\)/i);
+  if (markdownMatch) {
+    return resolveUrl(markdownMatch[1], baseUrl);
+  }
+
+  const mediaMatch = text.match(/https?:\/\/\S+\.(?:avif|gif|jpe?g|png|svg|webp)(?:\?\S*)?/i);
+  if (mediaMatch) {
+    return resolveUrl(mediaMatch[0], baseUrl);
+  }
+
+  return undefined;
 }
 
 export function isLikelyDirectImageUrl(value?: string | null) {
@@ -44,31 +85,60 @@ export async function resolveRecipeImageUrl(url: string) {
     return url;
   }
 
-  const response = await fetch(url, {
-    headers: REQUEST_HEADERS,
-    redirect: "follow",
-    cache: "no-store",
-    signal: AbortSignal.timeout(12000),
-  });
+  let blocked = false;
 
-  if (!response.ok) {
+  for (const headers of PRIMARY_HEADERS) {
+    const response = await fetch(url, {
+      headers,
+      redirect: "follow",
+      cache: "no-store",
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (response.ok) {
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.startsWith("image/")) {
+        return response.url || url;
+      }
+
+      const html = await response.text();
+      const metaImage =
+        extractMetaContent(html, "og:image") ||
+        extractMetaContent(html, "twitter:image") ||
+        extractMetaContent(html, "twitter:image:src");
+
+      if (!metaImage) {
+        return undefined;
+      }
+
+      return resolveUrl(metaImage, response.url || url);
+    }
+
+    if (response.status === 401 || response.status === 403) {
+      blocked = true;
+      continue;
+    }
+
     throw new Error("Could not fetch that URL");
   }
 
-  const contentType = response.headers.get("content-type") || "";
-  if (contentType.startsWith("image/")) {
-    return response.url || url;
+  if (blocked) {
+    for (const mirrorUrl of buildMirrorUrls(url)) {
+      const mirrorResponse = await fetch(mirrorUrl, {
+        headers: { Accept: "text/plain, text/markdown, text/html;q=0.9, */*;q=0.8" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(12000),
+      });
+
+      if (!mirrorResponse.ok) continue;
+
+      const text = await mirrorResponse.text();
+      const image = extractImageFromMirrorText(text, url);
+      if (image) return image;
+    }
+
+    throw new Error("Could not fetch that URL");
   }
 
-  const html = await response.text();
-  const metaImage =
-    extractMetaContent(html, "og:image") ||
-    extractMetaContent(html, "twitter:image") ||
-    extractMetaContent(html, "twitter:image:src");
-
-  if (!metaImage) {
-    return undefined;
-  }
-
-  return resolveUrl(metaImage, response.url || url);
+  return undefined;
 }

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, FileText, Link2, PencilLine } from "lucide-react";
 import type { ParsedRecipe } from "@/lib/recipe-parser";
 import { RecipeManualForm } from "@/components/recipe-manual-form";
+import { RecipeImage } from "@/components/recipe-image";
 
 type ImportStep = "input" | "preview" | "saving";
 type ImportMode = "url" | "document" | "manual";
@@ -47,6 +47,61 @@ export default function ImportRecipePage() {
   const [parsed, setParsed] = useState<ParsedRecipe | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resolvedImageUrl, setResolvedImageUrl] = useState("");
+  const [resolvingImage, setResolvingImage] = useState(false);
+
+  useEffect(() => {
+    if (!parsed?.sourceUrl) {
+      setResolvedImageUrl("");
+      setResolvingImage(false);
+      return;
+    }
+
+    const sourceUrl = parsed.sourceUrl;
+    const currentImageUrl = parsed.imageUrl;
+    let cancelled = false;
+
+    async function loadImage() {
+      if (isLikelyDirectImageUrl(sourceUrl)) {
+        setResolvedImageUrl(sourceUrl);
+        return;
+      }
+
+      setResolvingImage(true);
+
+      try {
+        const res = await fetch("/api/recipes/resolve-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: sourceUrl }),
+        });
+        const json = await res.json();
+
+        if (cancelled) return;
+
+        if (res.ok && json.data?.imageUrl) {
+          setResolvedImageUrl(json.data.imageUrl);
+          setParsed((current) => (current ? { ...current, imageUrl: json.data.imageUrl } : current));
+        } else {
+          setResolvedImageUrl(currentImageUrl && isLikelyDirectImageUrl(currentImageUrl) ? currentImageUrl : "");
+        }
+      } catch {
+        if (!cancelled) {
+          setResolvedImageUrl(currentImageUrl && isLikelyDirectImageUrl(currentImageUrl) ? currentImageUrl : "");
+        }
+      } finally {
+        if (!cancelled) {
+          setResolvingImage(false);
+        }
+      }
+    }
+
+    void loadImage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [parsed?.sourceUrl, parsed?.imageUrl]);
 
   const clearError = () => setError("");
 
@@ -85,6 +140,7 @@ export default function ImportRecipePage() {
 
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Import failed");
+      setResolvedImageUrl("");
       setParsed(json.data);
       setStep("preview");
     } catch (err) {
@@ -103,10 +159,14 @@ export default function ImportRecipePage() {
     setLoading(true);
     setStep("saving");
     try {
+      const imageUrl = resolvedImageUrl || (parsed.imageUrl && isLikelyDirectImageUrl(parsed.imageUrl) ? parsed.imageUrl : undefined);
       const res = await fetch("/api/recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed),
+        body: JSON.stringify({
+          ...parsed,
+          imageUrl,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Save failed");
@@ -235,17 +295,16 @@ export default function ImportRecipePage() {
       {step === "preview" && parsed && (
         <div style={S.preview}>
           <div style={S.previewCard}>
-            {parsed.imageUrl && (
+            {(resolvedImageUrl || parsed.imageUrl) && (
               <div style={S.previewImgShell}>
                 <div style={S.previewImgWrap}>
-                <Image
-                  src={parsed.imageUrl}
-                  alt={parsed.title || "Imported recipe preview"}
-                  fill
-                  unoptimized
-                  sizes="(max-width: 768px) 100vw, 720px"
-                  style={S.previewImg}
-                />
+                  <RecipeImage
+                    imageUrl={resolvedImageUrl || parsed.imageUrl}
+                    title={parsed.title || "Imported recipe preview"}
+                    sizes="(max-width: 768px) 100vw, 720px"
+                    imageStyle={S.previewImg}
+                    priority
+                  />
                 </div>
               </div>
             )}
@@ -260,6 +319,7 @@ export default function ImportRecipePage() {
                 <p style={S.previewTitleHint}>Add a title before saving.</p>
               )}
               {parsed.description && <p style={S.previewDesc}>{parsed.description}</p>}
+              {resolvingImage ? <p style={S.previewTitleHint}>Resolving recipe image…</p> : null}
 
               <div style={S.previewMeta}>
                 {parsed.prepTime && <MetaChip label="Prep" value={`${parsed.prepTime}m`} />}
@@ -323,6 +383,17 @@ export default function ImportRecipePage() {
       )}
     </div>
   );
+}
+
+function isLikelyDirectImageUrl(value?: string | null) {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+    return /\.(avif|gif|jpe?g|png|svg|webp)(?:$|[?#])/i.test(url.pathname) || /\.(avif|gif|jpe?g|png|svg|webp)(?:$|[?#])/i.test(url.toString());
+  } catch {
+    return false;
+  }
 }
 
 function MetaChip({ label, value }: { label: string; value: string }) {

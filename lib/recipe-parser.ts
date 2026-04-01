@@ -85,6 +85,57 @@ function parseServings(val?: string | number): number | undefined {
   return isNaN(n) ? undefined : n;
 }
 
+function sanitizeUrl(value?: string | null, baseUrl?: string): string | undefined {
+  if (!value) return undefined;
+
+  const normalized = normalizeImportedText(value)?.trim();
+  if (!normalized) return undefined;
+
+  const withProtocol = normalized.startsWith("//") ? `https:${normalized}` : normalized;
+
+  try {
+    const parsed = baseUrl ? new URL(withProtocol, baseUrl) : new URL(withProtocol);
+    if (!/^https?:$/i.test(parsed.protocol)) return undefined;
+    return parsed.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function extractImageUrl(value: unknown, baseUrl?: string): string | undefined {
+  if (!value) return undefined;
+
+  if (typeof value === "string") {
+    return sanitizeUrl(value, baseUrl);
+  }
+
+  if (Array.isArray(value)) {
+    for (const candidate of value) {
+      const url = extractImageUrl(candidate, baseUrl);
+      if (url) return url;
+    }
+    return undefined;
+  }
+
+  if (typeof value === "object") {
+    const imageObject = value as {
+      url?: unknown;
+      contentUrl?: unknown;
+      src?: unknown;
+      thumbnailUrl?: unknown;
+    };
+
+    return (
+      extractImageUrl(imageObject.url, baseUrl)
+      || extractImageUrl(imageObject.contentUrl, baseUrl)
+      || extractImageUrl(imageObject.src, baseUrl)
+      || extractImageUrl(imageObject.thumbnailUrl, baseUrl)
+    );
+  }
+
+  return undefined;
+}
+
 function splitSharedIngredientNames(raw: string) {
   return raw
     .split(/,|(?:\s+and\s+)/i)
@@ -284,6 +335,7 @@ function looksLikeIngredient(line: string) {
 
   return /^((\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+)?(cup|cups|tbsp|tsp|tablespoons?|teaspoons?|oz|ounces?|lb|pounds?|g|grams?|kg|ml|l|liters?|clove|cloves|slice|slices|piece|pieces|pinch|dash|handful|can|cans|package|packages|bunch|head|sprig|sprigs)\b/i.test(cleaned)
     || /^[-*•]\s+/.test(line)
+    || /^(\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+\([^)]{1,40}\)\s+\w+/i.test(cleaned)
     || /^(\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\s+\w+/.test(cleaned);
 }
 
@@ -423,7 +475,7 @@ function collectSection(lines: string[], startIndex: number, matcher: (line: str
   return collected;
 }
 
-function extractFromJsonLd(html: string): Partial<ParsedRecipe> | null {
+function extractFromJsonLd(html: string, baseUrl?: string): Partial<ParsedRecipe> | null {
   const scriptMatches = html.matchAll(
     /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
   );
@@ -478,18 +530,10 @@ function extractFromJsonLd(html: string): Partial<ParsedRecipe> | null {
           }
         : undefined;
 
-      const imageVal = recipe.image;
-      const imageUrl =
-        typeof imageVal === "string"
-          ? imageVal
-          : Array.isArray(imageVal)
-          ? imageVal[0]
-          : imageVal?.url;
-
       return {
         title: normalizeImportedText(recipe.name),
         description: normalizeImportedText(recipe.description),
-        imageUrl,
+        imageUrl: extractImageUrl(recipe.image, baseUrl),
         prepTime: parseISODuration(recipe.prepTime),
         cookTime: parseISODuration(recipe.cookTime),
         totalTime: parseISODuration(recipe.totalTime),
@@ -514,9 +558,26 @@ function extractFromJsonLd(html: string): Partial<ParsedRecipe> | null {
   return null;
 }
 
+function extractMetaContent(html: string, key: "og:image" | "twitter:image" | "twitter:image:src") {
+  const metaTags = html.match(/<meta\b[^>]*>/gi) || [];
+
+  for (const tag of metaTags) {
+    const nameOrProperty = tag.match(/\b(?:property|name)=["']([^"']+)["']/i)?.[1]?.trim().toLowerCase();
+    if (nameOrProperty !== key) continue;
+
+    const content = tag.match(/\bcontent=["']([^"']+)["']/i)?.[1]?.trim();
+    if (content) return content;
+  }
+
+  return undefined;
+}
+
 function extractOgImage(html: string): string | undefined {
-  const match = html.match(/<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i);
-  return match?.[1];
+  return (
+    extractMetaContent(html, "og:image")
+    || extractMetaContent(html, "twitter:image")
+    || extractMetaContent(html, "twitter:image:src")
+  );
 }
 
 function extractTitle(html: string): string | undefined {
@@ -548,74 +609,282 @@ function extractReadableTextFromHtml(html: string) {
     .trim();
 }
 
-export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
-  const headersList: HeadersInit[] = [
-    {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Cache-Control": "no-cache",
-      Pragma: "no-cache",
-    },
-    {
-      Accept: "text/html,application/xhtml+xml",
-    },
-  ];
+const PRIMARY_FETCH_HEADERS: HeadersInit[] = [
+  {
+    "User-Agent":
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36",
+    Accept:
+      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cache-Control": "no-cache",
+    Pragma: "no-cache",
+  },
+  {
+    Accept: "text/html,application/xhtml+xml",
+  },
+];
 
+function buildMirrorUrls(url: string) {
+  const stripped = url.replace(/^https?:\/\//i, "");
+  return Array.from(
+    new Set([
+      `https://r.jina.ai/http://${stripped}`,
+      `https://r.jina.ai/http://${url}`,
+      `https://r.jina.ai/http://https://${stripped}`,
+      `https://r.jina.ai/http://http://${stripped}`,
+    ])
+  );
+}
+
+async function fetchRecipePage(url: string) {
   let lastError: unknown;
-  let response: Response | null = null;
+  let blockedResponse: Response | null = null;
 
-  for (const headers of headersList) {
+  for (const headers of PRIMARY_FETCH_HEADERS) {
     try {
-      response = await fetch(url, {
+      const response = await fetch(url, {
         headers,
         redirect: "follow",
         cache: "no-store",
         signal: AbortSignal.timeout(12000),
       });
-      break;
+
+      if (response.ok) {
+        return {
+          response,
+          body: await response.text(),
+          sourceUrl: sanitizeUrl(response.url || url) || url,
+          isMirror: false,
+        };
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        blockedResponse = response;
+        continue;
+      }
+
+      if (response.status >= 500) {
+        throw new RecipeImportError(
+          "That site is having trouble right now. Please try again in a moment."
+        );
+      }
+
+      throw new RecipeImportError("Could not read that recipe URL. Please double-check the link.");
     } catch (error) {
       lastError = error;
     }
   }
 
-  if (!response) {
-    const message =
-      lastError instanceof Error && /(abort|timeout)/i.test(lastError.name + lastError.message)
-        ? "That site took too long to respond. Please try again or paste the recipe text instead."
-        : "Could not reach that URL. Please check it and try again.";
-    throw new RecipeImportError(message);
+  try {
+    for (const mirrorUrl of buildMirrorUrls(url)) {
+      const mirrorResponse = await fetch(mirrorUrl, {
+        headers: { Accept: "text/plain, text/markdown, text/html;q=0.9, */*;q=0.8" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(12000),
+      });
+
+      if (mirrorResponse.ok) {
+        return {
+          response: mirrorResponse,
+          body: await mirrorResponse.text(),
+          sourceUrl: url,
+          isMirror: true,
+        };
+      }
+    }
+  } catch (error) {
+    lastError = error;
   }
 
-  if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new RecipeImportError(
-        "That site blocked the import request. Try copy-paste or image OCR instead."
-      );
-    }
-
-    if (response.status >= 500) {
-      throw new RecipeImportError(
-        "That site is having trouble right now. Please try again in a moment."
-      );
-    }
-
-    throw new RecipeImportError("Could not read that recipe URL. Please double-check the link.");
+  if (blockedResponse) {
+    throw new RecipeImportError(
+      "That recipe site blocked our direct fetch, and the fallback reader also failed."
+    );
   }
 
-  const html = await response.text();
+  const message =
+    lastError instanceof Error && /(abort|timeout)/i.test(lastError.name + lastError.message)
+      ? "That site took too long to respond. Please try again or paste the recipe text instead."
+      : "Could not reach that URL. Please check it and try again.";
+  throw new RecipeImportError(message);
+}
+
+function extractImageFromMirrorText(text: string, baseUrl: string) {
+  const linkedImageMatch = text.match(/\[[^\]]*]\((https?:\/\/[^)\s]+\.(?:avif|gif|jpe?g|png|svg|webp)(?:\?[^)\s]*)?)\)/i);
+  if (linkedImageMatch) {
+    return sanitizeUrl(linkedImageMatch[1], baseUrl);
+  }
+
+  const markdownMatch = text.match(/!\[[^\]]*]\((https?:\/\/[^)\s]+)\)/i);
+  if (markdownMatch) {
+    return sanitizeUrl(markdownMatch[1], baseUrl);
+  }
+
+  const bareUrlMatch = text.match(/https?:\/\/\S+\.(?:avif|gif|jpe?g|png|svg|webp)(?:\?\S*)?/i);
+  if (bareUrlMatch) {
+    return sanitizeUrl(bareUrlMatch[0], baseUrl);
+  }
+
+  return undefined;
+}
+
+function normalizeMirrorMarkdown(text: string) {
+  const withoutFrontMatter = text.includes("Markdown Content:")
+    ? text.slice(text.indexOf("Markdown Content:") + "Markdown Content:".length)
+    : text;
+
+  return withoutFrontMatter
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, "$1")
+    .replace(/!\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g, "$1")
+    .replace(/https?:\/\/\S+/g, " ")
+    .replace(/\s+\|\s+/g, "\n")
+    .replace(/\s+\*\s+/g, "\n")
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function isMirrorBoilerplateLine(line: string) {
+  return /^(url source:|markdown content:)/i.test(line)
+    || /search please fill out this field/i.test(line)
+    || /(newsletters|sweepstakes|my saves|view all|follow us|about us|account settings|get help|log in|log out|get the magazine)/i.test(line)
+    || /(dinners|meals|ingredients|occasions|cuisines|kitchen tips|news|features)\s+(dinners|meals|ingredients|occasions|cuisines|kitchen tips|news|features)/i.test(line)
+    || /^submitted by\b/i.test(line)
+    || /^updated on\b/i.test(line)
+    || /^photo by\b/i.test(line)
+    || /^(save|rate|print|share|close|add photo|keep screen awake|i made it)$/i.test(line)
+    || /^oops! something went wrong/i.test(line)
+    || /^this recipe was developed at its original yield/i.test(line);
+}
+
+function isRecipeMetadataLine(line: string) {
+  return /^\d+\s+(reviews?|photos?)$/i.test(line)
+    || /^\d+\s+(mins?|minutes?|hours?)$/i.test(line)
+    || /^\d+(\.\d+)?\s*$/.test(line)
+    || /^\d+\s+servings?$/i.test(line)
+    || /^(prep time|cook time|additional time|total time|servings?|yield|jump to nutrition facts):?$/i.test(line)
+    || /^updated on\b/i.test(line)
+    || /^submitted by\b/i.test(line);
+}
+
+function isCategoryCrumbLine(line: string) {
+  const cleaned = line.trim();
+
+  return /^\d+-ingredient\s+[a-z]/i.test(cleaned)
+    || /^\d+-minute\s+[a-z]/i.test(cleaned)
+    || /^(breakfast|brunch|lunch|dinner|dinners|snack|snacks|dessert|desserts|meals|ingredients|occasions|cuisines|kitchen tips|news|features|appetizers|soups|salads|bread|drinks)\b/i.test(cleaned)
+    || /(recipes?|dinners?|meals?|lunch|breakfast|brunch|soups?|salads?|bread|drinks|desserts?)$/i.test(cleaned) && cleaned.split(/\s+/).length <= 4;
+}
+
+function isImageCaptionNoise(line: string) {
+  const cleaned = line.trim();
+
+  return /^image:\s*/i.test(cleaned)
+    || /^photo by\b/i.test(cleaned)
+    || /^allrecipes\s*\/\s*/i.test(cleaned)
+    || /(?:^|[\s_-])\d{4,}(?:[\s._-]|$)/.test(cleaned)
+    || /(?:^|[\s_-])(?:jpg|jpeg|png|webp|avif|gif)(?:$|[\s._-])/i.test(cleaned)
+    || /s3\.amazonaws\.com|dotdashmeredith|meredithcorp|mmartini|thmb/i.test(cleaned)
+    || /format\(webp\)|strip_icc|quality\(|bytes?_to/i.test(cleaned)
+    || /^[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}\s*\/\s*[A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,3}$/.test(cleaned);
+}
+
+function parseRecipeFromMirrorMarkdown(text: string, sourceUrl: string): ParsedRecipe | null {
+  const markdown = normalizeMirrorMarkdown(text);
+  const lines = markdown
+    .split("\n")
+    .map((line) => normalizeImportedText(line) || line.trim())
+    .filter(Boolean);
+
+  const titleIndex = lines.findIndex((line) => /^#\s+/.test(line) || /^title:\s*/i.test(line));
+  const ingredientsIndex = lines.findIndex((line) => /^(##\s+)?ingredients(?:\s*\(\d+\))?\b/i.test(line));
+  const stepsIndex = lines.findIndex((line) => /^(##\s+)?(directions|instructions|method|steps)(?:\s*\(\d+\))?\b/i.test(line));
+
+  if (titleIndex < 0 || ingredientsIndex < 0 || stepsIndex < 0 || stepsIndex <= ingredientsIndex) {
+    return null;
+  }
+
+  const title = normalizeImportedText(lines[titleIndex].replace(/^#\s+/, "").replace(/^title:\s*/i, ""));
+  const descriptionLines = lines
+    .slice(titleIndex + 1, ingredientsIndex)
+    .map((line) => line.replace(/^#+\s*/, "").trim())
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => !/^(prep time:|cook time:|total time:|servings:|yield:|jump to)/i.test(line))
+    .filter((line) => !isMirrorBoilerplateLine(line))
+    .filter((line) => !isRecipeMetadataLine(line))
+    .filter((line) => line.length > 30);
+
+  const ingredientLines = lines
+    .slice(ingredientsIndex + 1, stepsIndex)
+    .map((line) => line.replace(/^#+\s*/, "").trim())
+    .filter((line) => !isMirrorBoilerplateLine(line))
+    .filter((line) => !isRecipeMetadataLine(line))
+    .filter((line) => !isCategoryCrumbLine(line))
+    .filter((line) => !isImageCaptionNoise(line))
+    .filter((line) => !/^(1\/2x|1x|2x|3x)$/i.test(line))
+    .filter((line) => /^[-*•]\s+/.test(line) || looksLikeIngredient(line) || /^(?:\d+([./]\d+)?|\d+\s+\d\/\d|[¼½¾⅓⅔⅛⅜⅝⅞])\b/.test(line))
+    .map((line) => line.replace(/^[-*•]\s+/, "").trim())
+    .filter(Boolean);
+
+  const nextHeaderIndex = lines.findIndex((line, index) => index > stepsIndex && /^(##\s+)?[A-Z][A-Za-z ]+(?:\(\d+\))?$/.test(line));
+  const stepSectionEnd = nextHeaderIndex > stepsIndex ? nextHeaderIndex : lines.length;
+  const stepLines = lines
+    .slice(stepsIndex + 1, stepSectionEnd)
+    .map((line) => line.replace(/^#+\s*/, "").trim())
+    .map((line) => line.replace(/^\d+\.\s*/, "").trim())
+    .filter(Boolean)
+    .filter((line) => !/^(recipe tips|nutrition facts|photos of|review|i made it)\b/i.test(line))
+    .filter((line) => !isMirrorBoilerplateLine(line))
+    .filter((line) => !isRecipeMetadataLine(line))
+    .filter((line) => !isImageCaptionNoise(line))
+    .filter((line) => looksLikeStep(line) || line.length > 20);
+
+  const ingredients = ingredientLines.flatMap((line) => splitIngredient(line));
+  const steps = stepLines.map((instruction, index) => ({ order: index, instruction }));
+
+  if (!title || ingredients.length === 0 || steps.length === 0) {
+    return null;
+  }
+
+  return {
+    title,
+    description: descriptionLines.join(" ") || undefined,
+    sourceUrl,
+    ingredients,
+    steps,
+  };
+}
+
+export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
+  const { body, sourceUrl: resolvedSourceUrl, isMirror } = await fetchRecipePage(url);
+
+  if (isMirror) {
+    const mirrorParsed = parseRecipeFromMirrorMarkdown(body, resolvedSourceUrl) || parseRecipeFromText(body);
+
+    if (mirrorParsed.ingredients.length > 0 && mirrorParsed.steps.length > 0) {
+      return {
+        ...mirrorParsed,
+        sourceUrl: resolvedSourceUrl,
+        imageUrl: extractImageFromMirrorText(body, resolvedSourceUrl),
+      };
+    }
+
+    throw new RecipeImportError(
+      "We reached the recipe through a fallback reader, but still couldn't reliably extract it."
+    );
+  }
+
+  const html = body;
 
   // Try JSON-LD first (most reliable)
-  const jsonLd = extractFromJsonLd(html);
+  const jsonLd = extractFromJsonLd(html, resolvedSourceUrl);
   if (jsonLd && jsonLd.ingredients && jsonLd.ingredients.length > 0) {
     return {
       ...jsonLd,
-      sourceUrl: url,
+      sourceUrl: resolvedSourceUrl,
       ingredients: jsonLd.ingredients || [],
       steps: jsonLd.steps || [],
-      imageUrl: jsonLd.imageUrl || extractOgImage(html),
+      imageUrl: jsonLd.imageUrl || sanitizeUrl(extractOgImage(html), resolvedSourceUrl),
       title: jsonLd.title || extractTitle(html) || "Imported Recipe",
     };
   }
@@ -628,8 +897,8 @@ export async function parseRecipeFromUrl(url: string): Promise<ParsedRecipe> {
   if (textParsed.ingredients.length > 0 && textParsed.steps.length > 0) {
     return {
       ...textParsed,
-      sourceUrl: url,
-      imageUrl: extractOgImage(html),
+      sourceUrl: resolvedSourceUrl,
+      imageUrl: sanitizeUrl(extractOgImage(html), resolvedSourceUrl),
     };
   }
 
@@ -677,11 +946,15 @@ export function parseRecipeFromText(text: string, titleOverride?: string): Parse
   const ingredients = ingredientLines
     .map(cleanIngredientLine)
     .filter(Boolean)
+    .filter((line) => !isRecipeMetadataLine(line))
+    .filter((line) => !isCategoryCrumbLine(line))
     .flatMap((line) => splitIngredient(line));
 
   const steps = stepLines
     .map(cleanStepLine)
     .filter(Boolean)
+    .filter((line) => !isRecipeMetadataLine(line))
+    .filter((line) => !isImageCaptionNoise(line))
     .map((instruction, index) => ({
       order: index,
       instruction,
@@ -691,6 +964,8 @@ export function parseRecipeFromText(text: string, titleOverride?: string): Parse
     .filter((line) => looksLikeStep(line))
     .map((line) => line.replace(/^(\d+[\.\)]\s*|[-*•]\s*)/, ""))
     .filter(Boolean)
+    .filter((line) => !isRecipeMetadataLine(line))
+    .filter((line) => !isImageCaptionNoise(line))
     .map((instruction, index) => ({
       order: index,
       instruction,

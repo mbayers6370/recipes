@@ -47,7 +47,7 @@ export default function EditRecipePage() {
         setForm({
           title: recipe.title || "",
           description: recipe.description || "",
-          imageUrl: recipe.imageUrl || "",
+          imageUrl: recipe.sourceUrl || recipe.imageUrl || "",
           recipeType: getRecipeType(recipe.tags) || "",
           servings: recipe.servings ? String(recipe.servings) : "",
           prepTime: recipe.prepTime ? String(recipe.prepTime) : "",
@@ -153,10 +153,16 @@ export default function EditRecipePage() {
     setSaving(true);
     setError("");
 
+    const imageInput = form.imageUrl.trim();
+    const directImageUrl = imageInput && isLikelyDirectImageUrl(imageInput) ? imageInput : undefined;
+    const sourceUrl = imageInput && !isLikelyDirectImageUrl(imageInput) ? imageInput : undefined;
+    const imageUrl = directImageUrl || resolvedImageUrl || undefined;
+
     const body = {
       title: form.title.trim(),
       description: form.description.trim() || undefined,
-      imageUrl: form.imageUrl.trim() || undefined,
+      imageUrl,
+      sourceUrl,
       servings: form.servings ? parseInt(form.servings, 10) : undefined,
       prepTime: form.prepTime ? parseInt(form.prepTime, 10) : undefined,
       cookTime: form.cookTime ? parseInt(form.cookTime, 10) : undefined,
