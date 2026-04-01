@@ -169,6 +169,50 @@ function cleanIngredientName(name: string) {
     .trim();
 }
 
+function flattenRecipeInstructions(value: unknown): string[] {
+  if (!value) return [];
+
+  if (typeof value === "string") {
+    const normalized = normalizeImportedText(value) || value.trim();
+    return normalized ? [normalized] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => flattenRecipeInstructions(item));
+  }
+
+  if (typeof value === "object") {
+    const instruction = value as {
+      "@type"?: string | string[];
+      text?: unknown;
+      name?: unknown;
+      itemListElement?: unknown;
+      itemListElements?: unknown;
+      steps?: unknown;
+    };
+
+    const nested = [
+      ...flattenRecipeInstructions(instruction.itemListElement),
+      ...flattenRecipeInstructions(instruction.itemListElements),
+      ...flattenRecipeInstructions(instruction.steps),
+    ];
+
+    if (nested.length > 0) {
+      return nested;
+    }
+
+    const text = typeof instruction.text === "string"
+      ? normalizeImportedText(instruction.text) || instruction.text.trim()
+      : typeof instruction.name === "string"
+        ? normalizeImportedText(instruction.name) || instruction.name.trim()
+        : "";
+
+    return text ? [text] : [];
+  }
+
+  return [];
+}
+
 export function splitIngredient(raw: string): Array<{
   amount?: string;
   unit?: string;
@@ -496,6 +540,37 @@ function collectSection(lines: string[], startIndex: number, matcher: (line: str
   return collected;
 }
 
+function isInstructionBoundaryLine(line: string) {
+  const cleaned = line.trim();
+  if (!cleaned) return false;
+
+  return /^(comments?|leave a comment|did you make|rate this recipe|review this recipe|related recipes?|more recipes?|recommended|you may also like|nutrition(?: facts)?|video|notes?)[:]?$/i.test(cleaned)
+    || /^posted in\b/i.test(cleaned)
+    || /^filed under\b/i.test(cleaned)
+    || /^share\b/i.test(cleaned)
+    || /^reader interactions\b/i.test(cleaned);
+}
+
+function collectStepsAfterHeader(lines: string[]) {
+  const collected: string[] = [];
+
+  for (const line of lines) {
+    if (isSectionHeader(line, "ingredients") || isSectionHeader(line, "steps")) continue;
+    if (isInstructionBoundaryLine(line) && collected.length > 0) break;
+
+    if (looksLikeStep(line) || (collected.length > 0 && isLikelyInstructionSentence(line))) {
+      collected.push(line);
+      continue;
+    }
+
+    if (collected.length > 0 && !looksLikeIngredient(line)) {
+      break;
+    }
+  }
+
+  return collected;
+}
+
 function extractFromJsonLd(html: string, baseUrl?: string): Partial<ParsedRecipe> | null {
   const scriptMatches = html.matchAll(
     /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
@@ -522,13 +597,9 @@ function extractFromJsonLd(html: string, baseUrl?: string): Partial<ParsedRecipe
         (raw: string) => splitIngredient(normalizeImportedText(raw) || raw)
       );
 
-      const steps = (
-        recipe.recipeInstructions || []
-      ).map((step: { "@type"?: string; text?: string } | string, i: number) => ({
+      const steps = flattenRecipeInstructions(recipe.recipeInstructions).map((instruction, i) => ({
         order: i,
-        instruction:
-          normalizeImportedText(typeof step === "string" ? step : step.text || String(step))
-          || (typeof step === "string" ? step : step.text || String(step)),
+        instruction,
       }));
 
       const nutrition = recipe.nutrition
@@ -1016,7 +1087,7 @@ export function parseRecipeFromText(text: string, titleOverride?: string): Parse
 
   const stepLines =
     stepsHeader >= 0
-      ? lines.slice(stepsHeader + 1)
+      ? collectStepsAfterHeader(lines.slice(stepsHeader + 1))
       : sectionless.stepLines.length > 0
         ? sectionless.stepLines
         : ingredientsHeader >= 0
