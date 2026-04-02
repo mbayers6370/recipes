@@ -12,6 +12,13 @@ import {
 } from "lucide-react";
 import { getRecipeType, type RecipeType } from "@/lib/recipe-taxonomy";
 
+type NetworkInformationLike = EventTarget & {
+  effectiveType?: "slow-2g" | "2g" | "3g" | "4g";
+  saveData?: boolean;
+  downlink?: number;
+  rtt?: number;
+};
+
 type RecipeImageProps = {
   imageUrl?: string | null;
   title: string;
@@ -76,17 +83,66 @@ export function RecipeImage({
   priority = false,
 }: RecipeImageProps) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const [shouldSkipImageLoad, setShouldSkipImageLoad] = useState(false);
 
   useEffect(() => {
     setFailedUrl(null);
   }, [imageUrl]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const getConnection = () =>
+      (navigator as Navigator & {
+        connection?: NetworkInformationLike;
+        mozConnection?: NetworkInformationLike;
+        webkitConnection?: NetworkInformationLike;
+      }).connection ??
+      (navigator as Navigator & {
+        mozConnection?: NetworkInformationLike;
+      }).mozConnection ??
+      (navigator as Navigator & {
+        webkitConnection?: NetworkInformationLike;
+      }).webkitConnection;
+
+    const syncConstrainedNetworkState = () => {
+      const connection = getConnection();
+      const hasSlowEffectiveType = connection?.effectiveType
+        ? ["slow-2g", "2g", "3g"].includes(connection.effectiveType)
+        : false;
+      const hasLowBandwidth = typeof connection?.downlink === "number" && connection.downlink < 1.5;
+      const hasHighLatency = typeof connection?.rtt === "number" && connection.rtt > 300;
+
+      setShouldSkipImageLoad(
+        navigator.onLine === false ||
+        Boolean(connection?.saveData) ||
+        hasSlowEffectiveType ||
+        hasLowBandwidth ||
+        hasHighLatency
+      );
+    };
+
+    syncConstrainedNetworkState();
+
+    const connection = getConnection();
+    window.addEventListener("online", syncConstrainedNetworkState);
+    window.addEventListener("offline", syncConstrainedNetworkState);
+    connection?.addEventListener?.("change", syncConstrainedNetworkState);
+
+    return () => {
+      window.removeEventListener("online", syncConstrainedNetworkState);
+      window.removeEventListener("offline", syncConstrainedNetworkState);
+      connection?.removeEventListener?.("change", syncConstrainedNetworkState);
+    };
+  }, []);
+
   const recipeType = getRecipeType(tags);
   const fallback = TYPE_STYLES[recipeType || "default"];
   const Icon = fallback.icon;
   const hasError = !!imageUrl && failedUrl === imageUrl;
+  const shouldShowFallback = !imageUrl || hasError || shouldSkipImageLoad;
 
-  if (!imageUrl || hasError) {
+  if (shouldShowFallback) {
     return (
       <div
         style={{
@@ -118,7 +174,7 @@ export function RecipeImage({
           <Icon size={iconSize} strokeWidth={1.9} />
           {showLabel ? (
             <span style={{ fontSize: 13, fontWeight: 600, color: fallback.color }}>
-              {fallback.label}
+              {shouldSkipImageLoad && imageUrl ? "Image paused for slow connection" : fallback.label}
             </span>
           ) : null}
         </div>

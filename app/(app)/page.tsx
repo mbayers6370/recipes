@@ -8,6 +8,7 @@ import { useAuth } from "@/context/auth-context";
 import type { RecipeSummary, CookingSession, Household, MealPlan } from "@/types";
 import { DAY_NAMES } from "@/lib/date-utils";
 import { startOfWeek } from "@/lib/date-utils";
+import { getUSSeasonalProduceForMonth, US_MONTH_NAMES } from "@/lib/seasonal-produce";
 import { RecipeImage } from "@/components/recipe-image";
 
 const HOME_MEAL_TYPE_ORDER = ["breakfast", "brunch", "lunch", "dinner", "side", "snack", "dessert"] as const;
@@ -27,6 +28,7 @@ function getTimeContextSnapshot() {
     greeting: getGreeting(now),
     todayIndex: now.getDay(),
     todayDateLabel: now.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    monthIndex: now.getMonth(),
   };
 }
 
@@ -91,6 +93,9 @@ export default function HomePage() {
   const greeting = mounted ? (timeContext?.greeting ?? "Welcome") : "Welcome";
   const todayIndex = mounted ? timeContext?.todayIndex : null;
   const effectiveRecentRecipeLimit = mounted ? recentRecipeLimit : 2;
+  const monthIndex = timeContext?.monthIndex ?? new Date().getMonth();
+  const seasonalProduce = getUSSeasonalProduceForMonth(monthIndex);
+  const seasonalMonthName = US_MONTH_NAMES[monthIndex] ?? US_MONTH_NAMES[0];
   const todayItems = todayIndex === null || todayIndex === undefined
     ? []
     : (mealPlan?.items || [])
@@ -204,6 +209,34 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+        <div className="home-explicit-full-divider" />
+
+        <Section>
+          <div style={S.seasonalPanel} className="home-section-surface home-band-surface">
+            <div style={S.cardSectionHeaderTerracottaBand} className="home-band-header">
+              <h2 style={S.sectionTitleOnTerracotta}>What's In Season</h2>
+            </div>
+
+            <div style={S.seasonalIntro}>
+              <div>
+                <p style={S.seasonalEyebrow}>US seasonal guide</p>
+                <p style={S.seasonalTitle}>{seasonalMonthName}</p>
+              </div>
+              <p style={S.seasonalNote}>Peak timing can vary by region.</p>
+            </div>
+
+            <div style={S.seasonalGrid} className="home-seasonal-grid">
+              <ProduceColumn
+                title="Vegetables"
+                items={seasonalProduce.vegetables}
+              />
+              <ProduceColumn
+                title="Fruit"
+                items={seasonalProduce.fruits}
+              />
+            </div>
+          </div>
+        </Section>
         <div className="home-explicit-full-divider" />
 
         {/* Recently saved */}
@@ -438,6 +471,29 @@ function SkeletonCard({ className }: { className?: string }) {
       <div style={{ padding: "10px 0", display: "flex", flexDirection: "column", gap: 6 }}>
         <div style={{ height: 14, background: "rgb(var(--warm-200))", borderRadius: 6, width: "80%" }} />
         <div style={{ height: 12, background: "rgb(var(--warm-200))", borderRadius: 6, width: "40%" }} />
+      </div>
+    </div>
+  );
+}
+
+function ProduceColumn({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  return (
+    <div style={S.produceColumn} className="home-seasonal-column">
+      <div style={S.produceColumnHeader}>
+        <h3 style={S.produceColumnTitle}>{title}</h3>
+      </div>
+      <div style={S.produceChipWrap}>
+        {items.map((item) => (
+          <span key={`${title}-${item}`} style={S.produceChip}>
+            {item}
+          </span>
+        ))}
       </div>
     </div>
   );
@@ -725,6 +781,84 @@ const S: Record<string, React.CSSProperties> = {
     border: "1px solid rgb(var(--warm-200))",
     padding: "16px",
   },
+  seasonalPanel: {
+    background: "white",
+    borderRadius: "var(--radius-card-inner)",
+    border: "1px solid rgb(var(--warm-200))",
+    padding: "16px",
+  },
+  seasonalIntro: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 16,
+    paddingBottom: 14,
+    marginBottom: 14,
+    borderBottom: "1px solid rgb(var(--warm-100))",
+    flexWrap: "wrap" as const,
+  },
+  seasonalEyebrow: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: "rgb(var(--terra-700))",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+    marginBottom: 4,
+  },
+  seasonalTitle: {
+    fontSize: 24,
+    lineHeight: 1.1,
+    fontWeight: 700,
+    color: "rgb(var(--warm-900))",
+    fontFamily: "var(--font-serif)",
+  },
+  seasonalNote: {
+    maxWidth: 280,
+    fontSize: 13,
+    lineHeight: 1.5,
+    color: "rgb(var(--warm-500))",
+  },
+  seasonalGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr",
+    gap: 12,
+  },
+  produceColumn: {
+    background: "rgb(var(--warm-50))",
+    border: "1px solid rgba(181, 88, 47, 0.14)",
+    borderRadius: "var(--radius-card-inner)",
+    padding: "14px 14px 16px",
+  },
+  produceColumnHeader: {
+    paddingBottom: 10,
+    marginBottom: 12,
+    borderBottom: "1px solid rgba(181, 88, 47, 0.12)",
+  },
+  produceColumnTitle: {
+    fontSize: 14,
+    fontWeight: 700,
+    color: "rgb(var(--terra-700))",
+    fontFamily: "var(--font-serif)",
+    letterSpacing: "var(--tracking-brand)",
+  },
+  produceChipWrap: {
+    display: "flex",
+    flexWrap: "wrap" as const,
+    gap: 8,
+  },
+  produceChip: {
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: 32,
+    padding: "6px 10px",
+    borderRadius: "var(--radius-pill)",
+    background: "white",
+    border: "1px solid rgba(181, 88, 47, 0.18)",
+    fontSize: 13,
+    fontWeight: 600,
+    color: "rgb(var(--warm-800))",
+    lineHeight: 1.3,
+  },
   recipeCard: {
     background: "white",
     borderRadius: "var(--radius-card-inner)",
@@ -758,7 +892,7 @@ const S: Record<string, React.CSSProperties> = {
     borderRadius: "var(--radius-card-inner)",
     padding: "16px 20px 28px",
     textAlign: "center",
-    border: "2px dashed rgba(181, 88, 47, 0.42)",
+    border: "1px dashed rgba(181, 88, 47, 0.42)",
     boxShadow: "0 12px 26px rgba(112, 48, 26, 0.08)",
   },
   savedEmptyState: {

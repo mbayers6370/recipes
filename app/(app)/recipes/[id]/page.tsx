@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-import { ArrowLeft, Check, ChefHat, Download, Heart, Share2, ShoppingCart, Timer as TimerIcon, Users } from "lucide-react";
+import { ArrowLeft, Check, ChefHat, ChevronDown, ChevronLeft, ChevronRight, Download, Heart, Share2, ShoppingCart, Timer as TimerIcon, Users } from "lucide-react";
 import type { Household, Recipe } from "@/types";
 import { scaleAmountText } from "@/lib/measurements";
 import { RECIPE_TYPE_OPTIONS, formatRecipeType, getRecipeType, isImportedRecipe, setRecipeTypeTag, stripRecipeTypeTags, type RecipeType } from "@/lib/recipe-taxonomy";
@@ -257,6 +257,7 @@ export default function RecipeDetailPage() {
           {recipe.difficulty && <Stat label="Level" value={recipe.difficulty} />}
         </div>
 
+        <div style={S.controlsCard}>
         <div style={S.controlsRow}>
           {/* Servings scale */}
           <div style={S.scaleRow}>
@@ -265,35 +266,49 @@ export default function RecipeDetailPage() {
               <button
                 style={S.scaleBtn}
                 onClick={() => setServingScale(Math.max(0.5, servingScale - 0.5))}
-              >−</button>
-              <span style={S.scaleValue}>
+                aria-label="Decrease servings"
+              >
+                <ChevronLeft size={16} strokeWidth={2.2} />
+              </button>
+              <div style={S.scaleValueCard}>
+                <span style={S.scaleValue}>
                 {recipe.servings
                   ? Math.round(recipe.servings * servingScale * 10) / 10
                   : `×${servingScale}`}
-              </span>
+                </span>
+              </div>
               <button
                 style={S.scaleBtn}
                 onClick={() => setServingScale(servingScale + 0.5)}
-              >+</button>
+                aria-label="Increase servings"
+              >
+                <ChevronRight size={16} strokeWidth={2.2} />
+              </button>
             </div>
           </div>
 
           <div style={S.folderRow}>
             <span style={S.folderLabel}>Folder</span>
-            <select
-              style={S.folderSelect}
-              value={recipeType || ""}
-              onChange={(e) => { void moveToFolder(e.target.value); }}
-              disabled={movingFolder || !isOwner}
-            >
-              <option value="">Unsorted</option>
-              {RECIPE_TYPE_OPTIONS.map((type) => (
-                <option key={type} value={type}>
-                  {formatRecipeType(type)}
-                </option>
-              ))}
-            </select>
+            <div style={S.folderSelectWrap}>
+              <select
+                style={S.folderSelect}
+                value={recipeType || ""}
+                onChange={(e) => { void moveToFolder(e.target.value); }}
+                disabled={movingFolder || !isOwner}
+              >
+                <option value="">Unsorted</option>
+                {RECIPE_TYPE_OPTIONS.map((type) => (
+                  <option key={type} value={type}>
+                    {formatRecipeType(type)}
+                  </option>
+                ))}
+              </select>
+              <span style={S.folderSelectIcon}>
+                <ChevronDown size={15} strokeWidth={2.2} />
+              </span>
+            </div>
           </div>
+        </div>
         </div>
 
         {canShareWithKitchen && (
@@ -478,18 +493,70 @@ const S: Record<string, React.CSSProperties> = {
   desc: { fontSize: 14, color: "rgb(var(--warm-600))", lineHeight: 1.6 },
   sharedBy: { fontSize: 13, color: "rgb(var(--terra-700))", marginBottom: 8, fontWeight: 600 },
   stats: { display: "flex", gap: 16, background: "white", borderRadius: "var(--radius-card-inner)", padding: "14px 16px", marginBottom: 14, border: "1px solid rgb(var(--warm-100))", justifyContent: "space-around" },
-  controlsRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16, alignItems: "stretch" },
+  controlsCard: {
+    background: "rgba(255,255,255,0.72)",
+    border: "1px solid rgb(var(--warm-100))",
+    borderRadius: "var(--radius-card-inner)",
+    padding: "12px 14px",
+    marginBottom: 16,
+    boxShadow: "0 8px 18px rgba(71, 55, 46, 0.04)",
+    backdropFilter: "blur(6px)",
+  },
+  controlsRow: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "stretch" },
   scaleRow: { display: "flex", flexDirection: "column", gap: 8, minWidth: 0, alignItems: "center", justifyContent: "space-between", height: "100%" },
   scaleLabel: { fontSize: 12, color: "rgb(var(--warm-500))", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em" },
-  scaleControls: { display: "flex", alignItems: "center", gap: 8 },
-  scaleBtn: { background: "rgb(var(--warm-100))", border: "none", borderRadius: "50%", width: 28, height: 28, fontSize: 17, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "rgb(var(--warm-800))" },
-  scaleValue: { fontSize: 14, fontWeight: 700, color: "rgb(var(--warm-900))", minWidth: 28, textAlign: "center" },
+  scaleControls: { display: "grid", gridTemplateColumns: "36px minmax(64px, auto) 36px", alignItems: "center", gap: 8, width: "100%" },
+  scaleBtn: {
+    width: 36,
+    height: 36,
+    background: "rgb(var(--terra-50))",
+    border: "1px solid rgb(var(--terra-200))",
+    borderRadius: 10,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "rgb(var(--terra-700))",
+    padding: 0,
+  },
+  scaleValueCard: {
+    minHeight: 46,
+    padding: "10px 12px",
+    borderRadius: 10,
+    background: "white",
+    border: "1.5px solid rgb(var(--warm-200))",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scaleValue: { fontSize: 15, fontWeight: 700, color: "rgb(var(--warm-900))", minWidth: 28, textAlign: "center" },
   folderRow: { display: "flex", flexDirection: "column", gap: 8, minWidth: 0, justifyContent: "space-between", height: "100%" },
   folderLabel: { fontSize: 12, color: "rgb(var(--warm-500))", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", textAlign: "center" },
+  folderSelectWrap: { position: "relative" },
   folderSelect: {
-    borderWidth: "1.5px", borderStyle: "solid", borderColor: "rgb(var(--warm-200))",
-    borderRadius: "var(--radius-input)", padding: "8px 10px", fontSize: 12, color: "rgb(var(--warm-800))",
-    background: "white", outline: "none", width: "100%",
+    width: "100%",
+    height: 46,
+    borderWidth: "1.5px",
+    borderStyle: "solid",
+    borderColor: "rgb(var(--warm-200))",
+    borderRadius: 10,
+    padding: "11px 40px 11px 14px",
+    fontSize: 14,
+    color: "rgb(var(--warm-900))",
+    background: "white",
+    outline: "none",
+    appearance: "none" as const,
+  },
+  folderSelectIcon: {
+    position: "absolute",
+    top: "50%",
+    right: 14,
+    transform: "translateY(-50%)",
+    color: "rgb(var(--terra-600))",
+    pointerEvents: "none" as const,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   },
   householdShareBtn: {
     width: "100%",

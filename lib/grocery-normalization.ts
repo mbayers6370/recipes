@@ -33,7 +33,13 @@ const GROCERY_ALIAS_RULES: Array<{ pattern: RegExp; canonical: string }> = [
 ];
 
 const TRAILING_PREP_PATTERNS = [
-  /\b(chopped|diced|minced|sliced|cubed|melted|softened|room temperature|at room temperature|divided|drained|rinsed|peeled|crushed|for serving|for garnish|plus more.*|to taste)\b.*$/i,
+  /,\s*(chopped|diced|minced|sliced|cubed|melted|softened|room temperature|at room temperature|divided|drained|rinsed|peeled|crushed|for serving|for garnish|plus more.*|to taste)\b.*$/i,
+  /\s+-\s*(chopped|diced|minced|sliced|cubed|melted|softened|room temperature|at room temperature|divided|drained|rinsed|peeled|crushed|for serving|for garnish|plus more.*|to taste)\b.*$/i,
+];
+
+const LEADING_PREP_PATTERNS = [
+  /^(?:finely\s+|roughly\s+|thinly\s+|coarsely\s+)?(chopped|diced|minced|sliced|cubed|peeled|crushed)\s+/i,
+  /^fresh\s+/i,
 ];
 
 const LEADING_PACKAGING_PATTERNS = [
@@ -58,6 +64,19 @@ const LEADING_MEASUREMENT_PHRASES = [
 
 function stripPrepDescriptors(value: string) {
   let next = value;
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+
+    for (const pattern of LEADING_PREP_PATTERNS) {
+      const updated = next.replace(pattern, "");
+      if (updated !== next) {
+        next = updated;
+        changed = true;
+      }
+    }
+  }
 
   for (const pattern of TRAILING_PREP_PATTERNS) {
     next = next.replace(pattern, " ");

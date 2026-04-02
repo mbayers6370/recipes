@@ -232,7 +232,7 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      await Promise.all(
+      const addResults = await Promise.all(
         scaledIngredients.map((ing, i) =>
           addOrMergeGroceryItem({
             listId: list!.id,
@@ -246,7 +246,17 @@ export async function POST(req: NextRequest) {
         )
       );
 
-      return ok({ addedCount: ingredients.length, listId: list.id });
+      const addedCount = addResults.filter(Boolean).length;
+      const skippedIngredients = scaledIngredients
+        .filter((_, index) => !addResults[index])
+        .map((ingredient) => ingredient.name);
+
+      return ok({
+        addedCount,
+        skippedCount: skippedIngredients.length,
+        skippedIngredients,
+        listId: list.id,
+      });
     }
 
     // Add single item
