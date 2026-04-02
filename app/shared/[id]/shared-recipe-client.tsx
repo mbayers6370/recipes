@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Download, Save, Share2 } from "lucide-react";
+import { Download, Save, Share2 } from "lucide-react";
+import { BottomNav, DesktopNav } from "@/components/layout/nav";
 import { RecipeImage } from "@/components/recipe-image";
 import { useAuth } from "@/context/auth-context";
 import type { Recipe } from "@/types";
@@ -131,93 +132,105 @@ export function SharedRecipeClient({ id }: { id: string }) {
   const steps = Array.isArray(recipe.steps) ? recipe.steps : [];
 
   return (
-    <div style={S.page}>
-      <div style={S.shell}>
-        <div style={S.topRow}>
-          <button type="button" onClick={() => router.back()} style={S.backBtn}>
-            <ArrowLeft size={16} strokeWidth={2.2} />
-            <span>Back</span>
-          </button>
-          <span style={S.badge}>Shared from abovo</span>
-        </div>
+    <div style={S.appShell}>
+      <DesktopNav />
+      <main style={S.main}>
+        <div style={S.page}>
+          <div style={S.shell}>
+            <div style={S.topRow}>
+              <span style={S.badge}>Shared from abovo</span>
+            </div>
 
-        <div style={S.hero}>
-          <RecipeImage
-            imageUrl={recipe.imageUrl}
-            title={recipe.title}
-            tags={recipe.tags}
-            sizes="(min-width: 960px) 360px, 100vw"
-            showLabel
-            iconSize={42}
-            imageStyle={S.heroImage}
-          />
-        </div>
+            <div style={S.hero}>
+              <RecipeImage
+                imageUrl={recipe.imageUrl}
+                title={recipe.title}
+                tags={recipe.tags}
+                sizes="(min-width: 960px) 360px, 100vw"
+                showLabel
+                iconSize={42}
+                imageStyle={S.heroImage}
+              />
+            </div>
 
-        <div style={S.card}>
-          <p style={S.kicker}>Shared by {ownerLabel}</p>
-          <h1 style={S.title}>{recipe.title}</h1>
-          {recipe.description && <p style={S.description}>{recipe.description}</p>}
+            <div style={S.card}>
+              <p style={S.kicker}>Shared by {ownerLabel}</p>
+              <h1 style={S.title}>{recipe.title}</h1>
+              {recipe.description && <p style={S.description}>{recipe.description}</p>}
 
-          <div style={S.meta}>
-            {recipe.totalTime ? <span>{recipe.totalTime} min</span> : null}
-            {recipe.servings ? <span>Serves {recipe.servings}</span> : null}
-            {recipe.cuisine ? <span>{recipe.cuisine}</span> : null}
+              <div style={S.meta}>
+                {recipe.totalTime ? <span>{recipe.totalTime} min</span> : null}
+                {recipe.servings ? <span>Serves {recipe.servings}</span> : null}
+                {recipe.cuisine ? <span>{recipe.cuisine}</span> : null}
+              </div>
+
+              <div style={S.actionRow}>
+                <button type="button" onClick={() => void handleSave()} style={S.primaryBtn} disabled={saving}>
+                  <Save size={16} strokeWidth={2.2} />
+                  <span>{saving ? "Saving…" : user ? "Save to my recipes" : "Log in to save"}</span>
+                </button>
+                <button type="button" onClick={() => void handleShare()} style={S.secondaryBtn} disabled={sharing}>
+                  <Share2 size={16} strokeWidth={2.2} />
+                  <span>{sharing ? "Sharing…" : "Share link"}</span>
+                </button>
+                <Link href="/recipes/import" style={S.ghostLink}>
+                  <Download size={16} strokeWidth={2.2} />
+                  <span>Import another</span>
+                </Link>
+              </div>
+
+              <div style={S.contentGrid}>
+                <section style={S.panel}>
+                  <h2 style={S.panelTitle}>Ingredients</h2>
+                  <ul style={S.list}>
+                    {ingredients.map((ingredient, index) => (
+                      <li key={`${ingredient.id || "ingredient"}-${index}`} style={S.listItem}>
+                        {[ingredient.amount, ingredient.unit, ingredient.name, ingredient.notes].filter(Boolean).join(" ")}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section style={S.panel}>
+                  <h2 style={S.panelTitle}>Steps</h2>
+                  <ol style={S.stepList}>
+                    {steps.map((step, index) => (
+                      <li key={`${step.id || "step"}-${index}`} style={S.stepItem}>
+                        {step.instruction}
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              </div>
+
+              {recipe.notes && (
+                <section style={S.notesPanel}>
+                  <h2 style={S.panelTitle}>Notes</h2>
+                  <p style={S.notesText}>{recipe.notes}</p>
+                </section>
+              )}
+            </div>
           </div>
-
-          <div style={S.actionRow}>
-            <button type="button" onClick={() => void handleSave()} style={S.primaryBtn} disabled={saving}>
-              <Save size={16} strokeWidth={2.2} />
-              <span>{saving ? "Saving…" : user ? "Save to my recipes" : "Log in to save"}</span>
-            </button>
-            <button type="button" onClick={() => void handleShare()} style={S.secondaryBtn} disabled={sharing}>
-              <Share2 size={16} strokeWidth={2.2} />
-              <span>{sharing ? "Sharing…" : "Share link"}</span>
-            </button>
-            <Link href="/recipes/import" style={S.ghostLink}>
-              <Download size={16} strokeWidth={2.2} />
-              <span>Import another</span>
-            </Link>
-          </div>
-
-          <div style={S.contentGrid}>
-            <section style={S.panel}>
-              <h2 style={S.panelTitle}>Ingredients</h2>
-              <ul style={S.list}>
-                {ingredients.map((ingredient, index) => (
-                  <li key={`${ingredient.id || "ingredient"}-${index}`} style={S.listItem}>
-                    {[ingredient.amount, ingredient.unit, ingredient.name, ingredient.notes].filter(Boolean).join(" ")}
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section style={S.panel}>
-              <h2 style={S.panelTitle}>Steps</h2>
-              <ol style={S.stepList}>
-                {steps.map((step, index) => (
-                  <li key={`${step.id || "step"}-${index}`} style={S.stepItem}>
-                    {step.instruction}
-                  </li>
-                ))}
-              </ol>
-            </section>
-          </div>
-
-          {recipe.notes && (
-            <section style={S.notesPanel}>
-              <h2 style={S.panelTitle}>Notes</h2>
-              <p style={S.notesText}>{recipe.notes}</p>
-            </section>
-          )}
         </div>
-      </div>
+      </main>
+      <BottomNav />
     </div>
   );
 }
 
 const S: Record<string, React.CSSProperties> = {
-  page: {
+  appShell: {
     minHeight: "100dvh",
+    display: "flex",
+    flexDirection: "column",
+    background: "rgb(var(--warm-50))",
+  },
+  main: {
+    flex: 1,
+    paddingBottom: "72px",
+  },
+  page: {
+    minHeight: "100%",
     background: "rgb(var(--warm-50))",
     padding: "28px 16px 48px",
   },
@@ -228,22 +241,9 @@ const S: Record<string, React.CSSProperties> = {
   topRow: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "flex-end",
     gap: 12,
     marginBottom: 18,
-  },
-  backBtn: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "10px 14px",
-    borderRadius: 999,
-    border: "1px solid rgb(var(--warm-200))",
-    background: "white",
-    color: "rgb(var(--warm-700))",
-    cursor: "pointer",
-    fontSize: 14,
-    fontWeight: 600,
   },
   badge: {
     display: "inline-flex",
